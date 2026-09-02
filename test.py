@@ -74,6 +74,7 @@ class Board:
     piece_index: int = 0
     height: int = 20
     width: int = 10
+    game_over: bool = False
     cells: list[list[int | str]] = field(init=False)
     piece: Piece = field(init=False)
 
@@ -85,16 +86,6 @@ class Board:
         if 0 <= row < len(self.cells) and 0 <= col < len(self.cells[0]):
             return self.cells[row][col]
         return None
-
-    def draw_piece(self, stdscr, shape, row, col, rot):
-        for dr, dc in SHAPES[shape][rot]:
-            if row + dr + self.x >= 0: # prevent from rendering above board
-                stdscr.addstr(
-                    row + dr + self.x,
-                    (col + dc + self.y) * 2,
-                    "██",
-                    curses.color_pair(COLORS[shape]),
-                )
 
     def draw(self, stdscr):
         fill_rect(
@@ -112,9 +103,8 @@ class Board:
             )
             stdscr.addstr(1, (self.width + self.y) * 2 + 2, "NEXT PIECE:")
 
-        self.draw_piece(
-            stdscr, self.piece.shape, self.piece.row, self.piece.col, self.piece.rot
-        )
+        self.draw_piece(stdscr, self.piece.shape, self.piece.row, self.piece.col, self.piece.rot)
+
         for row in range(self.height):
             for col in range(self.width):
                 cell = self.get_cell(row, col)
@@ -123,8 +113,18 @@ class Board:
                         row + self.x,
                         (col + self.y) * 2,
                         "██",
-                        curses.color_pair(COLORS[cell]),
+                        curses.color_pair(9 if self.game_over else COLORS[cell]),
                     )
+
+    def draw_piece(self, stdscr, shape, row, col, rot):
+        for dr, dc in SHAPES[shape][rot]:
+            if row + dr + self.x >= 0:  # prevent from rendering above board
+                stdscr.addstr(
+                    row + dr + self.x,
+                    (col + dc + self.y) * 2,
+                    "██",
+                    curses.color_pair(9 if self.game_over else COLORS[shape]),
+                )
 
     def clear_lines(self) -> int:
         new_rows = [row for row in self.cells if not all(cell != 0 for cell in row)]
@@ -139,12 +139,25 @@ class Board:
         for dr, dc in SHAPES[self.piece.shape][self.piece.rot]:
             self.cells[dr + self.piece.row][dc + self.piece.col] = self.piece.shape
         self.clear_lines()
+        self.spawn_piece()
 
-        self.piece_index += 1
-        self.piece.shape = self.bag.get(self.piece_index)
-        self.piece.row = 0
-        self.piece.col = int(self.width / 2)
-        self.piece.rot = 0
+    def spawn_piece(self) -> bool:
+        if not self.game_over:
+            self.piece_index += 1
+            self.piece.shape = self.bag.get(self.piece_index)
+            self.piece.row = 0
+            self.piece.col = int(self.width / 2)
+            self.piece.rot = 0
+            for dr, dc in SHAPES[self.piece.shape][0]:
+                cell = self.get_cell(0 + dr + 1, int(self.width / 2) + dc)
+                if cell not in (0, None):
+                    self.lose()
+                    return False
+            return True
+        return False
+
+    def lose(self):
+        self.game_over = True
 
     def move_piece_down(self) -> bool:
         for dr, dc in SHAPES[self.piece.shape][self.piece.rot]:
@@ -215,6 +228,7 @@ def main(stdscr):
     curses.init_color(25, 630, 0, 940)  # T - purple
     curses.init_color(26, 940, 0, 0)  # Z - red
     curses.init_color(27, 192, 302, 475)  # background
+    curses.init_color(28, 600, 600, 600)  # gray
 
     curses.init_pair(1, 20, curses.COLOR_BLACK)  # I
     curses.init_pair(2, 21, curses.COLOR_BLACK)  # J
@@ -224,6 +238,7 @@ def main(stdscr):
     curses.init_pair(6, 26, curses.COLOR_BLACK)  # Z
     curses.init_pair(7, 22, curses.COLOR_BLACK)  # L
     curses.init_pair(8, 27, curses.COLOR_BLACK)  # background fill
+    curses.init_pair(9, 28, curses.COLOR_BLACK)  # gray
 
     stdscr.nodelay(True)  # getch() returns immediately even with no input
     stdscr.timeout(50)  # or: wait up to 50ms, then return -1 if nothing pressed
@@ -235,7 +250,7 @@ def main(stdscr):
     ]
 
     last_drop = time.time()
-    drop_interval = 0.5
+    drop_interval = 0.25
     selected_board = 0
 
     while True:
@@ -255,7 +270,7 @@ def main(stdscr):
         now = time.time()
         if now - last_drop >= drop_interval:
             for board in boards:
-                board.move_piece_down()
+                if not board.game_over: board.move_piece_down()
             last_drop = now
 
         stdscr.clear()
