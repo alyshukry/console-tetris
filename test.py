@@ -5,44 +5,44 @@ from dataclasses import dataclass, field
 
 SHAPES = {
     "I": [
-        [(-1, -2), (-1, -1), (-1, 0), (-1, 1)], # 0°
-        [(-2, 0), (-1, 0), (0, 0), (1, 0)],     # R (90° CW)
-        [(0, -2), (0, -1), (0, 0), (0, 1)],     # 180°
-        [(-2, -1), (-1, -1), (0, -1), (1, -1)], # L (270°)
+        [(-1, -2), (-1, -1), (-1, 0), (-1, 1)],  # 0°
+        [(-2, 0), (-1, 0), (0, 0), (1, 0)],  # R (90° CW)
+        [(0, -2), (0, -1), (0, 0), (0, 1)],  # 180°
+        [(-2, -1), (-1, -1), (0, -1), (1, -1)],  # L (270°)
     ],
     "J": [
-        [(0, 0), (0, 1), (0, -1), (-1, -1)],    # 0°
-        [(0, 0), (1, 0), (-1, 0), (-1, 1)],     # R
-        [(0, 0), (0, 1), (1, 1), (0, -1)],      # 180°
-        [(0, 0), (1, 0), (-1, 0), (1, -1)],     # L
+        [(0, 0), (0, 1), (0, -1), (-1, -1)],  # 0°
+        [(0, 0), (1, 0), (-1, 0), (-1, 1)],  # R
+        [(0, 0), (0, 1), (1, 1), (0, -1)],  # 180°
+        [(0, 0), (1, 0), (-1, 0), (1, -1)],  # L
     ],
     "L": [
-        [(0, 0), (0, -1), (0, 1), (-1, 1)],     # 0°
-        [(0, 0), (-1, 0), (1, 0), (1, 1)],      # R
-        [(0, 0), (0, -1), (1, -1), (0, 1)],     # 180°
-        [(0, 0), (-1, 0), (1, 0), (-1, -1)],    # L
+        [(0, 0), (0, -1), (0, 1), (-1, 1)],  # 0°
+        [(0, 0), (-1, 0), (1, 0), (1, 1)],  # R
+        [(0, 0), (0, -1), (1, -1), (0, 1)],  # 180°
+        [(0, 0), (-1, 0), (1, 0), (-1, -1)],  # L
     ],
     "O": [
-        [(0, 0), (0, -1), (-1, 0), (-1, -1)],   # same at every rotation
+        [(0, 0), (0, -1), (-1, 0), (-1, -1)],  # same at every rotation
     ]
     * 4,
     "S": [
-        [(0, 0), (-1, 0), (-1, 1), (0, -1)],    # 0°
-        [(0, 0), (0, 1), (-1, 0), (1, 1)],      # R
-        [(0, 0), (0, 1), (1, -1), (1, 0)],      # 180°
-        [(0, 0), (-1, -1), (1, 0), (0, -1)],    # L
+        [(0, 0), (-1, 0), (-1, 1), (0, -1)],  # 0°
+        [(0, 0), (0, 1), (-1, 0), (1, 1)],  # R
+        [(0, 0), (0, 1), (1, -1), (1, 0)],  # 180°
+        [(0, 0), (-1, -1), (1, 0), (0, -1)],  # L
     ],
     "T": [
-        [(0, 0), (0, 1), (0, -1), (-1, 0)],     # 0°
-        [(0, 0), (0, 1), (1, 0), (-1, 0)],      # R
-        [(0, 0), (1, 0), (0, 1), (0, -1)],      # 180°
-        [(0, 0), (0, -1), (1, 0), (-1, 0)],     # L
+        [(0, 0), (0, 1), (0, -1), (-1, 0)],  # 0°
+        [(0, 0), (0, 1), (1, 0), (-1, 0)],  # R
+        [(0, 0), (1, 0), (0, 1), (0, -1)],  # 180°
+        [(0, 0), (0, -1), (1, 0), (-1, 0)],  # L
     ],
     "Z": [
-        [(0, 0), (-1, 0), (-1, -1), (0, 1)],    # 0°
-        [(0, 0), (0, 1), (1, 0), (-1, 1)],      # R
-        [(0, 0), (0, -1), (1, 1), (1, 0)],      # 180°
-        [(0, 0), (1, -1), (-1, 0), (0, -1)],    # L
+        [(0, 0), (-1, 0), (-1, -1), (0, 1)],  # 0°
+        [(0, 0), (0, 1), (1, 0), (-1, 1)],  # R
+        [(0, 0), (0, -1), (1, 1), (1, 0)],  # 180°
+        [(0, 0), (1, -1), (-1, 0), (0, -1)],  # L
     ],
 }
 
@@ -164,6 +164,7 @@ class Board:
         right = self.y * 2 + self.width * 2
 
         stdscr.addstr(top, left, "┌" + "─" * (self.width * 2) + "┐")
+        stdscr.addstr(top, left + 2, " USRNM ")
         for row in range(self.height):
             stdscr.addstr(self.x + row, left, "│")
             stdscr.addstr(self.x + row, right, "│")
@@ -238,7 +239,7 @@ class Board:
 
     def rotate_piece(self) -> bool:
         new_rot = (self.piece.rot + 1) % 4
-        if self.fits(0, 1, rot=new_rot):
+        if self.fits(0, 0, rot=new_rot):
             self.piece.rot = new_rot
             return True
         return False
@@ -259,28 +260,28 @@ def fill_rect(stdscr, y1, x1, y2, x2, color_pair):
 def main(stdscr):
     curses.curs_set(0)
     curses.start_color()
-
-    curses.init_color(20, 0, 940, 940)   # I - cyan
-    curses.init_color(21, 0, 0, 940)     # J - blue
-    curses.init_color(22, 940, 630, 0)   # L - orange
-    curses.init_color(23, 940, 940, 0)   # O - yellow
-    curses.init_color(24, 0, 940, 0)     # S - green
-    curses.init_color(25, 630, 0, 940)   # T - purple
-    curses.init_color(26, 940, 0, 0)     # Z - red
-    curses.init_color(28, 600, 600, 600) # gray
-
-    curses.init_pair(1, 20, curses.COLOR_BLACK) # I
-    curses.init_pair(2, 21, curses.COLOR_BLACK) # J
-    curses.init_pair(3, 23, curses.COLOR_BLACK) # O
-    curses.init_pair(4, 25, curses.COLOR_BLACK) # T
-    curses.init_pair(5, 24, curses.COLOR_BLACK) # S
-    curses.init_pair(6, 26, curses.COLOR_BLACK) # Z
-    curses.init_pair(7, 22, curses.COLOR_BLACK) # L
-    curses.init_pair(9, 28, curses.COLOR_BLACK) # gray
-    curses.init_pair(10, curses.COLOR_BLACK, curses.COLOR_BLACK) # black
-
+    stdscr.keypad(True)
     stdscr.nodelay(True)
     stdscr.timeout(50)
+
+    curses.init_color(20, 0, 940, 940)  # I - cyan
+    curses.init_color(21, 0, 0, 940)  # J - blue
+    curses.init_color(22, 940, 630, 0)  # L - orange
+    curses.init_color(23, 940, 940, 0)  # O - yellow
+    curses.init_color(24, 0, 940, 0)  # S - green
+    curses.init_color(25, 630, 0, 940)  # T - purple
+    curses.init_color(26, 940, 0, 0)  # Z - red
+    curses.init_color(28, 600, 600, 600)  # gray
+
+    curses.init_pair(1, 20, curses.COLOR_BLACK)  # I
+    curses.init_pair(2, 21, curses.COLOR_BLACK)  # J
+    curses.init_pair(3, 23, curses.COLOR_BLACK)  # O
+    curses.init_pair(4, 25, curses.COLOR_BLACK)  # T
+    curses.init_pair(5, 24, curses.COLOR_BLACK)  # S
+    curses.init_pair(6, 26, curses.COLOR_BLACK)  # Z
+    curses.init_pair(7, 22, curses.COLOR_BLACK)  # L
+    curses.init_pair(9, 28, curses.COLOR_BLACK)  # gray
+    curses.init_pair(10, curses.COLOR_BLACK, curses.COLOR_BLACK)  # black
 
     shared_bag = SevenBag()
     boards = [
@@ -300,14 +301,17 @@ def main(stdscr):
             selected_board = (selected_board + 1) % len(boards)
 
         if not boards[selected_board].game_over:
+            if key == curses.KEY_LEFT:
+                boards[selected_board].move_piece_left()
+            if key == curses.KEY_RIGHT:
+                boards[selected_board].move_piece_right()
+            if key == curses.KEY_UP:
+                boards[selected_board].rotate_piece()
+            if key == curses.KEY_DOWN:
+                boards[selected_board].move_piece_down()
+                last_drop = time.time()
             if key == ord(" "):
                 boards[selected_board].drop_piece()
-            if key == ord("a"):
-                boards[selected_board].move_piece_left()
-            if key == ord("d"):
-                boards[selected_board].move_piece_right()
-            if key == ord("x"):
-                boards[selected_board].rotate_piece()
 
         now = time.time()
         if now - last_drop >= drop_interval:
