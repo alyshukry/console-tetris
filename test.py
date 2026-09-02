@@ -2,6 +2,7 @@ import curses
 import time
 import random
 from dataclasses import dataclass, field
+from typing import Callable
 
 SHAPES = {
     "I": [
@@ -54,6 +55,7 @@ COLORS = {
     "S": 5,
     "T": 4,
     "Z": 6,
+    "X": 9,
 }
 
 
@@ -93,6 +95,7 @@ class Board:
     game_over: bool = False
     cells: list[list[int | str]] = field(init=False)
     piece: Piece = field(init=False)
+    on_lines_cleared: Callable[[int], None] | None = None
 
     def __post_init__(self):
         self.cells = [[0] * self.width for _ in range(self.height)]
@@ -177,6 +180,8 @@ class Board:
             new_rows.insert(0, [0] * self.width)
 
         self.cells[:] = new_rows
+        if self.on_lines_cleared: self.on_lines_cleared(lines_cleared)
+        
         return lines_cleared
 
     def kill_piece(self):
@@ -249,7 +254,37 @@ class Board:
         while self.fits(ghost_row + 1, 0):
             ghost_row += 1
         return ghost_row
+    
+    def add_garbage(self, n: int):
+        for _ in range(n):
+            self.cells.pop(0)  # remove top row to make room
+            gap = random.randint(0, self.width - 1)
+            garbage_row = ["X" if col != gap else 0 for col in range(self.width)]
+            self.cells.append(garbage_row)
 
+def make_lines_cleared_handler(board, all_boards) -> Callable[[int], None]:
+    def handler(lines_cleared):
+        print(send_garbage(board, all_boards, lines_cleared))
+    return handler
+
+def send_garbage(sender: Board, recipients: list[Board], lines: int) -> int:
+    if lines <= 1:
+        return 0 # single-line clears don't send garbage
+
+    opponents = [b for b in recipients if b is not sender and not b.game_over]
+    if not opponents:
+        return 0
+
+    total_garbage = lines - 1  # simplified formula
+    per_board = total_garbage // len(opponents)
+    remainder = total_garbage % len(opponents)
+
+    for i, board in enumerate(opponents):
+        amount = per_board + (1 if i < remainder else 0)
+        if amount > 0:
+            board.add_garbage(amount)
+            return amount
+    return 0
 
 def fill_rect(stdscr, y1, x1, y2, x2, color_pair):
     for y in range(y1, y2 + 1):
@@ -288,6 +323,7 @@ def main(stdscr):
         Board(1, 1, shared_bag),
         Board(1, 21, shared_bag, show_next=False),
     ]
+    for board in boards: make_lines_cleared_handler(board, boards)
 
     last_drop = time.time()
     drop_interval = 0.5
