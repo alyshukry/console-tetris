@@ -5,44 +5,44 @@ from dataclasses import dataclass, field
 
 SHAPES = {
     "I": [
-        [(1, 0), (1, 1), (1, 2), (1, 3)],  # 0°
-        [(0, 2), (1, 2), (2, 2), (3, 2)],  # R (90° CW)
-        [(2, 0), (2, 1), (2, 2), (2, 3)],  # 180°
-        [(0, 1), (1, 1), (2, 1), (3, 1)],  # L (270°)
+        [(-1, -2), (-1, -1), (-1, 0), (-1, 1)],  # 0°
+        [(-2, 0), (-1, 0), (0, 0), (1, 0)],  # R (90° CW)
+        [(0, -2), (0, -1), (0, 0), (0, 1)],  # 180°
+        [(-2, -1), (-1, -1), (0, -1), (1, -1)],  # L (270°)
     ],
     "O": [
-        [(0, 0), (0, 1), (1, 0), (1, 1)],  # same at every rotation
+        [(0, 0), (0, -1), (-1, 0), (-1, -1)],  # same at every rotation
     ]
     * 4,
     "T": [
-        [(0, 1), (1, 0), (1, 1), (1, 2)],  # 0°
-        [(0, 1), (1, 1), (1, 2), (2, 1)],  # R
-        [(1, 0), (1, 1), (1, 2), (2, 1)],  # 180°
-        [(0, 1), (1, 0), (1, 1), (2, 1)],  # L
+        [(0, 0), (0, 1), (0, -1), (-1, 0)],  # 0°
+        [(0, 0), (0, 1), (1, 0), (-1, 0)],  # R
+        [(0, 0), (1, 0), (0, 1), (0, -1)],  # 180°
+        [(0, 0), (0, -1), (1, 0), (-1, 0)],  # L
     ],
     "S": [
-        [(0, 1), (0, 2), (1, 0), (1, 1)],  # 0°
-        [(0, 1), (1, 1), (1, 2), (2, 2)],  # R
-        [(1, 1), (1, 2), (2, 0), (2, 1)],  # 180°
-        [(0, 0), (1, 0), (1, 1), (2, 1)],  # L
+        [(0, 0), (-1, 0), (-1, 1), (0, -1)],  # 0°
+        [(0, 0), (0, 1), (-1, 0), (1, 1)],  # R
+        [(0, 0), (0, 1), (1, -1), (1, 0)],  # 180°
+        [(0, 0), (-1, -1), (1, 0), (0, -1)],  # L
     ],
     "Z": [
-        [(0, 0), (0, 1), (1, 1), (1, 2)],  # 0°
-        [(0, 2), (1, 1), (1, 2), (2, 1)],  # R
-        [(1, 0), (1, 1), (2, 1), (2, 2)],  # 180°
-        [(0, 1), (1, 0), (1, 1), (2, 0)],  # L
+        [(0, 0), (-1, 0), (-1, -1), (0, 1)],  # 0°
+        [(0, 0), (0, 1), (1, 0), (-1, 1)],  # R
+        [(0, 0), (0, -1), (1, 1), (1, 0)],  # 180°
+        [(0, 0), (1, -1), (-1, 0), (0, -1)],  # L
     ],
     "J": [
-        [(0, 0), (1, 0), (1, 1), (1, 2)],  # 0°
-        [(0, 1), (0, 2), (1, 1), (2, 1)],  # R
-        [(1, 0), (1, 1), (1, 2), (2, 2)],  # 180°
-        [(0, 1), (1, 1), (2, 0), (2, 1)],  # L
+        [(0, 0), (0, 1), (0, -1), (-1, -1)],  # 0°
+        [(0, 0), (1, 0), (-1, 0), (-1, 1)],  # R
+        [(0, 0), (0, 1), (1, 1), (0, -1)],  # 180°
+        [(0, 0), (1, 0), (-1, 0), (1, -1)],  # L
     ],
     "L": [
-        [(0, 2), (1, 0), (1, 1), (1, 2)],  # 0°
-        [(0, 1), (1, 1), (2, 1), (2, 2)],  # R
-        [(1, 0), (1, 1), (1, 2), (2, 0)],  # 180°
-        [(0, 0), (0, 1), (1, 1), (2, 1)],  # L
+        [(0, 0), (0, -1), (0, 1), (-1, 1)],  # 0°
+        [(0, 0), (-1, 0), (1, 0), (1, 1)],  # R
+        [(0, 0), (0, -1), (1, -1), (0, 1)],  # 180°
+        [(0, 0), (-1, 0), (1, 0), (-1, -1)],  # L
     ],
 }
 
@@ -58,21 +58,43 @@ COLORS = {
 
 
 @dataclass
+class Piece:
+    shape: str
+    row: int
+    col: int
+    rot: int
+
+
+@dataclass
 class Board:
     x: int
     y: int
-    piece: Piece
+    bag: SevenBag
+    show_next: bool = True
+    piece_index: int = 0
     height: int = 20
     width: int = 10
     cells: list[list[int | str]] = field(init=False)
+    piece: Piece = field(init=False)
 
     def __post_init__(self):
         self.cells = [[0] * self.width for _ in range(self.height)]
+        self.piece = Piece(self.bag.get(0), 0, int(self.width / 2), 0)
 
     def get_cell(self, row, col) -> None | str:
         if 0 <= row < len(self.cells) and 0 <= col < len(self.cells[0]):
             return self.cells[row][col]
         return None
+
+    def draw_piece(self, stdscr, shape, row, col, rot):
+        for dr, dc in SHAPES[shape][rot]:
+            if row + dr + self.x >= 0: # prevent from rendering above board
+                stdscr.addstr(
+                    row + dr + self.x,
+                    (col + dc + self.y) * 2,
+                    "██",
+                    curses.color_pair(COLORS[shape]),
+                )
 
     def draw(self, stdscr):
         fill_rect(
@@ -82,6 +104,16 @@ class Board:
             self.x + self.height - 1,
             self.y * 2 + self.width - 1,
             8,
+        )
+
+        if self.show_next:
+            self.draw_piece(
+                stdscr, self.bag.get(self.piece_index + 1), 4, self.width + 3, 0
+            )
+            stdscr.addstr(1, (self.width + self.y) * 2 + 2, "NEXT PIECE:")
+
+        self.draw_piece(
+            stdscr, self.piece.shape, self.piece.row, self.piece.col, self.piece.rot
         )
         for row in range(self.height):
             for col in range(self.width):
@@ -103,27 +135,19 @@ class Board:
         self.cells[:] = new_rows
         return lines_cleared
 
-    def draw_piece(self, stdscr):
-        for dr, dc in SHAPES[self.piece.shape][self.piece.rot]:
-            stdscr.addstr(
-                self.piece.row + dr + self.x,
-                (self.piece.col + dc + self.y) * 2,
-                "██",
-                curses.color_pair(COLORS[self.piece.shape]),
-            )
-
     def kill_piece(self):
-        for dr, dc in SHAPES[self.piece.shape][self.piece.rot % 4]:
-            if self.get_cell(dr + self.piece.row, dc + self.piece.col) is not None:
-                self.cells[dr + self.piece.row][dc + self.piece.col] = self.piece.shape
+        for dr, dc in SHAPES[self.piece.shape][self.piece.rot]:
+            self.cells[dr + self.piece.row][dc + self.piece.col] = self.piece.shape
         self.clear_lines()
-        self.piece.shape = random.choice(list(SHAPES.keys()))
+
+        self.piece_index += 1
+        self.piece.shape = self.bag.get(self.piece_index)
         self.piece.row = 0
-        self.piece.col = 0
+        self.piece.col = int(self.width / 2)
         self.piece.rot = 0
 
     def move_piece_down(self) -> bool:
-        for dr, dc in SHAPES[self.piece.shape][self.piece.rot % 4]:
+        for dr, dc in SHAPES[self.piece.shape][self.piece.rot]:
             cell = self.get_cell(self.piece.row + dr + 1, self.piece.col + dc)
             if cell != 0:
                 self.kill_piece()
@@ -132,7 +156,7 @@ class Board:
         return True
 
     def move_piece_right(self) -> bool:
-        for dr, dc in SHAPES[self.piece.shape][self.piece.rot % 4]:
+        for dr, dc in SHAPES[self.piece.shape][self.piece.rot]:
             cell = self.get_cell(self.piece.row + dr, self.piece.col + dc + 1)
             if cell != 0:
                 return False
@@ -140,7 +164,7 @@ class Board:
         return True
 
     def move_piece_left(self) -> bool:
-        for dr, dc in SHAPES[self.piece.shape][self.piece.rot % 4]:
+        for dr, dc in SHAPES[self.piece.shape][self.piece.rot]:
             cell = self.get_cell(self.piece.row + dr, self.piece.col + dc - 1)
             if cell != 0:
                 return False
@@ -148,16 +172,28 @@ class Board:
         return True
 
     def rotate_piece(self) -> bool:
-        self.piece.rot += 1
+        new_rot = (self.piece.rot + 1) % 4
+        for dr, dc in SHAPES[self.piece.shape][new_rot]:
+            if self.get_cell(self.piece.row + dr, self.piece.col + dc) != 0:
+                return False
+        self.piece.rot = new_rot
         return True
 
 
-@dataclass
-class Piece:
-    shape: str
-    row: int
-    col: int
-    rot: int
+class SevenBag:
+    def __init__(self, seed=None):
+        self.rng = random.Random(seed)
+        self.sequence = []
+
+    def _extend(self):
+        bag = list(SHAPES.keys())
+        self.rng.shuffle(bag)
+        self.sequence.extend(bag)
+
+    def get(self, index: int) -> str:
+        while index >= len(self.sequence):
+            self._extend()
+        return self.sequence[index]
 
 
 def fill_rect(stdscr, y1, x1, y2, x2, color_pair):
@@ -192,10 +228,10 @@ def main(stdscr):
     stdscr.nodelay(True)  # getch() returns immediately even with no input
     stdscr.timeout(50)  # or: wait up to 50ms, then return -1 if nothing pressed
 
+    shared_bag = SevenBag()
     boards = [
-        Board(0, 0, Piece(random.choice(list(SHAPES.keys())), 0, 0, 0)),
-        Board(0, 11, Piece(random.choice(list(SHAPES.keys())), 0, 0, 0)),
-        Board(0, 22, Piece(random.choice(list(SHAPES.keys())), 0, 0, 0)),
+        Board(0, 0, shared_bag),
+        Board(0, 20, shared_bag, False),
     ]
 
     last_drop = time.time()
@@ -226,7 +262,6 @@ def main(stdscr):
         try:
             for board in boards:
                 board.draw(stdscr)
-                board.draw_piece(stdscr)
         except curses.error:
             stdscr.clear()
             stdscr.addstr(0, 0, "Please expand console window.")
