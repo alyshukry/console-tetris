@@ -56,18 +56,18 @@ COLORS = {
     "J": 2,
 }
 
-BOARD_HEIGHT = 20
-BOARD_WIDTH = 10
-
 
 @dataclass
 class Board:
     x: int
     y: int
     piece: Piece
-    cells: list[list[int | str]] = field(
-        default_factory=lambda: [[0] * BOARD_WIDTH for _ in range(BOARD_HEIGHT)]
-    )
+    height: int = 20
+    width: int = 10
+    cells: list[list[int | str]] = field(init=False)
+
+    def __post_init__(self):
+        self.cells = [[0] * self.width for _ in range(self.height)]
 
     def get_cell(self, row, col) -> None | str:
         if 0 <= row < len(self.cells) and 0 <= col < len(self.cells[0]):
@@ -75,28 +75,41 @@ class Board:
         return None
 
     def draw(self, stdscr):
-        for row in range(BOARD_HEIGHT):
-            for col in range(BOARD_WIDTH):
+        fill_rect(
+            stdscr,
+            self.x,
+            self.y * 2,
+            self.x + self.height - 1,
+            self.y * 2 + self.width - 1,
+            8,
+        )
+        for row in range(self.height):
+            for col in range(self.width):
                 cell = self.get_cell(row, col)
                 if cell not in (0, None):
-                    stdscr.addstr(row, col * 2, "██", curses.color_pair(COLORS[cell]))
+                    stdscr.addstr(
+                        row + self.x,
+                        (col + self.y) * 2,
+                        "██",
+                        curses.color_pair(COLORS[cell]),
+                    )
 
     def clear_lines(self) -> int:
         new_rows = [row for row in self.cells if not all(cell != 0 for cell in row)]
-        lines_cleared = BOARD_HEIGHT - len(new_rows)
+        lines_cleared = self.height - len(new_rows)
         for _ in range(lines_cleared):
-            new_rows.insert(0, [0] * BOARD_WIDTH)
+            new_rows.insert(0, [0] * self.width)
 
         self.cells[:] = new_rows
         return lines_cleared
 
-    def draw_piece(self, stdscr, shape: str, row: int, col: int, rot: int):
-        for dr, dc in SHAPES[shape][rot]:
+    def draw_piece(self, stdscr):
+        for dr, dc in SHAPES[self.piece.shape][self.piece.rot]:
             stdscr.addstr(
-                row + dr + self.x,
-                (col + dc + self.y) * 2,
+                self.piece.row + dr + self.x,
+                (self.piece.col + dc + self.y) * 2,
                 "██",
-                curses.color_pair(COLORS[shape]),
+                curses.color_pair(COLORS[self.piece.shape]),
             )
 
     def kill_piece(self):
@@ -179,41 +192,41 @@ def main(stdscr):
     stdscr.nodelay(True)  # getch() returns immediately even with no input
     stdscr.timeout(50)  # or: wait up to 50ms, then return -1 if nothing pressed
 
-    board = Board(0, 0, Piece(random.choice(list(SHAPES.keys())), 0, 0, 0))
+    boards = [
+        Board(0, 0, Piece(random.choice(list(SHAPES.keys())), 0, 0, 0)),
+        Board(0, 11, Piece(random.choice(list(SHAPES.keys())), 0, 0, 0)),
+        Board(0, 22, Piece(random.choice(list(SHAPES.keys())), 0, 0, 0)),
+    ]
 
     last_drop = time.time()
-    drop_interval = 0.25
+    drop_interval = 0.5
+    selected_board = 0
 
     while True:
         key = stdscr.getch()
         if key == ord("q"):
             break
+        if key == ord(" "):
+            selected_board = (selected_board + 1) % len(boards)
 
         if key == ord("a"):
-            board.move_piece_left()
+            boards[selected_board].move_piece_left()
         if key == ord("d"):
-            board.move_piece_right()
+            boards[selected_board].move_piece_right()
         if key == ord("x"):
-            board.rotate_piece()
+            boards[selected_board].rotate_piece()
 
         now = time.time()
         if now - last_drop >= drop_interval:
-            board.move_piece_down()
+            for board in boards:
+                board.move_piece_down()
             last_drop = now
 
         stdscr.clear()
-        fill_rect(
-            stdscr, 0, 0, BOARD_HEIGHT - 1, BOARD_WIDTH - 1, 8
-        )  # uses color pair 1's background
         try:
-            board.draw(stdscr)
-            board.draw_piece(
-                stdscr,
-                board.piece.shape,
-                board.piece.row,
-                board.piece.col,
-                board.piece.rot % 4,
-            )
+            for board in boards:
+                board.draw(stdscr)
+                board.draw_piece(stdscr)
         except curses.error:
             stdscr.clear()
             stdscr.addstr(0, 0, "Please expand console window.")
