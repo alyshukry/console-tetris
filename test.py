@@ -61,12 +61,12 @@ BOARD_WIDTH = 10
 def draw_piece(stdscr, shape, x, y, rot):
     for dx, dy in SHAPES[shape][rot]:
         stdscr.addstr(x + dx, (y + dy) * 2, "██", curses.color_pair(COLORS[shape]))
-    stdscr.addstr(x, y * 2, "██", curses.color_pair(6))
+    # stdscr.addstr(x, y * 2, "██", curses.color_pair(6))
 
 
 def move_piece_down(piece: list) -> bool:
     max = 0
-    for x, _ in SHAPES[piece[0]][piece[3]]:
+    for x, _ in SHAPES[piece[0]][piece[3] % 4]:
         if x > max:
             max = x
     if max + piece[1] < BOARD_HEIGHT - 1: # if bottom of the piece is within board
@@ -77,7 +77,7 @@ def move_piece_down(piece: list) -> bool:
 
 def move_piece_right(piece: list) -> bool:
     max = 0
-    for _, y in SHAPES[piece[0]][piece[3]]:
+    for _, y in SHAPES[piece[0]][piece[3] % 4]:
         if y > max:
             max = y
     if max + piece[2] < BOARD_WIDTH - 1: # if bottom of the piece is within board
@@ -88,7 +88,7 @@ def move_piece_right(piece: list) -> bool:
 
 def move_piece_left(piece: list) -> bool:
     min = BOARD_WIDTH
-    for _, y in SHAPES[piece[0]][piece[3]]:
+    for _, y in SHAPES[piece[0]][piece[3] % 4]:
         if y < min:
             min = y
     if min + piece[2] > 0: # if bottom of the piece is within board
@@ -96,27 +96,43 @@ def move_piece_left(piece: list) -> bool:
         return True
     else:
         return False
+    
+def rotate_piece(piece: list) -> bool:
+    piece[3] += 1
+    return True
 
 def fill_rect(stdscr, y1, x1, y2, x2, color_pair):
     for y in range(y1, y2 + 1):
         width = x2 - x1 + 1
-        stdscr.addstr(y, x1, "  " * width, curses.color_pair(color_pair))
+        stdscr.addstr(y, x1, "██" * width, curses.color_pair(color_pair))
 
 def main(stdscr):
+    curses.curs_set(0)
     curses.start_color()
-    curses.init_pair(1, curses.COLOR_CYAN, curses.COLOR_BLACK)  # I
-    curses.init_pair(2, curses.COLOR_BLUE, curses.COLOR_BLACK)  # J
-    curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_BLACK)  # O
-    curses.init_pair(4, curses.COLOR_MAGENTA, curses.COLOR_BLACK)  # T
-    curses.init_pair(5, curses.COLOR_GREEN, curses.COLOR_BLACK)  # S
-    curses.init_pair(6, curses.COLOR_RED, curses.COLOR_BLACK)  # Z
-    curses.init_pair(7, curses.COLOR_WHITE, curses.COLOR_BLACK)
-    curses.init_pair(8, curses.COLOR_WHITE, curses.COLOR_WHITE)
+
+    # Custom color slots (id, R, G, B) — scaled 0-1000
+    curses.init_color(20, 0, 940, 940)     # I - cyan
+    curses.init_color(21, 0, 0, 940)       # J - blue
+    curses.init_color(22, 940, 630, 0)     # L - orange
+    curses.init_color(23, 940, 940, 0)     # O - yellow
+    curses.init_color(24, 0, 940, 0)       # S - green
+    curses.init_color(25, 630, 0, 940)     # T - purple
+    curses.init_color(26, 940, 0, 0)       # Z - red
+    curses.init_color(27, 192, 302, 475)     # background
+
+    curses.init_pair(1, 20, curses.COLOR_BLACK)  # I
+    curses.init_pair(2, 21, curses.COLOR_BLACK)  # J
+    curses.init_pair(3, 23, curses.COLOR_BLACK)  # O
+    curses.init_pair(4, 25, curses.COLOR_BLACK)  # T
+    curses.init_pair(5, 24, curses.COLOR_BLACK)  # S
+    curses.init_pair(6, 26, curses.COLOR_BLACK)  # Z
+    curses.init_pair(7, 22, curses.COLOR_BLACK)  # L
+    curses.init_pair(8, 27, curses.COLOR_BLACK)  # background fill
 
     stdscr.nodelay(True)  # getch() returns immediately even with no input
     stdscr.timeout(50)  # or: wait up to 50ms, then return -1 if nothing pressed
 
-    pieces = [["S", 0, 0, 0], ["L", 3, 5, 3], ["S", 6, 2, 3]]
+    current_piece = ["S", 0, 0, 0]
 
     last_drop = time.time()
     drop_interval = 1.5
@@ -126,20 +142,19 @@ def main(stdscr):
         if key == ord("q"):
             break
 
-        if key == ord("a"): move_piece_left(pieces[0])
-        if key == ord("d"): move_piece_right(pieces[0])
+        if key == ord("a"): move_piece_left(current_piece)
+        if key == ord("d"): move_piece_right(current_piece)
+        if key == ord("x"): rotate_piece(current_piece)
 
         now = time.time()
         if now - last_drop >= drop_interval:
-            move_piece_down(pieces[0])
+            move_piece_down(current_piece)
             last_drop = now
 
         stdscr.clear()
         fill_rect(stdscr, 0, 0, BOARD_HEIGHT - 1, BOARD_WIDTH - 1, 8)  # uses color pair 1's background
         try:
-            stdscr.addstr(39, 19, "", curses.color_pair(1))
-            for shape, x, y, rot in pieces:
-                draw_piece(stdscr, shape, x, y, rot)
+            draw_piece(stdscr, current_piece[0], current_piece[1], current_piece[2], current_piece[3] % 4)
         except curses.error:
             stdscr.clear()
             stdscr.addstr(0, 0, "Please expand console window.")
