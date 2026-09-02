@@ -180,8 +180,9 @@ class Board:
             new_rows.insert(0, [0] * self.width)
 
         self.cells[:] = new_rows
-        if self.on_lines_cleared: self.on_lines_cleared(lines_cleared)
-        
+        if self.on_lines_cleared:
+            self.on_lines_cleared(lines_cleared)
+
         return lines_cleared
 
     def kill_piece(self):
@@ -254,42 +255,49 @@ class Board:
         while self.fits(ghost_row + 1, 0):
             ghost_row += 1
         return ghost_row
-    
+
     def add_garbage(self, n: int):
+        gap = random.randint(0, self.width - 1)
         for _ in range(n):
             self.cells.pop(0)  # remove top row to make room
-            gap = random.randint(0, self.width - 1)
             garbage_row = ["X" if col != gap else 0 for col in range(self.width)]
             self.cells.append(garbage_row)
 
-def make_lines_cleared_handler(board, all_boards) -> Callable[[int], None]:
-    def handler(lines_cleared):
-        print(send_garbage(board, all_boards, lines_cleared))
-    return handler
 
 def send_garbage(sender: Board, recipients: list[Board], lines: int) -> int:
     if lines <= 1:
-        return 0 # single-line clears don't send garbage
+        return 0
 
     opponents = [b for b in recipients if b is not sender and not b.game_over]
     if not opponents:
         return 0
 
-    total_garbage = lines - 1  # simplified formula
+    total_garbage = lines - 1
     per_board = total_garbage // len(opponents)
     remainder = total_garbage % len(opponents)
 
-    for i, board in enumerate(opponents):
-        amount = per_board + (1 if i < remainder else 0)
+    extra_recipients = random.sample(opponents, remainder)  # randomly pick who gets +1
+
+    sent = 0
+    for board in opponents:
+        amount = per_board + (1 if board in extra_recipients else 0)
         if amount > 0:
             board.add_garbage(amount)
-            return amount
-    return 0
+            sent += amount
+    return sent
+
 
 def fill_rect(stdscr, y1, x1, y2, x2, color_pair):
     for y in range(y1, y2 + 1):
         width = x2 - x1 + 1
         stdscr.addstr(y, x1, "██" * width, curses.color_pair(color_pair))
+
+
+def make_lines_cleared_handler(board, all_boards) -> Callable[[int], None]:
+    def handler(lines_cleared):
+        send_garbage(board, all_boards, lines_cleared)
+
+    return handler
 
 
 def main(stdscr):
@@ -321,9 +329,11 @@ def main(stdscr):
     shared_bag = SevenBag()
     boards = [
         Board(1, 1, shared_bag),
-        Board(1, 21, shared_bag, show_next=False),
+        Board(1, 17 + 1, shared_bag, show_next=False),
+        Board(1, 29 + 1, shared_bag, show_next=False),
     ]
-    for board in boards: make_lines_cleared_handler(board, boards)
+    for board in boards:
+        board.on_lines_cleared = make_lines_cleared_handler(board, boards)
 
     last_drop = time.time()
     drop_interval = 0.5
