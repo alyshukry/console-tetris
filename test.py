@@ -1,5 +1,7 @@
 import curses
 import time
+import random
+from dataclasses import dataclass, field
 
 SHAPES = {
     "I": [
@@ -58,67 +60,112 @@ BOARD_HEIGHT = 20
 BOARD_WIDTH = 10
 
 
-def draw_piece(stdscr, shape, x, y, rot):
-    for dx, dy in SHAPES[shape][rot]:
-        stdscr.addstr(x + dx, (y + dy) * 2, "██", curses.color_pair(COLORS[shape]))
-    # stdscr.addstr(x, y * 2, "██", curses.color_pair(6))
+@dataclass
+class Board:
+    x: int
+    y: int
+    piece: Piece
+    cells: list[list[int | str]] = field(
+        default_factory=lambda: [[0] * BOARD_WIDTH for _ in range(BOARD_HEIGHT)]
+    )
 
+    def get_cell(self, row, col) -> None | str:
+        if 0 <= row < len(self.cells) and 0 <= col < len(self.cells[0]):
+            return self.cells[row][col]
+        return None
 
-def move_piece_down(piece: list) -> bool:
-    max = 0
-    for x, _ in SHAPES[piece[0]][piece[3] % 4]:
-        if x > max:
-            max = x
-    if max + piece[1] < BOARD_HEIGHT - 1: # if bottom of the piece is within board
-        piece[1] += 1
+    def draw(self, stdscr):
+        for row in range(BOARD_HEIGHT):
+            for col in range(BOARD_WIDTH):
+                cell = self.get_cell(row, col)
+                if cell not in (0, None):
+                    stdscr.addstr(row, col * 2, "██", curses.color_pair(COLORS[cell]))
+
+    def clear_lines(self) -> int:
+        new_rows = [row for row in self.cells if not all(cell != 0 for cell in row)]
+        lines_cleared = BOARD_HEIGHT - len(new_rows)
+        for _ in range(lines_cleared):
+            new_rows.insert(0, [0] * BOARD_WIDTH)
+
+        self.cells[:] = new_rows
+        return lines_cleared
+
+    def draw_piece(self, stdscr, shape: str, row: int, col: int, rot: int):
+        for dr, dc in SHAPES[shape][rot]:
+            stdscr.addstr(
+                row + dr + self.x,
+                (col + dc + self.y) * 2,
+                "██",
+                curses.color_pair(COLORS[shape]),
+            )
+
+    def kill_piece(self):
+        for dr, dc in SHAPES[self.piece.shape][self.piece.rot % 4]:
+            if self.get_cell(dr + self.piece.row, dc + self.piece.col) is not None:
+                self.cells[dr + self.piece.row][dc + self.piece.col] = self.piece.shape
+        self.clear_lines()
+        self.piece.shape = random.choice(list(SHAPES.keys()))
+        self.piece.row = 0
+        self.piece.col = 0
+        self.piece.rot = 0
+
+    def move_piece_down(self) -> bool:
+        for dr, dc in SHAPES[self.piece.shape][self.piece.rot % 4]:
+            cell = self.get_cell(self.piece.row + dr + 1, self.piece.col + dc)
+            if cell != 0:
+                self.kill_piece()
+                return False
+        self.piece.row += 1
         return True
-    else:
-        return False
 
-def move_piece_right(piece: list) -> bool:
-    max = 0
-    for _, y in SHAPES[piece[0]][piece[3] % 4]:
-        if y > max:
-            max = y
-    if max + piece[2] < BOARD_WIDTH - 1: # if bottom of the piece is within board
-        piece[2] += 1
+    def move_piece_right(self) -> bool:
+        for dr, dc in SHAPES[self.piece.shape][self.piece.rot % 4]:
+            cell = self.get_cell(self.piece.row + dr, self.piece.col + dc + 1)
+            if cell != 0:
+                return False
+        self.piece.col += 1
         return True
-    else:
-        return False
 
-def move_piece_left(piece: list) -> bool:
-    min = BOARD_WIDTH
-    for _, y in SHAPES[piece[0]][piece[3] % 4]:
-        if y < min:
-            min = y
-    if min + piece[2] > 0: # if bottom of the piece is within board
-        piece[2] -= 1
+    def move_piece_left(self) -> bool:
+        for dr, dc in SHAPES[self.piece.shape][self.piece.rot % 4]:
+            cell = self.get_cell(self.piece.row + dr, self.piece.col + dc - 1)
+            if cell != 0:
+                return False
+        self.piece.col -= 1
         return True
-    else:
-        return False
-    
-def rotate_piece(piece: list) -> bool:
-    piece[3] += 1
-    return True
+
+    def rotate_piece(self) -> bool:
+        self.piece.rot += 1
+        return True
+
+
+@dataclass
+class Piece:
+    shape: str
+    row: int
+    col: int
+    rot: int
+
 
 def fill_rect(stdscr, y1, x1, y2, x2, color_pair):
     for y in range(y1, y2 + 1):
         width = x2 - x1 + 1
         stdscr.addstr(y, x1, "██" * width, curses.color_pair(color_pair))
 
+
 def main(stdscr):
     curses.curs_set(0)
     curses.start_color()
 
     # Custom color slots (id, R, G, B) — scaled 0-1000
-    curses.init_color(20, 0, 940, 940)     # I - cyan
-    curses.init_color(21, 0, 0, 940)       # J - blue
-    curses.init_color(22, 940, 630, 0)     # L - orange
-    curses.init_color(23, 940, 940, 0)     # O - yellow
-    curses.init_color(24, 0, 940, 0)       # S - green
-    curses.init_color(25, 630, 0, 940)     # T - purple
-    curses.init_color(26, 940, 0, 0)       # Z - red
-    curses.init_color(27, 192, 302, 475)     # background
+    curses.init_color(20, 0, 940, 940)  # I - cyan
+    curses.init_color(21, 0, 0, 940)  # J - blue
+    curses.init_color(22, 940, 630, 0)  # L - orange
+    curses.init_color(23, 940, 940, 0)  # O - yellow
+    curses.init_color(24, 0, 940, 0)  # S - green
+    curses.init_color(25, 630, 0, 940)  # T - purple
+    curses.init_color(26, 940, 0, 0)  # Z - red
+    curses.init_color(27, 192, 302, 475)  # background
 
     curses.init_pair(1, 20, curses.COLOR_BLACK)  # I
     curses.init_pair(2, 21, curses.COLOR_BLACK)  # J
@@ -132,29 +179,41 @@ def main(stdscr):
     stdscr.nodelay(True)  # getch() returns immediately even with no input
     stdscr.timeout(50)  # or: wait up to 50ms, then return -1 if nothing pressed
 
-    current_piece = ["S", 0, 0, 0]
+    board = Board(0, 0, Piece(random.choice(list(SHAPES.keys())), 0, 0, 0))
 
     last_drop = time.time()
-    drop_interval = 1.5
+    drop_interval = 0.25
 
     while True:
         key = stdscr.getch()
         if key == ord("q"):
             break
 
-        if key == ord("a"): move_piece_left(current_piece)
-        if key == ord("d"): move_piece_right(current_piece)
-        if key == ord("x"): rotate_piece(current_piece)
+        if key == ord("a"):
+            board.move_piece_left()
+        if key == ord("d"):
+            board.move_piece_right()
+        if key == ord("x"):
+            board.rotate_piece()
 
         now = time.time()
         if now - last_drop >= drop_interval:
-            move_piece_down(current_piece)
+            board.move_piece_down()
             last_drop = now
 
         stdscr.clear()
-        fill_rect(stdscr, 0, 0, BOARD_HEIGHT - 1, BOARD_WIDTH - 1, 8)  # uses color pair 1's background
+        fill_rect(
+            stdscr, 0, 0, BOARD_HEIGHT - 1, BOARD_WIDTH - 1, 8
+        )  # uses color pair 1's background
         try:
-            draw_piece(stdscr, current_piece[0], current_piece[1], current_piece[2], current_piece[3] % 4)
+            board.draw(stdscr)
+            board.draw_piece(
+                stdscr,
+                board.piece.shape,
+                board.piece.row,
+                board.piece.col,
+                board.piece.rot % 4,
+            )
         except curses.error:
             stdscr.clear()
             stdscr.addstr(0, 0, "Please expand console window.")
