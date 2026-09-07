@@ -4,7 +4,7 @@ from .constants import SHAPES
 from .seven_bag import SevenBag
 from .piece import Piece
 from typing import Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 
 
 @dataclass
@@ -26,15 +26,12 @@ class Board:
     def to_dict(self) -> dict:
         return {
             "cells": self.cells,
-            "piece": {
-                "shape": self.piece.shape,
-                "row": self.piece.row,
-                "col": self.piece.col,
-                "rot": self.piece.rot,
-            },
-            "game_over": self.game_over,
-            "height": self.height,
             "width": self.width,
+            "height": self.height,
+            "piece": asdict(self.piece),
+            "next_piece": self.bag.get(self.piece_index + 1),  # since client has no bag access
+            "ghost_row": self.piece.row + self.get_ghost_row(),  # computed server-side, sent as a plain number
+            "game_over": self.game_over,
         }
 
     def get_cell(self, row, col) -> None | str:

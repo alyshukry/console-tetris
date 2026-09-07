@@ -1,4 +1,6 @@
 import asyncio
+import curses
+import json
 import websockets
 import random
 
@@ -30,8 +32,8 @@ async def game_loop():
             )
 
 
+shared_bag = SevenBag()
 async def handler(ws: ServerConnection):
-    shared_bag = SevenBag()
     board = Board(shared_bag)
 
     id = random.randint(0, 1000)
@@ -52,7 +54,25 @@ async def handler(ws: ServerConnection):
 
     try:
         async for msg in ws:
-            print(f"from client[{client_ids[ws]}]: {msg}")
+            data = json.loads(msg)
+            print(f"from client[{client_ids[ws]}]: {data}")
+
+            match data.get("type"):
+                case "input":
+                    if not connections[ws].game_over:
+                        key = data.get("key")
+                        if key == curses.KEY_LEFT:
+                            connections[ws].move_piece_left()
+                        elif key == curses.KEY_RIGHT:
+                            connections[ws].move_piece_right()
+                        elif key == curses.KEY_UP:
+                            connections[ws].rotate_piece()
+                        elif key == curses.KEY_DOWN:
+                            connections[ws].move_piece_down()
+                        elif key == ord(" "):
+                            connections[ws].drop_piece()
+                case _:
+                    pass
     finally:
         del connections[ws]
         del client_ids[ws]
