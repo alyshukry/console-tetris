@@ -17,7 +17,6 @@ def main(stdscr):
     async def run_client():
         async with websockets.connect("ws://localhost:8888") as ws:
             print("connected")
-            await ws.send("hello server")
             
             async def input_loop():
                 while True:
