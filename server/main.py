@@ -22,37 +22,37 @@ async def game_loop():
                 ws,
                 "all_boards",
                 {
-                    "boards": [
-                        {"id": client_ids[client_ws], "board": client_board}
+                    "boards": {
+                        client_ids[client_ws]: client_board.to_dict()
                         for client_ws, client_board in connections.items()
-                    ]
+                    }
                 },
             )
 
 
 async def handler(ws: ServerConnection):
     shared_bag = SevenBag()
-    board = Board(0, 0, shared_bag)
+    board = Board(shared_bag)
 
-    id = random.randint(0, 100)
+    id = random.randint(0, 1000)
     client_ids[ws] = id
     connections[ws] = board
 
-    await send_json(ws, "welcome_info", {"your_board": board, "your_id": id})
+    await send_json(ws, "welcome_info", {"your_board": board.to_dict(), "your_id": id})
     await send_json(
         ws,
         "all_boards",
         {
-            "boards": [
-                {"id": client_ids[client_ws], "board": client_board}
+            "boards": {
+                client_ids[client_ws]: client_board.to_dict()
                 for client_ws, client_board in connections.items()
-            ]
+            }
         },
     )
 
     try:
         async for msg in ws:
-            print(f"from client: ${msg}")
+            print(f"from client[{client_ids[ws]}]: {msg}")
     finally:
         del connections[ws]
         del client_ids[ws]

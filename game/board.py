@@ -9,10 +9,7 @@ from dataclasses import dataclass, field
 
 @dataclass
 class Board:
-    x: int
-    y: int
     bag: SevenBag
-    show_next: bool = True
     piece_index: int = 0
     height: int = 20
     width: int = 10
@@ -24,6 +21,21 @@ class Board:
     def __post_init__(self):
         self.cells = [[0] * self.width for _ in range(self.height)]
         self.piece = Piece(self.bag.get(0), 0, int(self.width / 2), 0)
+
+
+    def to_dict(self) -> dict:
+        return {
+            "cells": self.cells,
+            "piece": {
+                "shape": self.piece.shape,
+                "row": self.piece.row,
+                "col": self.piece.col,
+                "rot": self.piece.rot,
+            },
+            "game_over": self.game_over,
+            "height": self.height,
+            "width": self.width,
+        }
 
     def get_cell(self, row, col) -> None | str:
         if 0 <= row < len(self.cells) and 0 <= col < len(self.cells[0]):
