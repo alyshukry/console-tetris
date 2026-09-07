@@ -4,11 +4,11 @@ from typing import Callable
 
 from game.board import Board
 from game.seven_bag import SevenBag
-from render.curses import draw, setup_curses
+from render.curses_render import draw, setup_curses
 from game.events import make_lines_cleared_handler
 
 def main(stdscr):
-    setup_curses(stdscr)
+    
     
     shared_bag = SevenBag()
     boards = [
