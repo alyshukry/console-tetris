@@ -19,6 +19,9 @@ async def game_loop():
             if not board.game_over:
                 board.move_piece_down()
         await asyncio.sleep(0.5)
+
+async def net_loop():
+    while True:
         for ws, board in list(connections.items()):
             await send_json(
                 ws,
@@ -30,6 +33,7 @@ async def game_loop():
                     }
                 },
             )
+        await asyncio.sleep(0.05)
 
 
 shared_bag = SevenBag()
@@ -80,8 +84,7 @@ async def handler(ws: ServerConnection):
 
 async def main():
     async with websockets.serve(handler, "0.0.0.0", 8888):
-        asyncio.create_task(game_loop())
-        await asyncio.Future()
+        await asyncio.gather(game_loop(), net_loop())
 
 
 asyncio.run(main())

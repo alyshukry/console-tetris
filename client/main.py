@@ -8,20 +8,29 @@ from net.protocol import send_json
 from render.curses_render import draw, setup_curses
 
 
+def draw_boards(boards, stdscr, my_id):
+    x = 1
+    y = 1 + draw(boards[my_id], stdscr, 1, 1, True)[1] + 1
+    for id, board in boards.items():
+        if id != my_id:
+            y += draw(board, stdscr, x, y, False)[1] + 1
+
+
 def main(stdscr):
     setup_curses(stdscr)
-    
+
     boards: dict[int, dict] = {}
     my_id: int = -1
 
     async def run_client():
         async with websockets.connect("ws://localhost:8888") as ws:
             print("connected")
-            
+
             async def input_loop():
                 while True:
                     key = stdscr.getch()
-                    if key != -1: await send_json(ws, "input", {"key": key})
+                    if key != -1:
+                        await send_json(ws, "input", {"key": key})
 
                     await asyncio.sleep(0.05)
 
@@ -36,14 +45,12 @@ def main(stdscr):
                             my_id = data["your_id"]
                         case "all_boards":
                             boards = {int(k): v for k, v in data["boards"].items()}
-                    
-                    x, y = 1, 1
-                    for id, board in boards.items():
-                        draw(board, stdscr, x, y, id == my_id)
-                        print(repr(id), repr(my_id), id == my_id)
-                        y += 20
+
+                    if my_id in boards:
+                        draw_boards(boards, stdscr, my_id)
 
             await asyncio.gather(input_loop(), receive_loop())
+
     asyncio.run(run_client())
 
 
