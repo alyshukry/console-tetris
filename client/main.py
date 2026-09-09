@@ -3,7 +3,6 @@ import json
 import websockets
 import curses
 
-from game.board import Board
 from net.protocol import send_json
 from render.curses_render import draw, setup_curses
 
@@ -45,8 +44,12 @@ def main(stdscr):
                     match data["type"]:
                         case "welcome_info":
                             my_id = data["your_id"]
-                        case "all_boards":
-                            boards = {int(k): v for k, v in data["boards"].items()}
+                            boards[my_id] = data["board"]
+                        case "piece_moved":
+                            piece = boards[data["board_id"]].piece
+                            piece.rot = data["rot"]
+                            piece.col = data["col"]
+                            piece.row = data["row"]
 
                     if my_id in boards:
                         draw_boards(boards, stdscr, my_id)

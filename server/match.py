@@ -22,6 +22,7 @@ class Match:
         self.state = MatchState.WAITING
         self.all_ready = asyncio.Event()
         self.shared_bag = SevenBag()
+        self.gravity = 0.5  # how long each gravity tick takes
 
     def all_boards_payload(self):
         return {"boards": {c.id: c.board.to_dict() for c in self.connections.values()}}
@@ -34,28 +35,52 @@ class Match:
         ):
             await self.start_game()
 
+    def make_callbacks(self, client: Client):
+        def on_piece_moved():
+            event = (
+                "piece_moved",
+                {
+                    "board_id": client.id,
+                    "row": client.board.piece.row,
+                    "col": client.board.piece.col,
+                    "rot": client.board.piece.rot,
+                },
+            )
+            for c in self.connections.values():
+                c.outbox.append(event)
+
+        def on_lines_cleared(lines: int):
+            event = ("lines_cleared", {"board_id": client.id, "lines": lines})
+            for c in self.connections.values():
+                c.outbox.append(event)
+
+            send_garbage(
+                client.board,
+                [
+                    c.board
+                    for c in self.connections.values()
+                    if c.board is not client.board
+                ],
+                lines,
+            )
+
+        return on_piece_moved, on_lines_cleared
+
     async def start_game(self):
         for client in self.connections.values():
-            board = client.board
-
-            def on_lines_cleared(lines: int, board=board):
-                send_garbage(
-                    board,
-                    [
-                        c.board
-                        for c in self.connections.values()
-                        if c.board is not board
-                    ],
-                    lines,
-                )
-
-            board.on_lines_cleared = on_lines_cleared
+            on_moved, on_cleared = self.make_callbacks(client)
+            client.board.on_piece_moved = on_moved
+            client.board.on_lines_cleared = on_cleared
 
         for ws, client in self.connections.items():
             await send_json(
                 ws,
                 "welcome_info",
-                {"your_board": client.board.to_dict(), "your_id": client.id},
+                {
+                    "your_board": client.board.to_dict(),
+                    "your_id": client.id,
+                    "gravity": self.gravity,
+                },
             )
             await send_json(ws, "all_boards", self.all_boards_payload())
 
@@ -69,15 +94,17 @@ class Match:
                 for client in self.connections.values():
                     if not client.board.game_over:
                         client.board.move_piece_down()
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(self.gravity)
 
     async def net_loop(self):
         await self.all_ready.wait()
         while True:
-            if self.state == MatchState.IN_PROGRESS:
-                for ws in list(self.connections):
-                    await send_json(ws, "all_boards", self.all_boards_payload())
-                await asyncio.sleep(0.05)
+            for ws, client in list(self.connections.items()):
+                if client.outbox:
+                    for e in client.outbox:
+                        await send_json(ws, type=e[0], data=e[1])
+                    client.outbox.clear()
+                await asyncio.sleep(0.01)
 
     # remove this later and make client send match id when sending stuff
     async def handle_message(self, ws, data):

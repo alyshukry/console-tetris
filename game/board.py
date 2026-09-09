@@ -16,12 +16,12 @@ class Board:
     game_over: bool = False
     cells: list[list[int | str]] = field(init=False)
     piece: Piece = field(init=False)
+    on_piece_moved: Callable[[], None] | None = None
     on_lines_cleared: Callable[[int], None] | None = None
 
     def __post_init__(self):
         self.cells = [[0] * self.width for _ in range(self.height)]
         self.piece = Piece(self.bag.get(0), 0, int(self.width / 2), 0)
-
 
     def to_dict(self) -> dict:
         return {
@@ -29,8 +29,11 @@ class Board:
             "width": self.width,
             "height": self.height,
             "piece": asdict(self.piece),
-            "next_piece": self.bag.get(self.piece_index + 1),  # since client has no bag access
-            "ghost_row": self.piece.row + self.get_ghost_row(),  # computed server-side, sent as a plain number
+            "next_piece": self.bag.get(
+                self.piece_index + 1
+            ),  # since client has no bag access
+            "ghost_row": self.piece.row
+            + self.get_ghost_row(),  # computed server-side, sent as a plain number
             "game_over": self.game_over,
         }
 
@@ -96,12 +99,16 @@ class Board:
     def move_piece_right(self) -> bool:
         if self.fits(0, 1):
             self.piece.col += 1
+            if self.on_piece_moved:
+                self.on_piece_moved()
             return True
         return False
 
     def move_piece_left(self) -> bool:
         if self.fits(0, -1):
             self.piece.col -= 1
+            if self.on_piece_moved:
+                self.on_piece_moved()
             return True
         return False
 
@@ -113,6 +120,8 @@ class Board:
         new_rot = (self.piece.rot + 1) % 4
         if self.fits(0, 0, rot=new_rot):
             self.piece.rot = new_rot
+            if self.on_piece_moved:
+                self.on_piece_moved()
             return True
         return False
 
