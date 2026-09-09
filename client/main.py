@@ -13,7 +13,7 @@ def draw_boards(boards, stdscr, my_id):
     y = 1 + draw(boards[my_id], stdscr, 1, 1, True)[1] + 1
     for id, board in boards.items():
         if id != my_id:
-            y += draw(board, stdscr, x, y, False)[1] + 1
+            y += draw(board, stdscr, x, y, False)[1]
 
 
 def main(stdscr):
