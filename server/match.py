@@ -69,7 +69,7 @@ class Match:
                 for client in self.connections.values():
                     if not client.board.game_over:
                         client.board.move_piece_down()
-                await asyncio.sleep(0.5)
+            await asyncio.sleep(0.5)
 
     async def net_loop(self):
         await self.all_ready.wait()

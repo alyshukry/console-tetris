@@ -11,7 +11,6 @@ from server.match import Match
 from websockets.asyncio.server import ServerConnection
 from game.board import Board
 from net.client import Client
-from enum import Enum, auto
 
 
 match = Match()
