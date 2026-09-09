@@ -23,113 +23,108 @@ class MatchState(Enum):
     FINISHED = auto()  # someone won, results shown
 
 
-connections: dict[ServerConnection, Client] = {}
-match_state = MatchState.WAITING
-game_ready = asyncio.Event()
+class Match:
+    def __init__(self):
+        self.connections: dict[ServerConnection, Client] = {}
+        self.state = MatchState.WAITING
+        self.all_ready = asyncio.Event()
+        self.shared_bag = SevenBag()
 
+    def all_boards_payload(self):
+        return {"boards": {c.id: c.board.to_dict() for c in self.connections.values()}}
 
-async def check_ready():
-    global match_state
-    if (
-        match_state == MatchState.WAITING
-        and connections
-        and all(c.ready for c in connections.values())
-    ):
-        await start_game()
+    async def check_ready(self):
+        if (
+            self.state == MatchState.WAITING
+            and self.connections
+            and all(c.ready for c in self.connections.values())
+        ):
+            await self.start_game()
 
+    async def start_game(self):
+        for client in self.connections.values():
+            board = client.board
 
-async def start_game():
-    global match_state
-    for client in connections.values():
-        board = client.board
-
-        def on_lines_cleared(
-            lines: int, board=board
-        ):  # default arg to avoid late-binding bug
-            send_garbage(
-                board,
-                [c.board for c in connections.values() if c.board is not board],
-                lines,
-            )
-
-        board.on_lines_cleared = on_lines_cleared
-
-    for ws, client in connections.items():
-        await send_json(
-            ws,
-            "welcome_info",
-            {"your_board": client.board.to_dict(), "your_id": client.id},
-        )
-        await send_json(
-            ws,
-            "all_boards",
-            {"boards": {c.id: c.board.to_dict() for c in connections.values()}},
-        )
-        
-    match_state = MatchState.IN_PROGRESS
-    game_ready.set()
-
-
-async def game_loop():
-    await game_ready.wait()
-    while True:
-        if match_state == MatchState.IN_PROGRESS:
-            for client in connections.values():
-                if not client.board.game_over:
-                    client.board.move_piece_down()
-            await asyncio.sleep(0.5)
-
-
-async def net_loop():
-    await game_ready.wait()
-    while True:
-        if match_state == MatchState.IN_PROGRESS:
-            for ws, _ in list(connections.items()):
-                await send_json(
-                    ws,
-                    "all_boards",
-                    {"boards": {c.id: c.board.to_dict() for c in connections.values()}},
+            def on_lines_cleared(lines: int, board=board):
+                send_garbage(
+                    board,
+                    [
+                        c.board
+                        for c in self.connections.values()
+                        if c.board is not board
+                    ],
+                    lines,
                 )
-            await asyncio.sleep(0.05)
+
+            board.on_lines_cleared = on_lines_cleared
+
+        for ws, client in self.connections.items():
+            await send_json(
+                ws,
+                "welcome_info",
+                {"your_board": client.board.to_dict(), "your_id": client.id},
+            )
+            await send_json(ws, "all_boards", self.all_boards_payload())
+
+        self.state = MatchState.IN_PROGRESS
+        self.all_ready.set()
+
+    async def game_loop(self):
+        await self.all_ready.wait()
+        while True:
+            if self.state == MatchState.IN_PROGRESS:
+                for client in self.connections.values():
+                    if not client.board.game_over:
+                        client.board.move_piece_down()
+                await asyncio.sleep(0.5)
+
+    async def net_loop(self):
+        await self.all_ready.wait()
+        while True:
+            if self.state == MatchState.IN_PROGRESS:
+                for ws in list(self.connections):
+                    await send_json(ws, "all_boards", self.all_boards_payload())
+                await asyncio.sleep(0.05)
+
+    async def handle_message(self, ws, data):
+        client = self.connections[ws]
+        match data.get("type"):
+            case "input":
+                handle_input(client, data.get("key"))
+            case "ready":
+                client.ready = True
+                await self.check_ready()
 
 
-shared_bag = SevenBag()
+def handle_input(client: Client, key):
+    if client.board.game_over:
+        return
+    {
+        curses.KEY_LEFT: client.board.move_piece_left,
+        curses.KEY_RIGHT: client.board.move_piece_right,
+        curses.KEY_UP: client.board.rotate_piece,
+        curses.KEY_DOWN: client.board.move_piece_down,
+        ord(" "): client.board.drop_piece,
+    }.get(key, lambda: None)()
 
+
+match = Match()
 
 async def handler(ws: ServerConnection):
     id = random.randint(0, 1000)
-    connections[ws] = Client(Board(shared_bag), id)
+    match.connections[ws] = Client(Board(match.shared_bag), id)
 
     try:
         async for msg in ws:
             data = json.loads(msg)
-
-            match data.get("type"):
-                case "input":
-                    if connections[ws].board and not connections[ws].board.game_over:
-                        key = data.get("key")
-                        if key == curses.KEY_LEFT:
-                            connections[ws].board.move_piece_left()
-                        elif key == curses.KEY_RIGHT:
-                            connections[ws].board.move_piece_right()
-                        elif key == curses.KEY_UP:
-                            connections[ws].board.rotate_piece()
-                        elif key == curses.KEY_DOWN:
-                            connections[ws].board.move_piece_down()
-                        elif key == ord(" "):
-                            connections[ws].board.drop_piece()
-                case "ready":
-                    connections[ws].ready = True
-                    await check_ready()
-                case _:
-                    pass
+            await match.handle_message(ws, data)
     finally:
-        del connections[ws]
+        del match.connections[ws]
 
 
 async def main():
     async with websockets.serve(handler, "0.0.0.0", 8888):
-        await asyncio.gather(game_loop(), net_loop())
+        await asyncio.gather(match.game_loop(), match.net_loop())
 
 
 asyncio.run(main())
