@@ -5,3 +5,4 @@ from game.board import Board
 class Client:
     board: Board
     id: int
+    ready: bool = False

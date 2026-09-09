@@ -31,6 +31,8 @@ def main(stdscr):
                     key = stdscr.getch()
                     if key != -1:
                         await send_json(ws, "input", {"key": key})
+                    
+                    if key == ord("k"): await send_json(ws, "ready")
 
                     await asyncio.sleep(0.05)
 
