@@ -69,7 +69,9 @@ class Board:
             self.piece.row = 0
             self.piece.col = int(self.width / 2)
             self.piece.rot = 0
-            if not fits(self.cells, self.to_dict().get("piece"), self.width, self.height, 0, 0):
+            if not fits(
+                self.cells, self.to_dict().get("piece"), self.width, self.height, 0, 0
+            ):
                 self.lose()
                 return False
             return True
@@ -94,7 +96,9 @@ class Board:
         return False
 
     def move_piece_left(self) -> bool:
-        if fits(self.cells, self.to_dict().get("piece"), self.width, self.height, 0, -1):
+        if fits(
+            self.cells, self.to_dict().get("piece"), self.width, self.height, 0, -1
+        ):
             self.piece.col -= 1
             if self.on_piece_moved:
                 self.on_piece_moved()
@@ -105,9 +109,22 @@ class Board:
         while self.move_piece_down():
             pass
 
+    def soft_drop_piece(self):
+        self.move_piece_down()
+        if self.on_piece_moved:
+            self.on_piece_moved()
+
     def rotate_piece(self) -> bool:
         new_rot = (self.piece.rot + 1) % 4
-        if fits(self.cells, self.to_dict().get("piece"), self.width, self.height, 0, 0, rot=new_rot):
+        if fits(
+            self.cells,
+            self.to_dict().get("piece"),
+            self.width,
+            self.height,
+            0,
+            0,
+            rot=new_rot,
+        ):
             self.piece.rot = new_rot
             if self.on_piece_moved:
                 self.on_piece_moved()

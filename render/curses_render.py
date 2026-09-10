@@ -72,7 +72,7 @@ def draw_ghost(board: dict, stdscr, bx, by):
     p = board["piece"]
     for dr, dc in SHAPES[p["shape"]][p["rot"]]:
         stdscr.addstr(
-            gr + dr + bx,
+            p["row"] + gr + dr + bx,
             (p["col"] + dc + by) * 2,
             "░░",
             curses.color_pair(COLORS[p["shape"]]),

@@ -3,6 +3,7 @@ import json
 import websockets
 import curses
 
+from game.collision import fits
 from net.protocol import send_json
 from render.curses_render import draw, setup_curses
 
@@ -20,18 +21,28 @@ def main(stdscr):
 
     boards: dict[int, dict] = {}
     my_id: int = -1
+    gravity: float = 0.5
 
     async def run_client():
         async with websockets.connect("ws://localhost:8888") as ws:
             print("connected")
 
+            async def gravity_loop():
+                nonlocal boards
+                while True:
+                    await asyncio.sleep(gravity)
+                    for board in boards.values():
+                        if not board["game_over"] and fits(board["cells"], board["piece"], board["width"], board["height"], 1, 0):
+                            board["piece"]["row"] += 1
+
             async def input_loop():
                 while True:
                     key = stdscr.getch()
+
+                    if key == ord("k"):
+                        await send_json(ws, "ready")
                     if key != -1:
                         await send_json(ws, "input", {"key": key})
-                    
-                    if key == ord("k"): await send_json(ws, "ready")
 
                     await asyncio.sleep(0.05)
 
@@ -44,6 +55,7 @@ def main(stdscr):
                     match data["type"]:
                         case "welcome_info":
                             my_id = data["your_id"]
+                            gravity = data["gravity"]
                         case "all_boards":
                             boards = {int(k): v for k, v in data["boards"].items()}
                         case "piece_moved":
@@ -55,10 +67,15 @@ def main(stdscr):
                             boards[data["board_id"]]["piece"] = data["new_piece"]
                             boards[data["board_id"]]["cells"] = data["cells"]
 
+            async def render_loop():
+                while True:
                     if my_id in boards:
                         draw_boards(boards, stdscr, my_id)
+                    await asyncio.sleep(0.02)
 
-            await asyncio.gather(input_loop(), receive_loop())
+            await asyncio.gather(
+                input_loop(), receive_loop(), gravity_loop(), render_loop()
+            )
 
     asyncio.run(run_client())
 

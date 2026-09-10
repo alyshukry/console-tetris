@@ -1,14 +1,14 @@
 import random
 
-from .board import Board
+from net.client import Client
 
-def send_garbage(sender: Board, recipients: list[Board], lines: int) -> int:
+def send_garbage(sender: Client, recipients: list[Client], lines: int) -> list[Client]:
     if lines <= 1:
-        return 0
+        return []
 
-    opponents = [b for b in recipients if b is not sender and not b.game_over]
+    opponents = [c for c in recipients if c is not sender and not c.board.game_over]
     if not opponents:
-        return 0
+        return []
 
     total_garbage = lines - 1
     per_board = total_garbage // len(opponents)
@@ -16,10 +16,10 @@ def send_garbage(sender: Board, recipients: list[Board], lines: int) -> int:
 
     extra_recipients = random.sample(opponents, remainder)  # randomly pick who gets +1
 
-    sent = 0
-    for board in opponents:
-        amount = per_board + (1 if board in extra_recipients else 0)
+    affected = []
+    for client in opponents:
+        amount = per_board + (1 if client.board in extra_recipients else 0)
         if amount > 0:
-            board.add_garbage(amount)
-            sent += amount
-    return sent
+            client.board.add_garbage(amount)
+            affected.append(client)
+    return affected

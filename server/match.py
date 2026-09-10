@@ -50,6 +50,10 @@ class Match:
                 c.outbox.append(event)
 
         def on_piece_killed(lines: int):
+            affected = []
+            if lines > 0:
+                affected = send_garbage(client, list(self.connections.values()), lines)
+
             event = (
                 "piece_killed",
                 {
@@ -61,16 +65,17 @@ class Match:
             for c in self.connections.values():
                 c.outbox.append(event)
 
-            if lines > 0:
-                send_garbage(
-                    client.board,
-                    [
-                        c.board
-                        for c in self.connections.values()
-                        if c.board is not client.board
-                    ],
-                    lines,
+            for garbage_client in affected:
+                garbage_event = (
+                    "piece_killed",  # reuse same event type
+                    {
+                        "board_id": garbage_client.id,
+                        "cells": garbage_client.board.to_dict().get("cells"),
+                        "new_piece": garbage_client.board.to_dict().get("piece"),
+                    },
                 )
+                for c in self.connections.values():
+                    c.outbox.append(garbage_event)
 
         return on_piece_moved, on_piece_killed
 
