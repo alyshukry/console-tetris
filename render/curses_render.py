@@ -1,5 +1,6 @@
 import curses
 
+from game.collision import get_ghost_row
 from game.constants import SHAPES, COLORS
 
 
@@ -67,11 +68,11 @@ def draw_piece(board: dict, stdscr, bx, by, shape, row, col, rot):
 
 
 def draw_ghost(board: dict, stdscr, bx, by):
-    ghost_row = board["ghost_row"]
+    gr = get_ghost_row(board["cells"], board["piece"], board["width"], board["height"])
     p = board["piece"]
     for dr, dc in SHAPES[p["shape"]][p["rot"]]:
         stdscr.addstr(
-            ghost_row + dr + bx,
+            gr + dr + bx,
             (p["col"] + dc + by) * 2,
             "░░",
             curses.color_pair(COLORS[p["shape"]]),

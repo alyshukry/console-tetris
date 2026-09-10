@@ -49,28 +49,36 @@ class Match:
             for c in self.connections.values():
                 c.outbox.append(event)
 
-        def on_lines_cleared(lines: int):
-            event = ("lines_cleared", {"board_id": client.id, "lines": lines})
+        def on_piece_killed(lines: int):
+            event = (
+                "piece_killed",
+                {
+                    "board_id": client.id,
+                    "cells": client.board.to_dict().get("cells"),
+                    "new_piece": client.board.to_dict().get("piece"),
+                },
+            )
             for c in self.connections.values():
                 c.outbox.append(event)
 
-            send_garbage(
-                client.board,
-                [
-                    c.board
-                    for c in self.connections.values()
-                    if c.board is not client.board
-                ],
-                lines,
-            )
+            if lines > 0:
+                send_garbage(
+                    client.board,
+                    [
+                        c.board
+                        for c in self.connections.values()
+                        if c.board is not client.board
+                    ],
+                    lines,
+                )
 
-        return on_piece_moved, on_lines_cleared
+        return on_piece_moved, on_piece_killed
 
     async def start_game(self):
         for client in self.connections.values():
-            on_moved, on_cleared = self.make_callbacks(client)
+            on_moved, on_killed = self.make_callbacks(client)
             client.board.on_piece_moved = on_moved
-            client.board.on_lines_cleared = on_cleared
+            client.board.on_piece_killed = on_killed
 
         for ws, client in self.connections.items():
             await send_json(

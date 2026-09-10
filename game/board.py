@@ -3,6 +3,7 @@ import random
 from .constants import SHAPES
 from .seven_bag import SevenBag
 from .piece import Piece
+from .collision import fits
 from typing import Callable
 from dataclasses import dataclass, field, asdict
 
@@ -17,7 +18,7 @@ class Board:
     cells: list[list[int | str]] = field(init=False)
     piece: Piece = field(init=False)
     on_piece_moved: Callable[[], None] | None = None
-    on_lines_cleared: Callable[[int], None] | None = None
+    on_piece_killed: Callable[[int], None] | None = None
 
     def __post_init__(self):
         self.cells = [[0] * self.width for _ in range(self.height)]
@@ -32,8 +33,6 @@ class Board:
             "next_piece": self.bag.get(
                 self.piece_index + 1
             ),  # since client has no bag access
-            "ghost_row": self.piece.row
-            + self.get_ghost_row(),  # computed server-side, sent as a plain number
             "game_over": self.game_over,
         }
 
@@ -45,20 +44,23 @@ class Board:
     def clear_lines(self) -> int:
         new_rows = [row for row in self.cells if not all(cell != 0 for cell in row)]
         lines_cleared = self.height - len(new_rows)
+
         for _ in range(lines_cleared):
             new_rows.insert(0, [0] * self.width)
 
         self.cells[:] = new_rows
-        if self.on_lines_cleared:
-            self.on_lines_cleared(lines_cleared)
 
         return lines_cleared
 
     def kill_piece(self):
         for dr, dc in SHAPES[self.piece.shape][self.piece.rot]:
             self.cells[dr + self.piece.row][dc + self.piece.col] = self.piece.shape
-        self.clear_lines()
+
+        lines_cleared = self.clear_lines()
         self.spawn_piece()
+
+        if self.on_piece_killed:
+            self.on_piece_killed(lines_cleared)
 
     def spawn_piece(self) -> bool:
         if not self.game_over:
@@ -67,7 +69,7 @@ class Board:
             self.piece.row = 0
             self.piece.col = int(self.width / 2)
             self.piece.rot = 0
-            if not self.fits(0, 0):
+            if not fits(self.cells, self.to_dict().get("piece"), self.width, self.height, 0, 0):
                 self.lose()
                 return False
             return True
@@ -76,28 +78,15 @@ class Board:
     def lose(self):
         self.game_over = True
 
-    def fits(self, drow: int, dcol: int, rot: int | None = None) -> bool:
-        rot = self.piece.rot if rot is None else rot
-        for dr, dc in SHAPES[self.piece.shape][rot]:
-            row = self.piece.row + dr + drow
-            col = self.piece.col + dc + dcol
-            if col < 0 or col >= self.width or row >= self.height:
-                return False  # out of bounds sideways or below: blocked
-            if row < 0:
-                continue  # above the board: allowed
-            if self.cells[row][col] != 0:
-                return False
-        return True
-
     def move_piece_down(self) -> bool:
-        if self.fits(1, 0):
+        if fits(self.cells, self.to_dict().get("piece"), self.width, self.height, 1, 0):
             self.piece.row += 1
             return True
         self.kill_piece()
         return False
 
     def move_piece_right(self) -> bool:
-        if self.fits(0, 1):
+        if fits(self.cells, self.to_dict().get("piece"), self.width, self.height, 0, 1):
             self.piece.col += 1
             if self.on_piece_moved:
                 self.on_piece_moved()
@@ -105,7 +94,7 @@ class Board:
         return False
 
     def move_piece_left(self) -> bool:
-        if self.fits(0, -1):
+        if fits(self.cells, self.to_dict().get("piece"), self.width, self.height, 0, -1):
             self.piece.col -= 1
             if self.on_piece_moved:
                 self.on_piece_moved()
@@ -118,18 +107,12 @@ class Board:
 
     def rotate_piece(self) -> bool:
         new_rot = (self.piece.rot + 1) % 4
-        if self.fits(0, 0, rot=new_rot):
+        if fits(self.cells, self.to_dict().get("piece"), self.width, self.height, 0, 0, rot=new_rot):
             self.piece.rot = new_rot
             if self.on_piece_moved:
                 self.on_piece_moved()
             return True
         return False
-
-    def get_ghost_row(self) -> int:
-        ghost_row = 0
-        while self.fits(ghost_row + 1, 0):
-            ghost_row += 1
-        return ghost_row
 
     def add_garbage(self, n: int):
         gap = random.randint(0, self.width - 1)

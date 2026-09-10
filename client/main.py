@@ -51,6 +51,9 @@ def main(stdscr):
                             piece["rot"] = data["rot"]
                             piece["col"] = data["col"]
                             piece["row"] = data["row"]
+                        case "piece_killed":
+                            boards[data["board_id"]]["piece"] = data["new_piece"]
+                            boards[data["board_id"]]["cells"] = data["cells"]
 
                     if my_id in boards:
                         draw_boards(boards, stdscr, my_id)
