@@ -77,13 +77,22 @@ class Match:
                 for c in self.connections.values():
                     c.outbox.append(garbage_event)
 
-        return on_piece_moved, on_piece_killed
+        def on_lose():
+            event = (
+                "lose",
+                {"board_id": client.id},
+            )
+            for c in self.connections.values():
+                c.outbox.append(event)
+
+        return on_piece_moved, on_piece_killed, on_lose
 
     async def start_game(self):
         for client in self.connections.values():
-            on_moved, on_killed = self.make_callbacks(client)
+            on_moved, on_killed, on_lose = self.make_callbacks(client)
             client.board.on_piece_moved = on_moved
             client.board.on_piece_killed = on_killed
+            client.board.on_lose = on_lose
 
         for ws, client in self.connections.items():
             await send_json(

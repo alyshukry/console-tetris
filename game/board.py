@@ -19,6 +19,7 @@ class Board:
     piece: Piece = field(init=False)
     on_piece_moved: Callable[[], None] | None = None
     on_piece_killed: Callable[[int], None] | None = None
+    on_lose: Callable[[], None] | None = None
 
     def __post_init__(self):
         self.cells = [[0] * self.width for _ in range(self.height)]
@@ -79,6 +80,8 @@ class Board:
 
     def lose(self):
         self.game_over = True
+        if self.on_lose:
+            self.on_lose()
 
     def move_piece_down(self) -> bool:
         if fits(self.cells, self.to_dict().get("piece"), self.width, self.height, 1, 0):

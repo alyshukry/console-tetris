@@ -66,6 +66,8 @@ def main(stdscr):
                         case "piece_killed":
                             boards[data["board_id"]]["piece"] = data["new_piece"]
                             boards[data["board_id"]]["cells"] = data["cells"]
+                        case "lose":
+                            boards[data["board_id"]]["game_over"] = True
 
             async def render_loop():
                 while True:
