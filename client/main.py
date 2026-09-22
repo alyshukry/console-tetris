@@ -31,7 +31,7 @@ def main(stdscr):
     winners: list[int] = []
 
     async def run_client():
-        async with websockets.connect("ws://localhost:8888") as ws:
+        async with websockets.connect("ws://192.168.1.90:8888") as ws:
             print("connected")
 
             async def gravity_loop():
