@@ -157,9 +157,9 @@ class Match:
         await self.reset_to_lobby()
         
     async def reset_to_lobby(self):
+        self.shared_bag = SevenBag()
         for client in self.connections.values():
             client.ready = False
-            self.shared_bag = SevenBag()
             client.board = Board(self.shared_bag)
 
         self.state = MatchState.WAITING
