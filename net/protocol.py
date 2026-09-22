@@ -15,8 +15,9 @@ async def send_json(
     await ws.send(json.dumps(payload))
 
 async def broadcast_json(
-    match: "Match", type: str, data: dict | None = None
+    match: "Match", type: str, data: dict | None = None, exclude: list[ServerConnection] | None = None
 ):
     connections = match.connections
     for ws in connections.keys():
-        await send_json(ws, type, data)
+        if not exclude or ws not in exclude:
+            await send_json(ws, type, data)

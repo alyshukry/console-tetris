@@ -6,14 +6,15 @@ from websockets.asyncio.server import ServerConnection
 from game.garbage import send_garbage
 from game.seven_bag import SevenBag
 from net.client import Client
-from net.protocol import send_json
+from net.protocol import broadcast_json, send_json
 from server.handlers import handle_input
 
 
 class MatchState(Enum):
     WAITING = auto()  # lobby, waiting for ready-ups
+    COUNTDOWN = auto() # everyone is ready, countdown started
     IN_PROGRESS = auto()  # game_loop/net_loop active
-    FINISHED = auto()  # someone won, results shown
+    RESULTS = auto()  # someone won, results shown
 
 
 class Match:
@@ -27,13 +28,14 @@ class Match:
     def all_boards_payload(self):
         return {"boards": {c.id: c.board.to_dict() for c in self.connections.values()}}
 
-    async def check_ready(self):
+    async def check_ready(self) -> bool:
         if (
             self.state == MatchState.WAITING
             and self.connections
             and all(c.ready for c in self.connections.values())
         ):
-            await self.start_game()
+            return True
+        else: return False
 
     def make_callbacks(self, client: Client):
         def on_piece_moved():
@@ -109,6 +111,7 @@ class Match:
             await send_json(ws, "all_boards", self.all_boards_payload())
 
         self.state = MatchState.IN_PROGRESS
+        await broadcast_json(self, "match_state", {"state": self.state})
         self.all_ready.set()
 
     async def game_loop(self):
@@ -138,4 +141,5 @@ class Match:
                 handle_input(client, data.get("key"))
             case "ready":
                 client.ready = True
-                await self.check_ready()
+                await broadcast_json(self, "player_ready", None, [ws])
+                if self.check_ready(): await self.start_game()
