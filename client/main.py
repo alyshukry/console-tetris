@@ -27,6 +27,8 @@ def main(stdscr):
     ready = False
     player_count = 1
     ready_count = 0
+    countdown = 5
+    winners: list[int] = []
 
     async def run_client():
         async with websockets.connect("ws://localhost:8888") as ws:
@@ -55,7 +57,7 @@ def main(stdscr):
                     await asyncio.sleep(0.05)
 
             async def receive_loop():
-                nonlocal boards, my_id, gravity, match_state, player_count, ready_count
+                nonlocal boards, my_id, gravity, match_state, player_count, ready_count, countdown, winners, ready
                 async for msg in ws:
                     data = json.loads(msg)
                     print(f"from server: {data}")
@@ -82,6 +84,9 @@ def main(stdscr):
                             if match_state == MatchState.WAITING:
                                 player_count = data["player_count"]
                                 ready_count = data["ready_count"]
+                                ready = False
+                            if match_state == MatchState.RESULTS:
+                                winners = data["winners"]
                         case "player_joined":
                             if match_state == MatchState.WAITING:
                                 player_count += 1
@@ -89,18 +94,24 @@ def main(stdscr):
                             ready_count += 1
                         case "player_unready":
                             ready_count -= 1
+                        case "countdown_tick":
+                            countdown = data["seconds"]
 
             async def render_loop():
-                nonlocal ready
+                nonlocal ready, countdown
                 while True:
                     stdscr.erase()
                     match match_state:
                         case MatchState.WAITING:
                             stdscr.addstr(0, 0, "Press K to get ready" if not ready else "You are ready")
                             stdscr.addstr(1, 0, f"{ready_count}/{player_count} players ready...")
+                        case MatchState.COUNTDOWN:
+                            stdscr.addstr(0, 0, f"Starting in {countdown} seconds{"." * (countdown % 3 + 1)}")
                         case MatchState.IN_PROGRESS:
                             if my_id in boards:
                                 draw_boards(boards, stdscr, my_id)
+                        case MatchState.RESULTS:
+                            stdscr.addstr(0, 0, f"{winners} win the game!")
                     await asyncio.sleep(0.02)
 
             await asyncio.gather(

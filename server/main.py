@@ -20,7 +20,15 @@ match = Match()
 async def handler(ws: ServerConnection):
     id = random.randint(0, 1000)
     match.connections[ws] = Client(Board(match.shared_bag), id)
-    await send_json(ws, "match_state", {"state": MatchState.WAITING.value, "player_count": len(match.connections)})
+    await send_json(
+        ws,
+        "match_state",
+        {
+            "state": MatchState.WAITING.value,
+            "player_count": len(match.connections),
+            "ready_count": sum(c.ready for c in match.connections.values()),
+        },
+    )
     await broadcast_json(match, "player_joined", None, [ws])
 
     try:
