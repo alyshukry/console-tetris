@@ -28,7 +28,7 @@ class Match:
     def all_boards_payload(self):
         return {"boards": {c.id: c.board.to_dict() for c in self.connections.values()}}
 
-    async def check_ready(self) -> bool:
+    def check_ready(self) -> bool:
         if (
             self.state == MatchState.WAITING
             and self.connections
@@ -111,7 +111,7 @@ class Match:
             await send_json(ws, "all_boards", self.all_boards_payload())
 
         self.state = MatchState.IN_PROGRESS
-        await broadcast_json(self, "match_state", {"state": self.state})
+        await broadcast_json(self, "match_state", {"state": self.state.value})
         self.all_ready.set()
 
     async def game_loop(self):
@@ -143,3 +143,6 @@ class Match:
                 client.ready = True
                 await broadcast_json(self, "player_ready", None, [ws])
                 if self.check_ready(): await self.start_game()
+            case "unready":
+                client.ready = False
+                await broadcast_json(self, "player_unready", None, [ws])

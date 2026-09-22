@@ -46,9 +46,9 @@ def main(stdscr):
                     key = stdscr.getch()
 
                     if key == ord("k"):
-                        await send_json(ws, "ready")
-                        ready = True
-                        ready_count += 1
+                        await send_json(ws, "unready" if ready else "ready")
+                        ready = not ready
+                        ready_count += 1 if ready else -1
                     if key != -1:
                         await send_json(ws, "input", {"key": key})
 
@@ -81,15 +81,19 @@ def main(stdscr):
                             match_state = MatchState(data["state"])
                             if match_state == MatchState.WAITING:
                                 player_count = data["player_count"]
+                                ready_count = data["ready_count"]
                         case "player_joined":
                             if match_state == MatchState.WAITING:
                                 player_count += 1
                         case "player_ready":
                             ready_count += 1
+                        case "player_unready":
+                            ready_count -= 1
 
             async def render_loop():
                 nonlocal ready
                 while True:
+                    stdscr.erase()
                     match match_state:
                         case MatchState.WAITING:
                             stdscr.addstr(0, 0, "Press K to get ready" if not ready else "You are ready")
