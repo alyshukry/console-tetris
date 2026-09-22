@@ -3,7 +3,7 @@ import random
 from .constants import SHAPES
 from .seven_bag import SevenBag
 from .piece import Piece
-from .collision import fits
+from .collision import fits, fits_abs
 from typing import Callable
 from dataclasses import dataclass, field, asdict
 
@@ -67,14 +67,14 @@ class Board:
         if not self.game_over:
             self.piece_index += 1
             self.piece.shape = self.bag.get(self.piece_index)
-            self.piece.row = 0
-            self.piece.col = int(self.width / 2)
-            self.piece.rot = 0
-            if not fits(
-                self.cells, self.to_dict().get("piece"), self.width, self.height, 0, 0
+            if not fits_abs(
+                self.cells, self.to_dict().get("piece"), self.width, self.height, 0, int(self.width / 2)
             ):
                 self.lose()
                 return False
+            self.piece.row = 0
+            self.piece.col = int(self.width / 2)
+            self.piece.rot = 0
             return True
         return False
 

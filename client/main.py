@@ -65,6 +65,7 @@ def main(stdscr):
                             piece["row"] = data["row"]
                         case "piece_killed":
                             boards[data["board_id"]]["piece"] = data["new_piece"]
+                            boards[data["board_id"]]["next_piece"] = data["next_piece"]
                             boards[data["board_id"]]["cells"] = data["cells"]
                         case "lose":
                             boards[data["board_id"]]["game_over"] = True

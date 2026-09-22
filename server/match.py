@@ -60,6 +60,7 @@ class Match:
                     "board_id": client.id,
                     "cells": client.board.to_dict().get("cells"),
                     "new_piece": client.board.to_dict().get("piece"),
+                    "next_piece": client.board.to_dict().get("next_piece"),
                 },
             )
             for c in self.connections.values():
@@ -72,6 +73,7 @@ class Match:
                         "board_id": garbage_client.id,
                         "cells": garbage_client.board.to_dict().get("cells"),
                         "new_piece": garbage_client.board.to_dict().get("piece"),
+                        "next_piece": garbage_client.board.to_dict().get("next_piece"),
                     },
                 )
                 for c in self.connections.values():
