@@ -66,6 +66,15 @@ class Match:
         while True:
             if self.state == MatchState.IN_GAME:
                 self.tick += 1
+
+                for client in self.connections.values():
+                    if client.board.game_over:
+                        continue
+                    due = [item for item in client.input_queue if item[0] <= self.tick]
+                    client.input_queue = [item for item in client.input_queue if item[0] > self.tick]
+                    for tick, key in sorted(due, key=lambda item: item[0]):
+                        handle_input(client, key, tick)
+
                 if self.tick % self.gravity_ticks == 0:
                     alive_before = [
                         c for c in self.connections.values() if not c.board.game_over
