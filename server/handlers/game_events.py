@@ -3,17 +3,18 @@ from game.garbage import send_garbage
 
 def make_callbacks(match, client):
     def on_piece_moved():
-        event = (
-            "piece_moved",
-            {
-                "board_id": client.id,
-                "row": client.board.piece.row,
-                "col": client.board.piece.col,
-                "rot": client.board.piece.rot,
-            },
+        broadcast_event(
+            match,
+            (
+                "piece_moved",
+                {
+                    "board_id": client.id,
+                    "row": client.board.piece.row,
+                    "col": client.board.piece.col,
+                    "rot": client.board.piece.rot,
+                },
+            ),
         )
-        for c in match.connections.values():
-            c.outbox.append(event)
 
     def board_update_event(c):
         d = c.board.to_dict()
@@ -33,19 +34,16 @@ def make_callbacks(match, client):
             if lines > 0
             else []
         )
-
-        event = board_update_event(client)
-        for c in match.connections.values():
-            c.outbox.append(event)
-
+        broadcast_event(match, board_update_event(client))
         for garbage_client in affected:
-            garbage_event = board_update_event(garbage_client)
-            for c in match.connections.values():
-                c.outbox.append(garbage_event)
+            broadcast_event(match, board_update_event(garbage_client))
 
     def on_lose():
-        event = ("lose", {"board_id": client.id})
-        for c in match.connections.values():
-            c.outbox.append(event)
+        broadcast_event(match, ("lose", {"board_id": client.id}))
 
     return on_piece_moved, on_piece_killed, on_lose
+
+
+def broadcast_event(match, event):
+    for c in match.connections.values():
+        c.outbox.append(event)
