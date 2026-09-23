@@ -1,8 +1,16 @@
 from enum import Enum, auto
+from net.protocol import broadcast_json
 
 
 class MatchState(Enum):
-    WAITING = auto()  # lobby, waiting for ready-ups
-    COUNTDOWN = auto()  # everyone is ready, countdown started
-    IN_PROGRESS = auto()  # game_loop/net_loop active
-    RESULTS = auto()  # someone won, results shown
+    WAITING = auto()
+    COUNTDOWN = auto()
+    IN_PROGRESS = auto()
+    RESULTS = auto()
+
+
+async def set_match_state(match, new_state: "MatchState", extra: dict | None = None):
+    match.state = new_state
+    await broadcast_json(
+        match, "match_state", {"state": new_state.value, **(extra or {})}
+    )

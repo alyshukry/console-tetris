@@ -13,7 +13,7 @@ from server.handlers.lobby import (
     reset_to_lobby,
 )
 from server.handlers.game_events import make_callbacks
-from server.match_state import MatchState
+from server.match_state import MatchState, set_match_state
 
 
 class Match:
@@ -50,16 +50,10 @@ class Match:
             )
             await send_json(ws, "all_boards", self.all_boards_payload())
 
-        self.state = MatchState.IN_PROGRESS
-        await broadcast_json(self, "match_state", {"state": self.state.value})
+        await set_match_state(self, MatchState.WAITING)
 
     async def end_game(self, winners: list[Client]):
-        self.state = MatchState.RESULTS
-        await broadcast_json(
-            self,
-            "match_state",
-            {"state": self.state.value, "winners": [c.id for c in winners]},
-        )
+        await set_match_state(self, MatchState.RESULTS, {"winners": [c.id for c in winners]})
         await asyncio.sleep(5)
         await reset_to_lobby(self)
 
@@ -86,7 +80,7 @@ class Match:
                         tasks.append(send_json(ws, msg_type=e[0], data=e[1]))
                     client.outbox.clear()
             if tasks:
-                asyncio.gather(*tasks)
+                await asyncio.gather(*tasks)
             await asyncio.sleep(0.01)
 
     async def handle_message(self, ws, data):
