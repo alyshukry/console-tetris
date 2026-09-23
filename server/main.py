@@ -1,22 +1,22 @@
+import asyncio
+import itertools
+import json
 import logging
 
+import websockets
+from websockets.asyncio.server import ServerConnection
+from websockets.exceptions import ConnectionClosed
+
+from game.board import Board
+from net.client import Client
 from net.protocol import broadcast_json, send_json
+from server.match import Match, MatchState
 
 logging.basicConfig(level=logging.DEBUG)
 
-import asyncio
-import json
-import websockets
-import itertools
-
-from server.match import Match, MatchState
-from websockets.asyncio.server import ServerConnection
-from websockets.exceptions import ConnectionClosed
-from game.board import Board
-from net.client import Client
-
 match = Match()
 _id_counter = itertools.count()
+
 
 async def handler(ws: ServerConnection):
     id = next(_id_counter)
@@ -53,4 +53,5 @@ async def main():
         await asyncio.gather(match.game_loop(), match.net_loop())
 
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

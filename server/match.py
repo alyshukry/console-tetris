@@ -86,7 +86,7 @@ class Match:
         client = self.connections[ws]
         match data.get("type"):
             case "input":
-                handle_input(client, data.get("key"))
+                handle_input(client, data.get("key"), data.get("seq"))
             case "ready":
                 client.ready = True
                 await broadcast_json(self, "player_ready", None, [ws])

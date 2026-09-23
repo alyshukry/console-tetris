@@ -7,3 +7,4 @@ class Client:
     id: int
     ready: bool = False
     outbox: list[tuple[str, dict]] = field(default_factory=list)
+    current_input_seq: int = -1

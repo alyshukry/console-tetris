@@ -1,4 +1,5 @@
 from game.garbage import send_garbage
+from net.client import Client
 
 
 def make_callbacks(match, client):
@@ -11,9 +12,22 @@ def make_callbacks(match, client):
                     "board_id": client.id,
                     "row": client.board.piece.row,
                     "col": client.board.piece.col,
-                    "rot": client.board.piece.rot,
+                    "rot": client.board.piece.rot
                 },
             ),
+            [client]
+        )
+        client.outbox.append(
+            (
+                "piece_moved",
+                {
+                    "board_id": client.id,
+                    "row": client.board.piece.row,
+                    "col": client.board.piece.col,
+                    "rot": client.board.piece.rot,
+                    "seq": client.current_input_seq
+                },
+            )
         )
 
     def board_update_event(c):
@@ -44,6 +58,7 @@ def make_callbacks(match, client):
     return on_piece_moved, on_piece_killed, on_lose
 
 
-def broadcast_event(match, event):
+def broadcast_event(match, event, exclude: list[Client] | None = None):
     for c in match.connections.values():
-        c.outbox.append(event)
+        if not c in exclude:
+            c.outbox.append(event)

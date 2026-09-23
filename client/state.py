@@ -13,3 +13,4 @@ class ClientState:
     ready_count: int = 0
     countdown: int = 5
     winners: list[int] = field(default_factory=list)
+    predictions: dict[int, dict] = field(default_factory=dict)
