@@ -13,13 +13,7 @@ from server.handlers.lobby import (
     reset_to_lobby,
 )
 from server.handlers.game_events import make_callbacks
-
-
-class MatchState(Enum):
-    WAITING = auto()
-    COUNTDOWN = auto()
-    IN_PROGRESS = auto()
-    RESULTS = auto()
+from server.match_state import MatchState
 
 
 class Match:

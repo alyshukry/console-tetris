@@ -2,18 +2,19 @@ import asyncio
 from game.board import Board
 from game.seven_bag import SevenBag
 from net.protocol import broadcast_json
+from server.match_state import MatchState
 
 
 def check_ready(match) -> bool:
     return (
-        match.state == match.MatchState.WAITING
+        match.state == MatchState.WAITING
         and bool(match.connections)
         and all(c.ready for c in match.connections.values())
     )
 
 
 async def start_countdown(match):
-    match.state = match.MatchState.COUNTDOWN
+    match.state = MatchState.COUNTDOWN
     await broadcast_json(match, "match_state", {"state": match.state.value})
 
     try:
@@ -22,7 +23,7 @@ async def start_countdown(match):
             await asyncio.sleep(1)
         await match.start_game()
     except asyncio.CancelledError:
-        match.state = match.MatchState.WAITING
+        match.state = MatchState.WAITING
         await broadcast_json(
             match,
             "match_state",
@@ -51,7 +52,7 @@ async def reset_to_lobby(match):
         client.ready = False
         client.board = Board(match.shared_bag)
 
-    match.state = match.MatchState.WAITING
+    match.state = MatchState.WAITING
     await broadcast_json(
         match,
         "match_state",

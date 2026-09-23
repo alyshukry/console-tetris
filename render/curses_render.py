@@ -35,7 +35,7 @@ async def render_loop(stdscr, state):
                 if state.my_id in state.boards:
                     draw_boards(state.boards, stdscr, state.my_id)
             case MatchState.RESULTS:
-                stdscr.addstr(0, 0, f"{state.winners} win the game!")
+                stdscr.addstr(0, 0, f"{state.winners} win{"s" if len(state.winners) <= 1 else ""} the game!")
         await asyncio.sleep(0.02)
 
 
