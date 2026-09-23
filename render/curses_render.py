@@ -2,6 +2,41 @@ import curses
 
 from game.collision import get_ghost_row
 from game.constants import SHAPES, COLORS
+import asyncio
+from server.match import MatchState
+
+
+def draw_boards(boards, stdscr, my_id):
+    x = 1
+    y = 1 + draw(boards[my_id], stdscr, 1, 1, True)[1] + 1
+    for id, board in boards.items():
+        if id != my_id:
+            y += draw(board, stdscr, x, y, False)[1]
+
+
+async def render_loop(stdscr, state):
+    while True:
+        stdscr.erase()
+        match state.match_state:
+            case MatchState.WAITING:
+                stdscr.addstr(
+                    0, 0, "Press K to get ready" if not state.ready else "You are ready"
+                )
+                stdscr.addstr(
+                    1, 0, f"{state.ready_count}/{state.player_count} players ready..."
+                )
+            case MatchState.COUNTDOWN:
+                stdscr.addstr(
+                    0,
+                    0,
+                    f"Starting in {state.countdown} seconds{'.' * (state.countdown % 3 + 1)}",
+                )
+            case MatchState.IN_PROGRESS:
+                if state.my_id in state.boards:
+                    draw_boards(state.boards, stdscr, state.my_id)
+            case MatchState.RESULTS:
+                stdscr.addstr(0, 0, f"{state.winners} win the game!")
+        await asyncio.sleep(0.02)
 
 
 def fill_rect(stdscr, x1, y1, x2, y2, color_pair):
@@ -11,7 +46,9 @@ def fill_rect(stdscr, x1, y1, x2, y2, color_pair):
         stdscr.addstr(row, y1 * 2, block, curses.color_pair(color_pair))
 
 
-def draw(board: dict, stdscr, x: int, y: int, show_next: bool) -> list[int]: # returns total height and width of render 
+def draw(
+    board: dict, stdscr, x: int, y: int, show_next: bool
+) -> list[int]:  # returns total height and width of render
     fill_rect(
         stdscr,
         x,
@@ -29,11 +66,9 @@ def draw(board: dict, stdscr, x: int, y: int, show_next: bool) -> list[int]: # r
             board["width"] + y - 1 + 3,
             x + 6,
             board["width"] + y - 1 + 8,
-            10
+            10,
         )
-        draw_piece(
-            board, stdscr, x, y, board["next_piece"], 4, board["width"] + 4, 0
-        )
+        draw_piece(board, stdscr, x, y, board["next_piece"], 4, board["width"] + 4, 0)
         stdscr.addstr(x + 1, (board["width"] + y) * 2 + 4, "NEXT PIECE:")
 
     if not board["game_over"]:
@@ -52,7 +87,7 @@ def draw(board: dict, stdscr, x: int, y: int, show_next: bool) -> list[int]: # r
                     "██",
                     curses.color_pair(9 if board["game_over"] else COLORS[cell]),
                 )
-                
+
     return [board["height"] + 2, board["width"] + 2 + (7 if show_next else 0)]
 
 
@@ -85,12 +120,16 @@ def draw_border(board: dict, stdscr, bx, by):
     bottom = bx + board["height"]
     right = (by + board["width"]) * 2
 
-    stdscr.addstr(top, left, " ▄" + "▄" * (board["width"] * 2) + "▄ ", curses.color_pair(11))
+    stdscr.addstr(
+        top, left, " ▄" + "▄" * (board["width"] * 2) + "▄ ", curses.color_pair(11)
+    )
     # stdscr.addstr(top, left + 2, " USRNM ")
     for row in range(board["height"]):
         stdscr.addstr(bx + row, left, " █", curses.color_pair(11))
         stdscr.addstr(bx + row, right, "█ ", curses.color_pair(11))
-    stdscr.addstr(bottom, left, " ▀" + "▀" * (board["width"] * 2) + "▀ ", curses.color_pair(11))
+    stdscr.addstr(
+        bottom, left, " ▀" + "▀" * (board["width"] * 2) + "▀ ", curses.color_pair(11)
+    )
 
 
 def setup_curses(stdscr):
