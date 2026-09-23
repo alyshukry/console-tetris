@@ -35,4 +35,8 @@ def handle_pong(state, data):
     one_way_ticks = rtt_ticks / 2
     state.rtt_estimate = 0.8 * state.rtt_estimate + 0.2 * one_way_ticks
     target_offset = (data["server_tick"] + state.rtt_estimate) - state.tick
-    state.tick += max(-1, min(round(target_offset), 1))
+    if not state.first_pong_received:
+        state.tick += round(target_offset)
+        state.first_pong_received = True
+    else:
+        state.tick += max(-1, min(round(target_offset), 1))
