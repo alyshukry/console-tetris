@@ -13,4 +13,8 @@ class ClientState:
     ready_count: int = 0
     countdown: int = 5
     winners: list[int] = field(default_factory=list)
-    predictions: dict[int, dict] = field(default_factory=dict)
+    tick: int = 0
+    tick_interval: float = 0.05
+    gravity_ticks: int = 10
+    tick_offset: int = 2
+    pending_inputs: dict[int, int] = field(default_factory=dict)

@@ -3,10 +3,12 @@ import curses
 from net.client import Client
 
 
-def handle_input(client: Client, key, seq):
+def handle_input(client: Client, key, tick):
     if client.board.game_over:
         return
-    client.current_input_seq = seq
+    client.input_queue.append((tick, key))
+
+def apply_input(client: Client, key):
     {
         curses.KEY_LEFT: client.board.move_piece_left,
         curses.KEY_RIGHT: client.board.move_piece_right,

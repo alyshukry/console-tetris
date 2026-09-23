@@ -33,9 +33,11 @@ async def receive_loop(ws, state):
 
 async def gravity_loop(state):
     while True:
-        await asyncio.sleep(state.gravity)
-        for board in state.boards.values():
-            if not board["game_over"] and fits(
-                board["cells"], board["piece"], board["width"], board["height"], 1, 0
-            ):
-                board["piece"]["row"] += 1
+        await asyncio.sleep(state.tick_interval)
+        state.tick += 1
+        if state.tick % state.gravity_ticks == 0:
+            for board in state.boards.values():
+                if not board["game_over"] and fits(
+                    board["cells"], board["piece"], board["width"], board["height"], 1, 0
+                ):
+                    board["piece"]["row"] += 1

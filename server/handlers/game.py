@@ -25,17 +25,9 @@ def make_callbacks(match, client):
                     "row": client.board.piece.row,
                     "col": client.board.piece.col,
                     "rot": client.board.piece.rot,
-                    "seq": client.current_input_seq
+                    "tick": match.tick,
                 },
             )
-        )
-        print(
-            "SEND",
-            "seq=", client.current_input_seq,
-            "pos=",
-            client.board.piece.col,
-            client.board.piece.row,
-            client.board.piece.rot,
         )
 
     def board_update_event(c):

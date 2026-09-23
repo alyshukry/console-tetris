@@ -1,6 +1,12 @@
+from client.input import apply_local_move
+
+
 def handle_welcome_info(state, data):
     state.my_id = data["your_id"]
     state.gravity = data["gravity"]
+    state.tick_interval = data["tick_interval"]
+    state.gravity_ticks = data["gravity_ticks"]
+    state.tick = data["tick"] + state.tick_offset
 
 def handle_all_boards(state, data):
     state.boards = {int(k): v for k, v in data["boards"].items()}
@@ -9,39 +15,23 @@ def handle_piece_moved(state, data):
     board_id = int(data["board_id"])
     board = state.boards[board_id]
 
-    raw_seq = data.get("seq")
-    seq = int(raw_seq) if raw_seq is not None else None
-
-    prediction = (
-        state.predictions.get(seq)
-        if board_id == state.my_id and seq is not None
-        else None
-    )
-
-    matches = (
-        prediction is not None
-        and prediction["col"] == data["col"]
-        and prediction["row"] == data["row"]
-        and prediction["rot"] == data["rot"]
-    )
-
-    if not matches:
+    if board_id != state.my_id:
         board["piece"]["col"] = data["col"]
         board["piece"]["row"] = data["row"]
         board["piece"]["rot"] = data["rot"]
+        return
 
-    if board_id == state.my_id and seq is not None:
-        state.predictions.pop(seq, None)
-            
-    print(
-        "ACK",
-        "seq=", seq,
-        "predicted=", prediction,
-        "server=",
-        data["col"],
-        data["row"],
-        data["rot"],
-    )
+    server_tick = data.get("tick")
+
+    board["piece"]["col"] = data["col"]
+    board["piece"]["row"] = data["row"]
+    board["piece"]["rot"] = data["rot"]
+
+    for t in [t for t in state.pending_inputs if server_tick is not None and t <= server_tick]:
+        state.pending_inputs.pop(t, None)
+
+    for t in sorted(state.pending_inputs):
+        apply_local_move(board, state.pending_inputs[t])
 
 
 def handle_piece_killed(state, data):

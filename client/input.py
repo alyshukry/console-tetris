@@ -6,7 +6,6 @@ from net.protocol import send_json
 
 
 async def input_loop(ws, stdscr, state):
-    seq = 0
     while True:
         key = stdscr.getch()
         if key == ord("k"):
@@ -15,10 +14,9 @@ async def input_loop(ws, stdscr, state):
             state.ready_count += 1 if state.ready else -1
         if key != -1 and key in (curses.KEY_LEFT, curses.KEY_RIGHT, curses.KEY_UP, curses.KEY_DOWN, ord(" ")):
             if state.my_id in state.boards:
-                pos = apply_local_move(state.boards[state.my_id], key)
-                seq += 1
-                state.predictions[seq] = pos
-            await send_json(ws, "input", {"key": key, "seq": seq})
+                apply_local_move(state.boards[state.my_id], key)
+                state.pending_inputs[state.tick] = key
+            await send_json(ws, "input", {"key": key, "tick": state.tick})
         await asyncio.sleep(0.05)
 
 
