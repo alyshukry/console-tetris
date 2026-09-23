@@ -7,7 +7,6 @@ logging.basicConfig(level=logging.DEBUG)
 import asyncio
 import json
 import websockets
-import random
 import itertools
 
 from server.match import Match, MatchState
