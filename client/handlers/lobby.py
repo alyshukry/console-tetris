@@ -29,3 +29,10 @@ def handle_player_left(state, data):
             state.ready_count -= 1
     if state.match_state == MatchState.IN_GAME:
         state.boards.pop(data["player_id"], None)
+        
+def handle_pong(state, data):
+    rtt_ticks = state.tick - data["client_tick"]
+    one_way_ticks = rtt_ticks / 2
+    state.rtt_estimate = 0.8 * state.rtt_estimate + 0.2 * one_way_ticks
+    target_offset = (data["server_tick"] + state.rtt_estimate) - state.tick
+    state.tick += max(-1, min(round(target_offset), 1))

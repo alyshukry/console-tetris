@@ -4,7 +4,7 @@ from websockets.asyncio.server import ServerConnection
 
 from net.client import Client
 from net.protocol import broadcast_json, send_json
-from server.handlers.input import handle_input
+from server.handlers.input import handle_input, apply_input
 from server.handlers.lobby import (
     check_ready,
     start_countdown,
@@ -13,7 +13,7 @@ from server.handlers.lobby import (
 )
 from server.handlers.game import make_callbacks
 from server.match_state import MatchState, set_match_state
-from game.constants import TICK_INTERVAL
+from game.constants import TICKS_PER_SECOND
 
 
 class Match:
@@ -25,7 +25,7 @@ class Match:
         self.shared_bag = SevenBag()
         self.gravity = 0.5
         self.tick = 0
-        self.gravity_ticks = max(1, round(self.gravity / TICK_INTERVAL))
+        self.gravity_ticks = round(self.gravity * TICKS_PER_SECOND)
         self.countdown_task: asyncio.Task | None = None
         self.countdown_seconds = 5
 
@@ -48,7 +48,7 @@ class Match:
                     "your_board": client.board.to_dict(),
                     "your_id": client.id,
                     "gravity": self.gravity,
-                    "tick_interval": TICK_INTERVAL,
+                    "ticks_per_second": TICKS_PER_SECOND,
                     "gravity_ticks": self.gravity_ticks,
                     "tick": self.tick,
                 },
@@ -73,7 +73,7 @@ class Match:
                     due = [item for item in client.input_queue if item[0] <= self.tick]
                     client.input_queue = [item for item in client.input_queue if item[0] > self.tick]
                     for tick, key in sorted(due, key=lambda item: item[0]):
-                        handle_input(client, key, tick)
+                        apply_input(client, key)
 
                 if self.tick % self.gravity_ticks == 0:
                     alive_before = [
@@ -85,7 +85,7 @@ class Match:
                     alive_after = [c for c in alive_before if not c.board.game_over]
                     if len(alive_after) <= 1:
                         await self.end_game(alive_after if alive_after else just_died)
-            await asyncio.sleep(TICK_INTERVAL)
+            await asyncio.sleep(1 / TICKS_PER_SECOND)
 
     async def net_loop(self):
         while True:
@@ -113,3 +113,5 @@ class Match:
                 client.ready = False
                 await broadcast_json(self, "player_unready", None, [ws])
                 await cancel_countdown(self)
+            case "ping":
+                await send_json(ws, "pong", {"client_tick": data.get("client_tick"), "server_tick": self.tick})

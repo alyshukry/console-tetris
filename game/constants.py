@@ -1,4 +1,4 @@
-TICK_INTERVAL = 0.05
+TICKS_PER_SECOND = 30
 
 SHAPES = {
     "I": [

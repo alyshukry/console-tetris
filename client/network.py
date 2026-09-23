@@ -7,8 +7,9 @@ from client.handlers.game import (
 )
 from client.handlers.lobby import (
     handle_match_state, handle_player_joined, handle_player_ready,
-    handle_player_unready, handle_countdown_tick, handle_player_left,
+    handle_player_unready, handle_countdown_tick, handle_player_left, handle_pong,
 )
+from net.protocol import send_json
 
 HANDLERS = {
     "welcome_info": handle_welcome_info,
@@ -22,6 +23,7 @@ HANDLERS = {
     "player_unready": handle_player_unready,
     "countdown_tick": handle_countdown_tick,
     "player_left": handle_player_left,
+    "pong": handle_pong,
 }
 
 async def receive_loop(ws, state):
@@ -33,7 +35,7 @@ async def receive_loop(ws, state):
 
 async def gravity_loop(state):
     while True:
-        await asyncio.sleep(state.tick_interval)
+        await asyncio.sleep(1 / state.ticks_per_second)
         state.tick += 1
         if state.tick % state.gravity_ticks == 0:
             for board in state.boards.values():
@@ -41,3 +43,8 @@ async def gravity_loop(state):
                     board["cells"], board["piece"], board["width"], board["height"], 1, 0
                 ):
                     board["piece"]["row"] += 1
+                    
+async def ping_loop(ws, state):
+    while True:
+        await send_json(ws, "ping", {"client_tick": state.tick})
+        await asyncio.sleep(1)

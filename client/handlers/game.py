@@ -4,7 +4,7 @@ from client.input import apply_local_move
 def handle_welcome_info(state, data):
     state.my_id = data["your_id"]
     state.gravity = data["gravity"]
-    state.tick_interval = data["tick_interval"]
+    state.ticks_per_second = data["ticks_per_second"]
     state.gravity_ticks = data["gravity_ticks"]
     state.tick = data["tick"] + state.tick_offset
 
