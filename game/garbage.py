@@ -18,7 +18,7 @@ def send_garbage(sender: Client, recipients: list[Client], lines: int) -> list[C
 
     affected = []
     for client in opponents:
-        amount = per_board + (1 if client.board in extra_recipients else 0)
+        amount = per_board + (1 if client in extra_recipients else 0)
         if amount > 0:
             client.board.add_garbage(amount)
             affected.append(client)
