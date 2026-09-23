@@ -60,5 +60,5 @@ def make_callbacks(match, client):
 
 def broadcast_event(match, event, exclude: list[Client] | None = None):
     for c in match.connections.values():
-        if not c in exclude:
+        if not exclude or c not in exclude:
             c.outbox.append(event)
