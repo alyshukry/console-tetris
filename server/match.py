@@ -79,11 +79,14 @@ class Match:
 
     async def net_loop(self):
         while True:
+            tasks = []
             for ws, client in list(self.connections.items()):
                 if client.outbox:
                     for e in client.outbox:
-                        await send_json(ws, msg_type=e[0], data=e[1])
+                        tasks.append(send_json(ws, msg_type=e[0], data=e[1]))
                     client.outbox.clear()
+            if tasks:
+                asyncio.gather(*tasks)
             await asyncio.sleep(0.01)
 
     async def handle_message(self, ws, data):
