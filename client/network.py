@@ -1,7 +1,7 @@
 import asyncio
 import json
 from game.collision import fits
-from client.handlers.game_events import (
+from client.handlers.game import (
     handle_welcome_info, handle_all_boards, handle_piece_moved,
     handle_piece_killed, handle_lose,
 )

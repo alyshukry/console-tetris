@@ -1,5 +1,4 @@
 import asyncio
-from enum import Enum, auto
 
 from websockets.asyncio.server import ServerConnection
 
@@ -12,7 +11,7 @@ from server.handlers.lobby import (
     cancel_countdown,
     reset_to_lobby,
 )
-from server.handlers.game_events import make_callbacks
+from server.handlers.game import make_callbacks
 from server.match_state import MatchState, set_match_state
 
 
