@@ -68,7 +68,7 @@ class Board:
             self.piece_index += 1
             self.piece.shape = self.bag.get(self.piece_index)
             if not fits_abs(
-                self.cells, self.to_dict().get("piece"), self.width, self.height, 0, int(self.width / 2)
+                self.cells, asdict(self.piece), self.width, self.height, 0, int(self.width / 2)
             ):
                 self.lose()
                 return False
@@ -84,14 +84,14 @@ class Board:
             self.on_lose()
 
     def move_piece_down(self) -> bool:
-        if fits(self.cells, self.to_dict().get("piece"), self.width, self.height, 1, 0):
+        if fits(self.cells, asdict(self.piece), self.width, self.height, 1, 0):
             self.piece.row += 1
             return True
         self.kill_piece()
         return False
 
     def move_piece_right(self) -> bool:
-        if fits(self.cells, self.to_dict().get("piece"), self.width, self.height, 0, 1):
+        if fits(self.cells, asdict(self.piece), self.width, self.height, 0, 1):
             self.piece.col += 1
             if self.on_piece_moved:
                 self.on_piece_moved()
@@ -100,7 +100,7 @@ class Board:
 
     def move_piece_left(self) -> bool:
         if fits(
-            self.cells, self.to_dict().get("piece"), self.width, self.height, 0, -1
+            self.cells, asdict(self.piece), self.width, self.height, 0, -1
         ):
             self.piece.col -= 1
             if self.on_piece_moved:
@@ -121,7 +121,7 @@ class Board:
         new_rot = (self.piece.rot + 1) % 4
         if fits(
             self.cells,
-            self.to_dict().get("piece"),
+            asdict(self.piece),
             self.width,
             self.height,
             0,

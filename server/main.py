@@ -8,17 +8,19 @@ import asyncio
 import json
 import websockets
 import random
+import itertools
 
 from server.match import Match, MatchState
 from websockets.asyncio.server import ServerConnection
+from websockets.exceptions import ConnectionClosed
 from game.board import Board
 from net.client import Client
 
 match = Match()
-
+_id_counter = itertools.count()
 
 async def handler(ws: ServerConnection):
-    id = random.randint(0, 1000)
+    id = next(_id_counter)
     match.connections[ws] = Client(Board(match.shared_bag), id)
     await send_json(
         ws,
@@ -35,8 +37,16 @@ async def handler(ws: ServerConnection):
         async for msg in ws:
             data = json.loads(msg)
             await match.handle_message(ws, data)
+    except ConnectionClosed:
+        pass
     finally:
-        del match.connections[ws]
+        leaver = match.connections.pop(ws, None)
+        if leaver:
+            await broadcast_json(
+                match,
+                "player_left",
+                {"player_id": leaver.id, "was_ready": leaver.ready},
+            )
 
 
 async def main():

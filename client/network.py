@@ -42,6 +42,13 @@ async def receive_loop(ws, state):
                 state.ready_count -= 1
             case "countdown_tick":
                 state.countdown = data["seconds"]
+            case "player_left":
+                if state.match_state == MatchState.WAITING:
+                    state.player_count -= 1
+                    if data["was_ready"]:
+                        state.ready_count -= 1
+                if state.match_state == MatchState.IN_PROGRESS:
+                    state.boards.pop(data["player_id"], None)
 
 
 async def gravity_loop(state):

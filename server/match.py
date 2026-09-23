@@ -82,7 +82,7 @@ class Match:
             for ws, client in list(self.connections.items()):
                 if client.outbox:
                     for e in client.outbox:
-                        await send_json(ws, type=e[0], data=e[1])
+                        await send_json(ws, msg_type=e[0], data=e[1])
                     client.outbox.clear()
             await asyncio.sleep(0.01)
 
