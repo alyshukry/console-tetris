@@ -26,7 +26,7 @@ async def handler(ws: ServerConnection):
         ws,
         "match_state",
         {
-            "state": MatchState.WAITING.value,
+            "state": MatchState.LOBBY.value,
             "player_count": len(match.connections),
             "ready_count": sum(c.ready for c in match.connections.values()),
         },

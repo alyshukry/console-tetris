@@ -7,7 +7,7 @@ from server.match_state import MatchState, set_match_state
 
 def check_ready(match) -> bool:
     return (
-        match.state == MatchState.WAITING
+        match.state == MatchState.LOBBY
         and bool(match.connections)
         and all(c.ready for c in match.connections.values())
     )
@@ -24,7 +24,7 @@ async def start_countdown(match):
     except asyncio.CancelledError:
         await set_match_state(
             match,
-            MatchState.WAITING,
+            MatchState.LOBBY,
             {
                 "player_count": len(match.connections),
                 "ready_count": sum(c.ready for c in match.connections.values()),
@@ -51,7 +51,7 @@ async def reset_to_lobby(match):
 
     await set_match_state(
         match,
-        MatchState.WAITING,
+        MatchState.LOBBY,
         {
             "player_count": len(match.connections),
             "ready_count": 0,

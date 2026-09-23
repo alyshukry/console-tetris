@@ -18,7 +18,7 @@ async def render_loop(stdscr, state):
     while True:
         stdscr.erase()
         match state.match_state:
-            case MatchState.WAITING:
+            case MatchState.LOBBY:
                 stdscr.addstr(
                     0, 0, "Press K to get ready" if not state.ready else "You are ready"
                 )
@@ -31,7 +31,7 @@ async def render_loop(stdscr, state):
                     0,
                     f"Starting in {state.countdown} seconds{'.' * (state.countdown % 3 + 1)}",
                 )
-            case MatchState.IN_PROGRESS:
+            case MatchState.IN_GAME:
                 if state.my_id in state.boards:
                     draw_boards(state.boards, stdscr, state.my_id)
             case MatchState.RESULTS:

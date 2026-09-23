@@ -1,55 +1,35 @@
 import asyncio
 import json
-from server.match import MatchState
 from game.collision import fits
+from client.handlers.game_events import (
+    handle_welcome_info, handle_all_boards, handle_piece_moved,
+    handle_piece_killed, handle_lose,
+)
+from client.handlers.lobby import (
+    handle_match_state, handle_player_joined, handle_player_ready,
+    handle_player_unready, handle_countdown_tick, handle_player_left,
+)
 
+HANDLERS = {
+    "welcome_info": handle_welcome_info,
+    "all_boards": handle_all_boards,
+    "piece_moved": handle_piece_moved,
+    "piece_killed": handle_piece_killed,
+    "lose": handle_lose,
+    "match_state": handle_match_state,
+    "player_joined": handle_player_joined,
+    "player_ready": handle_player_ready,
+    "player_unready": handle_player_unready,
+    "countdown_tick": handle_countdown_tick,
+    "player_left": handle_player_left,
+}
 
 async def receive_loop(ws, state):
     async for msg in ws:
         data = json.loads(msg)
-        match data["type"]:
-            case "welcome_info":
-                state.my_id = data["your_id"]
-                state.gravity = data["gravity"]
-            case "all_boards":
-                state.boards = {int(k): v for k, v in data["boards"].items()}
-            case "piece_moved":
-                piece = state.boards[data["board_id"]]["piece"]
-                piece["rot"] = data["rot"]
-                piece["col"] = data["col"]
-                piece["row"] = data["row"]
-            case "piece_killed":
-                b = state.boards[data["board_id"]]
-                b["piece"] = data["new_piece"]
-                b["next_piece"] = data["next_piece"]
-                b["cells"] = data["cells"]
-            case "lose":
-                state.boards[data["board_id"]]["game_over"] = True
-            case "match_state":
-                state.match_state = MatchState(data["state"])
-                if state.match_state == MatchState.WAITING:
-                    state.player_count = data["player_count"]
-                    state.ready_count = data["ready_count"]
-                    state.ready = False
-                if state.match_state == MatchState.RESULTS:
-                    state.winners = data["winners"]
-            case "player_joined":
-                if state.match_state == MatchState.WAITING:
-                    state.player_count += 1
-            case "player_ready":
-                state.ready_count += 1
-            case "player_unready":
-                state.ready_count -= 1
-            case "countdown_tick":
-                state.countdown = data["seconds"]
-            case "player_left":
-                if state.match_state == MatchState.WAITING:
-                    state.player_count -= 1
-                    if data["was_ready"]:
-                        state.ready_count -= 1
-                if state.match_state == MatchState.IN_PROGRESS:
-                    state.boards.pop(data["player_id"], None)
-
+        handler = HANDLERS.get(data["type"])
+        if handler:
+            handler(state, data)
 
 async def gravity_loop(state):
     while True:

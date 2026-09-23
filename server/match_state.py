@@ -3,9 +3,9 @@ from net.protocol import broadcast_json
 
 
 class MatchState(Enum):
-    WAITING = auto()
+    LOBBY = auto()
     COUNTDOWN = auto()
-    IN_PROGRESS = auto()
+    IN_GAME = auto()
     RESULTS = auto()
 
 

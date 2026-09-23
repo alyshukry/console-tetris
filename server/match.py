@@ -19,7 +19,7 @@ from server.match_state import MatchState, set_match_state
 class Match:
     def __init__(self):
         self.connections: dict[ServerConnection, Client] = {}
-        self.state = MatchState.WAITING
+        self.state = MatchState.LOBBY
         from game.seven_bag import SevenBag
 
         self.shared_bag = SevenBag()
@@ -50,7 +50,7 @@ class Match:
             )
             await send_json(ws, "all_boards", self.all_boards_payload())
 
-        await set_match_state(self, MatchState.WAITING)
+        await set_match_state(self, MatchState.IN_GAME)
 
     async def end_game(self, winners: list[Client]):
         await set_match_state(self, MatchState.RESULTS, {"winners": [c.id for c in winners]})
@@ -59,7 +59,7 @@ class Match:
 
     async def game_loop(self):
         while True:
-            if self.state == MatchState.IN_PROGRESS:
+            if self.state == MatchState.IN_GAME:
                 alive_before = [
                     c for c in self.connections.values() if not c.board.game_over
                 ]
