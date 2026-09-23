@@ -111,8 +111,6 @@ class Board:
     def drop_piece(self):
         while self.move_piece_down():
             pass
-        if self.on_piece_moved:
-            self.on_piece_moved()
 
     def soft_drop_piece(self):
         self.move_piece_down()

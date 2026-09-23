@@ -32,6 +32,16 @@ def handle_piece_moved(state, data):
 
     if board_id == state.my_id and seq is not None:
         state.predictions.pop(seq, None)
+            
+    print(
+        "ACK",
+        "seq=", seq,
+        "predicted=", prediction,
+        "server=",
+        data["col"],
+        data["row"],
+        data["rot"],
+    )
 
 
 def handle_piece_killed(state, data):

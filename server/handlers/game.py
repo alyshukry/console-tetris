@@ -29,6 +29,14 @@ def make_callbacks(match, client):
                 },
             )
         )
+        print(
+            "SEND",
+            "seq=", client.current_input_seq,
+            "pos=",
+            client.board.piece.col,
+            client.board.piece.row,
+            client.board.piece.rot,
+        )
 
     def board_update_event(c):
         d = c.board.to_dict()
