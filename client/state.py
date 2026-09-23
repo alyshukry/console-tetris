@@ -17,6 +17,6 @@ class ClientState:
     tick: int = 0
     ticks_per_second: float = TICKS_PER_SECOND
     gravity_ticks: int = 10
-    tick_offset: int = 1
-    rtt_estimate: float = 1.0
+    tick_offset: int = 0
+    rtt_estimate: float = 0.0
     pending_inputs: dict[int, int] = field(default_factory=dict)
