@@ -1,7 +1,7 @@
 import asyncio
+import time
 
 from websockets.asyncio.server import ServerConnection
-
 from net.client import Client
 from net.protocol import broadcast_json, send_json
 from server.handlers.input import handle_input, apply_input
@@ -25,6 +25,7 @@ class Match:
         self.shared_bag = SevenBag()
         self.gravity = 0.5
         self.tick = 0
+        self.start_time = None
         self.gravity_ticks = round(self.gravity * TICKS_PER_SECOND)
         self.countdown_task: asyncio.Task | None = None
         self.countdown_seconds = 5
@@ -55,6 +56,7 @@ class Match:
             )
             await send_json(ws, "all_boards", self.all_boards_payload())
 
+        self.start_time = time.monotonic()
         await set_match_state(self, MatchState.IN_GAME)
 
     async def end_game(self, winners: list[Client]):
@@ -64,28 +66,31 @@ class Match:
 
     async def game_loop(self):
         while True:
-            if self.state == MatchState.IN_GAME:
-                self.tick += 1
+            target_ticks = int((time.monotonic() - (self.start_time or 0)) * TICKS_PER_SECOND)
 
-                for client in self.connections.values():
-                    if client.board.game_over:
-                        continue
-                    due = [item for item in client.input_queue if item[0] <= self.tick]
-                    client.input_queue = [item for item in client.input_queue if item[0] > self.tick]
-                    for tick, key in sorted(due, key=lambda item: item[0]):
-                        apply_input(client, key)
+            while self.tick < target_ticks:
+                if self.state == MatchState.IN_GAME:
+                    self.tick += 1
 
-                if self.tick % self.gravity_ticks == 0:
-                    alive_before = [
-                        c for c in self.connections.values() if not c.board.game_over
-                    ]
-                    for client in alive_before:
-                        client.board.move_piece_down()
-                    just_died = [c for c in alive_before if c.board.game_over]
-                    alive_after = [c for c in alive_before if not c.board.game_over]
-                    if len(alive_after) <= 1:
-                        await self.end_game(alive_after if alive_after else just_died)
-            await asyncio.sleep(1 / TICKS_PER_SECOND)
+                    for client in self.connections.values():
+                        if client.board.game_over:
+                            continue
+                        due = [item for item in client.input_queue if item[0] <= self.tick]
+                        client.input_queue = [item for item in client.input_queue if item[0] > self.tick]
+                        for tick, key in sorted(due, key=lambda item: item[0]):
+                            apply_input(client, key)
+
+                    if self.tick % self.gravity_ticks == 0:
+                        alive_before = [
+                            c for c in self.connections.values() if not c.board.game_over
+                        ]
+                        for client in alive_before:
+                            client.board.move_piece_down()
+                        just_died = [c for c in alive_before if c.board.game_over]
+                        alive_after = [c for c in alive_before if not c.board.game_over]
+                        if len(alive_after) <= 1:
+                            await self.end_game(alive_after if alive_after else just_died)
+                await asyncio.sleep(1 / TICKS_PER_SECOND)
 
     async def net_loop(self):
         while True:

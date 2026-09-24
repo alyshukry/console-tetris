@@ -1,5 +1,7 @@
 import asyncio
 import json
+import time
+
 from game.collision import fits
 from client.handlers.game import (
     handle_welcome_info, handle_all_boards, handle_piece_moved,
@@ -33,17 +35,23 @@ async def receive_loop(ws, state):
         if handler:
             handler(state, data)
 
+start_time = time.monotonic()
+target_ticks = 0
+
 async def gravity_loop(state):
+    global target_ticks
     while True:
-        await asyncio.sleep(1 / state.ticks_per_second)
-        state.tick += 1
-        if state.tick % state.gravity_ticks == 0:
-            for board in state.boards.values():
-                if not board["game_over"] and fits(
-                    board["cells"], board["piece"], board["width"], board["height"], 1, 0
-                ):
-                    board["piece"]["row"] += 1
-                    
+        await asyncio.sleep(0.01)
+        target_ticks = int((time.monotonic() - start_time) * state.ticks_per_second)
+        while state.tick < target_ticks:
+            state.tick += 1
+            if state.tick % state.gravity_ticks == 0:
+                for board in state.boards.values():
+                    if not board["game_over"] and fits(
+                        board["cells"], board["piece"], board["width"], board["height"], 1, 0
+                    ):
+                        board["piece"]["row"] += 1
+
 async def ping_loop(ws, state):
     while True:
         await send_json(ws, "ping", {"client_tick": state.tick})
