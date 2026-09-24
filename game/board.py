@@ -86,6 +86,8 @@ class Board:
     def move_piece_down(self) -> bool:
         if fits(self.cells, asdict(self.piece), self.width, self.height, 1, 0):
             self.piece.row += 1
+            if self.on_piece_moved:
+                self.on_piece_moved()
             return True
         self.kill_piece()
         return False

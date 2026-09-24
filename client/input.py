@@ -23,7 +23,7 @@ async def input_loop(ws, stdscr, state):
                 apply_local_move(state.boards[state.my_id], key)
                 state.pending_inputs[state.tick] = key
             await send_json(ws, "input", {"key": key, "tick": state.tick})
-        await asyncio.sleep(0.05)
+        await asyncio.sleep(0.025)
 
 
 def apply_local_move(board, key):

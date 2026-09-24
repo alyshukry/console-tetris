@@ -66,10 +66,9 @@ class Match:
 
     async def game_loop(self):
         while True:
-            target_ticks = int((time.monotonic() - (self.start_time or 0)) * TICKS_PER_SECOND)
-
-            while self.tick < target_ticks:
-                if self.state == MatchState.IN_GAME:
+            if self.state == MatchState.IN_GAME:
+                target_ticks = int((time.monotonic() - (self.start_time or 0)) * TICKS_PER_SECOND)
+                while self.tick < target_ticks:
                     self.tick += 1
 
                     for client in self.connections.values():
