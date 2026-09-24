@@ -2,6 +2,7 @@ import time
 
 from server.match_state import MatchState
 
+
 def handle_match_state(state, data):
     state.match_state = MatchState(data["state"])
     if state.match_state == MatchState.LOBBY:
@@ -11,18 +12,23 @@ def handle_match_state(state, data):
     if state.match_state == MatchState.RESULTS:
         state.winners = data["winners"]
 
+
 def handle_player_joined(state, data):
     if state.match_state == MatchState.LOBBY:
         state.player_count += 1
 
+
 def handle_player_ready(state, data):
     state.ready_count += 1
+
 
 def handle_player_unready(state, data):
     state.ready_count -= 1
 
+
 def handle_countdown_tick(state, data):
     state.countdown = data["seconds"]
+
 
 def handle_player_left(state, data):
     if state.match_state == MatchState.LOBBY:
@@ -31,10 +37,12 @@ def handle_player_left(state, data):
             state.ready_count -= 1
     if state.match_state == MatchState.IN_GAME:
         state.boards.pop(data["player_id"], None)
-        
+
+
 def handle_pong(state, data):
-    rtt_seconds = time.monotonic() - data["sent_at"]
+    rtt_seconds = time.monotonic() - data["client_sent_at"]
     one_way_ticks = (rtt_seconds / 2) * state.ticks_per_second
     state.rtt_estimate = 0.8 * state.rtt_estimate + 0.2 * one_way_ticks
     target_offset = (data["server_tick"] + state.rtt_estimate) - state.tick
+    print(f"rtt={rtt_seconds*1000:.1f}ms one_way_ticks={one_way_ticks:.2f} rtt_est={state.rtt_estimate:.2f} offset={target_offset:.2f} tick={state.tick}->{state.tick+round(target_offset)}")
     state.tick += round(target_offset)
