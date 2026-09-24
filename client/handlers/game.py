@@ -1,3 +1,5 @@
+import time
+
 from client.input import apply_local_move
 
 
@@ -7,6 +9,7 @@ def handle_welcome_info(state, data):
     state.ticks_per_second = data["ticks_per_second"]
     state.gravity_ticks = data["gravity_ticks"]
     state.tick = data["tick"] + state.tick_offset
+    state.start_time = time.monotonic()
 
 def handle_all_boards(state, data):
     state.boards = {int(k): v for k, v in data["boards"].items()}

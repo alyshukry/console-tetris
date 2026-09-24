@@ -21,3 +21,4 @@ class ClientState:
     rtt_estimate: float = 0.0
     pending_inputs: dict[int, int] = field(default_factory=dict)
     first_pong_received: bool = False
+    start_time: float = field(default_factory=lambda: __import__("time").monotonic())

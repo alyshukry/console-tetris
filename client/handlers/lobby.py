@@ -1,3 +1,5 @@
+import time
+
 from server.match_state import MatchState
 
 def handle_match_state(state, data):
@@ -31,12 +33,8 @@ def handle_player_left(state, data):
         state.boards.pop(data["player_id"], None)
         
 def handle_pong(state, data):
-    rtt_ticks = state.tick - data["client_tick"]
-    one_way_ticks = rtt_ticks / 2
+    rtt_seconds = time.monotonic() - data["sent_at"]
+    one_way_ticks = (rtt_seconds / 2) * state.ticks_per_second
     state.rtt_estimate = 0.8 * state.rtt_estimate + 0.2 * one_way_ticks
     target_offset = (data["server_tick"] + state.rtt_estimate) - state.tick
-    if not state.first_pong_received:
-        state.tick += round(target_offset)
-        state.first_pong_received = True
-    else:
-        state.tick += max(-1, min(round(target_offset), 1))
+    state.tick += round(target_offset)

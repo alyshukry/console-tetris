@@ -90,6 +90,7 @@ class Match:
                         alive_after = [c for c in alive_before if not c.board.game_over]
                         if len(alive_after) <= 1:
                             await self.end_game(alive_after if alive_after else just_died)
+                            break
                 await asyncio.sleep(1 / TICKS_PER_SECOND)
 
     async def net_loop(self):
@@ -119,4 +120,4 @@ class Match:
                 await broadcast_json(self, "player_unready", None, [ws])
                 await cancel_countdown(self)
             case "ping":
-                await send_json(ws, "pong", {"client_tick": data.get("client_tick"), "server_tick": self.tick})
+                await send_json(ws, "pong", {"sent_at": time.monotonic(), "server_tick": self.tick})

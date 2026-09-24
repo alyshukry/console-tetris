@@ -12,7 +12,13 @@ async def input_loop(ws, stdscr, state):
             await send_json(ws, "unready" if state.ready else "ready")
             state.ready = not state.ready
             state.ready_count += 1 if state.ready else -1
-        if key != -1 and key in (curses.KEY_LEFT, curses.KEY_RIGHT, curses.KEY_UP, curses.KEY_DOWN, ord(" ")):
+        if key != -1 and key in (
+            curses.KEY_LEFT,
+            curses.KEY_RIGHT,
+            curses.KEY_UP,
+            curses.KEY_DOWN,
+            ord(" "),
+        ):
             if state.my_id in state.boards:
                 apply_local_move(state.boards[state.my_id], key)
                 state.pending_inputs[state.tick] = key
@@ -42,5 +48,5 @@ def apply_local_move(board, key):
         elif key == ord(" "):
             while fits(cells, piece, w, h, 1, 0):
                 piece["row"] += 1
-        
+
         return {"col": piece["col"], "row": piece["row"], "rot": piece["rot"]}
