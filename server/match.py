@@ -60,35 +60,51 @@ class Match:
         await set_match_state(self, MatchState.IN_GAME)
 
     async def end_game(self, winners: list[Client]):
-        await set_match_state(self, MatchState.RESULTS, {"winners": [c.id for c in winners]})
+        await set_match_state(
+            self, MatchState.RESULTS, {"winners": [c.id for c in winners]}
+        )
         await asyncio.sleep(5)
         await reset_to_lobby(self)
 
     async def game_loop(self):
         while True:
             if self.state == MatchState.IN_GAME:
-                target_ticks = int((time.monotonic() - (self.start_time or 0)) * TICKS_PER_SECOND)
+                target_ticks = int(
+                    (time.monotonic() - (self.start_time or 0)) * TICKS_PER_SECOND
+                )
                 while self.tick < target_ticks:
                     self.tick += 1
 
                     for client in self.connections.values():
                         if client.board.game_over:
                             continue
-                        due = [item for item in client.input_queue if item[0] <= self.tick]
-                        client.input_queue = [item for item in client.input_queue if item[0] > self.tick]
+                        due = [
+                            item for item in client.input_queue if item[0] <= self.tick
+                        ]
+                        client.input_queue = [
+                            item for item in client.input_queue if item[0] > self.tick
+                        ]
                         for tick, key in sorted(due, key=lambda item: item[0]):
                             apply_input(client, key)
+                            client.last_processed_input_tick = max(
+                                client.last_processed_input_tick,
+                                tick,
+                            )
 
                     if self.tick % self.gravity_ticks == 0:
                         alive_before = [
-                            c for c in self.connections.values() if not c.board.game_over
+                            c
+                            for c in self.connections.values()
+                            if not c.board.game_over
                         ]
                         for client in alive_before:
                             client.board.move_piece_down()
                         just_died = [c for c in alive_before if c.board.game_over]
                         alive_after = [c for c in alive_before if not c.board.game_over]
                         if len(alive_after) <= 1:
-                            await self.end_game(alive_after if alive_after else just_died)
+                            await self.end_game(
+                                alive_after if alive_after else just_died
+                            )
                             break
             await asyncio.sleep(1 / TICKS_PER_SECOND)
 
@@ -119,4 +135,8 @@ class Match:
                 await broadcast_json(self, "player_unready", None, [ws])
                 await cancel_countdown(self)
             case "ping":
-                await send_json(ws, "pong", {"client_sent_at": data.get("sent_at"), "server_tick": self.tick})
+                await send_json(
+                    ws,
+                    "pong",
+                    {"client_sent_at": data.get("sent_at"), "server_tick": self.tick},
+                )

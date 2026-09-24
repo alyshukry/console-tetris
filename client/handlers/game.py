@@ -25,16 +25,39 @@ def handle_piece_moved(state, data):
         return
 
     server_tick = data.get("tick")
+    ack_input_tick = data.get("ack_input_tick")
+
+    print(
+        f"[RECONCILE] "
+        f"client_tick={state.tick} "
+        f"server_tick={server_tick} "
+        f"server_piece=({data['col']},{data['row']},{data['rot']}) "
+        f"pending={sorted(state.pending_inputs)} "
+        f"local_before=("
+        f"{board['piece']['col']},"
+        f"{board['piece']['row']},"
+        f"{board['piece']['rot']})"
+    )
 
     board["piece"]["col"] = data["col"]
     board["piece"]["row"] = data["row"]
     board["piece"]["rot"] = data["rot"]
 
-    for t in [t for t in state.pending_inputs if server_tick is not None and t <= server_tick]:
-        state.pending_inputs.pop(t, None)
+    if ack_input_tick is not None:
+        for tick in list(state.pending_inputs):
+            if tick <= ack_input_tick:
+                del state.pending_inputs[tick]
 
     for t in sorted(state.pending_inputs):
         apply_local_move(board, state.pending_inputs[t])
+        
+    print(
+        f"[RECONCILE RESULT] "
+        f"piece=("
+        f"{board['piece']['col']},"
+        f"{board['piece']['row']},"
+        f"{board['piece']['rot']})"
+    )
 
 
 def handle_piece_killed(state, data):

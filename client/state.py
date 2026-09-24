@@ -22,4 +22,3 @@ class ClientState:
     pending_inputs: dict[int, int] = field(default_factory=dict)
     first_pong_received: bool = False
     start_time: float = field(default_factory=lambda: __import__("time").monotonic())
-    server_piece: dict = field(default_factory=dict)

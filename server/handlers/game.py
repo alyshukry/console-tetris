@@ -26,6 +26,7 @@ def make_callbacks(match, client):
                     "col": client.board.piece.col,
                     "rot": client.board.piece.rot,
                     "tick": match.tick,
+                    "ack_input_tick": client.last_processed_input_tick,
                 },
             )
         )
