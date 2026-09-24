@@ -45,9 +45,12 @@ async def cancel_countdown(match):
 
 async def reset_to_lobby(match):
     match.shared_bag = SevenBag()
+    match.tick = 0
     for client in match.connections.values():
         client.ready = False
         client.board = Board(match.shared_bag)
+        client.input_queue.clear()
+        client.last_processed_input_tick = -1
 
     await set_match_state(
         match,

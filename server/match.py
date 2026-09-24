@@ -85,11 +85,11 @@ class Match:
                             item for item in client.input_queue if item[0] > self.tick
                         ]
                         for tick, key in sorted(due, key=lambda item: item[0]):
-                            apply_input(client, key)
                             client.last_processed_input_tick = max(
                                 client.last_processed_input_tick,
                                 tick,
                             )
+                            apply_input(client, key)
 
                     if self.tick % self.gravity_ticks == 0:
                         alive_before = [
