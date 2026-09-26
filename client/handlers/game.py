@@ -7,6 +7,7 @@ def handle_welcome_info(state, data):
     state.my_id = data["your_id"]
     state.ticks_per_second = data["ticks_per_second"]
     state.gravity_ticks = data["gravity_ticks"]
+    state.tick = data["tick"]
     state.start_time = time.monotonic()
 
 def handle_all_boards(state, data):
