@@ -10,7 +10,8 @@ from websockets.exceptions import ConnectionClosed
 from game.board import Board
 from server.player import Player
 from net.protocol import broadcast_json, send_json
-from server.match import Match, MatchState
+from server.match import Match
+from shared.match_state import MatchState
 
 logging.basicConfig(level=logging.DEBUG)
 

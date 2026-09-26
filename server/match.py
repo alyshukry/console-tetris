@@ -47,6 +47,12 @@ class Match:
                 },
             )
 
+            await send_json(
+                ws,
+                "all_boards",
+                self.all_boards_payload()
+            )
+
         self.start_time = time.monotonic()
         await set_match_state(self, MatchState.IN_GAME)
 
