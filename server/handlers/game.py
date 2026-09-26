@@ -2,8 +2,8 @@ from game.garbage import calc_garbage
 from server.player import Player
 
 
-def make_callbacks(match, player):
-    def on_piece_moved():
+def handle_move_result(match, player, result):
+    if result.moved:
         broadcast_event(
             match,
             (
@@ -12,10 +12,10 @@ def make_callbacks(match, player):
                     "board_id": player.id,
                     "row": player.board.piece.row,
                     "col": player.board.piece.col,
-                    "rot": player.board.piece.rot
+                    "rot": player.board.piece.rot,
                 },
             ),
-            [player]
+            [player],
         )
         player.outbox.append(
             (
@@ -31,26 +31,14 @@ def make_callbacks(match, player):
             )
         )
 
-    def board_update_event(p):
-        d = p.board.to_dict()
-        return (
-            "piece_killed",
-            {
-                "board_id": p.id,
-                "cells": d.get("cells"),
-                "new_piece": d.get("piece"),
-                "next_piece": d.get("next_piece"),
-            },
-        )
-
-    def on_piece_killed(lines: int):
+    if result.locked:
         garbage = {}
-        if lines > 0:
+        if result.lines_cleared > 0:
             recipients = [
                 p.id for p in match.connections.values()
                 if p.id != player.id and not p.board.game_over
             ]
-            garbage = calc_garbage(recipients, lines)
+            garbage = calc_garbage(recipients, result.lines_cleared)
 
         broadcast_event(match, board_update_event(player))
         for recipient_id, amount in garbage.items():
@@ -60,10 +48,21 @@ def make_callbacks(match, player):
             recipient_player.board.add_garbage(amount)
             broadcast_event(match, board_update_event(recipient_player))
 
-    def on_lose():
+    if result.game_over:
         broadcast_event(match, ("lose", {"board_id": player.id}))
 
-    return on_piece_moved, on_piece_killed, on_lose
+
+def board_update_event(p):
+    d = p.board.to_dict()
+    return (
+        "piece_killed",
+        {
+            "board_id": p.id,
+            "cells": d.get("cells"),
+            "new_piece": d.get("piece"),
+            "next_piece": d.get("next_piece"),
+        },
+    )
 
 
 def broadcast_event(match, event, exclude: list[Player] | None = None):

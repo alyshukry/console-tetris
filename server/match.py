@@ -2,6 +2,7 @@ import asyncio
 import time
 
 from websockets.asyncio.server import ServerConnection
+from server.handlers.game import handle_move_result
 from server.player import Player
 from net.protocol import broadcast_json, send_json
 from server.handlers.input import handle_input, apply_input
@@ -11,7 +12,6 @@ from server.handlers.lobby import (
     cancel_countdown,
     reset_to_lobby,
 )
-from server.handlers.game import make_callbacks
 from shared.match_state import MatchState, set_match_state
 from game.constants import TICKS_PER_SECOND
 
@@ -75,12 +75,14 @@ class Match:
                         player.input_queue = [
                             item for item in player.input_queue if item[0] > self.tick
                         ]
-                        for tick, action in sorted(due, key=lambda item: item[0]):
+                        for tick, seq, action in sorted(
+                            due, key=lambda item: (item[0], item[1])
+                        ):
                             player.last_processed_input_tick = max(
                                 player.last_processed_input_tick,
                                 tick,
                             )
-                            apply_input(player, action)
+                            apply_input(self, player, action)
 
                     if self.tick % self.gravity_ticks == 0:
                         alive_before = [
@@ -89,7 +91,8 @@ class Match:
                             if not p.board.game_over
                         ]
                         for player in alive_before:
-                            player.board.move_piece_down()
+                            result = player.board.move_piece_down()
+                            handle_move_result(self, player, result)
                         just_died = [p for p in alive_before if p.board.game_over]
                         alive_after = [p for p in alive_before if not p.board.game_over]
                         if len(alive_after) <= 1:
@@ -115,7 +118,7 @@ class Match:
         player = self.connections[ws]
         match data.get("type"):
             case "input":
-                handle_input(player, data.get("action"), data.get("tick"))
+                handle_input(player, data.get("action"), data.get("tick"), data.get("seq"))
             case "ready":
                 player.ready = True
                 await broadcast_json(self, "player_ready", None, [ws])

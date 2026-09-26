@@ -105,11 +105,13 @@ class Board:
         return MoveResult(False, False, 0, False)
 
     def drop_piece(self):
-        while self.move_piece_down().moved:
-            pass
+        result = self.move_piece_down()
+        while result.moved:
+            result = self.move_piece_down()
+        return result
 
     def soft_drop_piece(self):
-        self.move_piece_down() # already does on_piece_moved
+        return self.move_piece_down()
 
     def rotate_piece(self):
         new_rot = (self.piece.rot + 1) % 4
