@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from game.board import Board
 
 @dataclass
-class Client:
+class Player:
     board: Board
     id: int
     ready: bool = False

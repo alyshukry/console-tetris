@@ -22,8 +22,20 @@ async def input_loop(ws, stdscr, state):
             if state.my_id in state.boards:
                 apply_local_move(state.boards[state.my_id], key)
                 state.pending_inputs[state.tick] = key
-            await send_json(ws, "input", {"key": key, "tick": state.tick})
+            await send_json(
+                ws, "input", {"action": key_to_action(key), "tick": state.tick}
+            )
         await asyncio.sleep(0.025)
+
+
+def key_to_action(key) -> str | None:
+    return {
+        curses.KEY_LEFT: "left",
+        curses.KEY_RIGHT: "right",
+        curses.KEY_UP: "rotate",
+        curses.KEY_DOWN: "soft_drop",
+        ord(" "): "drop",
+    }.get(key)
 
 
 def apply_local_move(board, key):

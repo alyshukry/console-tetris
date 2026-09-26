@@ -6,7 +6,7 @@ from server.match import MatchState
 
 
 @dataclass
-class ClientState:
+class PlayerState:
     boards: dict[int, dict] = field(default_factory=dict)
     my_id: int = -1
     match_state: MatchState = MatchState.LOBBY

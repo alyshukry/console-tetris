@@ -9,6 +9,13 @@ from dataclasses import dataclass, field, asdict
 
 
 @dataclass
+class MoveResult:
+    moved: bool
+    locked: bool
+    lines_cleared: int
+    game_over: bool
+
+@dataclass
 class Board:
     bag: SevenBag
     piece_index: int = 0
@@ -17,9 +24,6 @@ class Board:
     game_over: bool = False
     cells: list[list[int | str]] = field(init=False)
     piece: Piece = field(init=False)
-    on_piece_moved: Callable[[], None] | None = None
-    on_piece_killed: Callable[[int], None] | None = None
-    on_lose: Callable[[], None] | None = None
 
     def __post_init__(self):
         self.cells = [[0] * self.width for _ in range(self.height)]
@@ -33,7 +37,7 @@ class Board:
             "piece": asdict(self.piece),
             "next_piece": self.bag.get(
                 self.piece_index + 1
-            ),  # since client has no bag access
+            ),  # since player has no bag access
             "game_over": self.game_over,
         }
 
@@ -58,10 +62,8 @@ class Board:
             self.cells[dr + self.piece.row][dc + self.piece.col] = self.piece.shape
 
         lines_cleared = self.clear_lines()
-        self.spawn_piece()
-
-        if self.on_piece_killed:
-            self.on_piece_killed(lines_cleared)
+        spawn_ok = self.spawn_piece()
+        return MoveResult(False, True, lines_cleared, not spawn_ok)
 
     def spawn_piece(self) -> bool:
         if not self.game_over:
@@ -80,44 +82,36 @@ class Board:
 
     def lose(self):
         self.game_over = True
-        if self.on_lose:
-            self.on_lose()
+        return MoveResult(False, False, 0, True)
 
-    def move_piece_down(self) -> bool:
+    def move_piece_down(self):
         if fits(self.cells, asdict(self.piece), self.width, self.height, 1, 0):
             self.piece.row += 1
-            if self.on_piece_moved:
-                self.on_piece_moved()
-            return True
-        self.kill_piece()
-        return False
+            return MoveResult(True, False, 0, False)
+        return self.kill_piece()
 
-    def move_piece_right(self) -> bool:
+    def move_piece_right(self):
         if fits(self.cells, asdict(self.piece), self.width, self.height, 0, 1):
             self.piece.col += 1
-            if self.on_piece_moved:
-                self.on_piece_moved()
-            return True
-        return False
+            return MoveResult(True, False, 0, False)
+        return MoveResult(False, False, 0, False)
 
-    def move_piece_left(self) -> bool:
+    def move_piece_left(self):
         if fits(
             self.cells, asdict(self.piece), self.width, self.height, 0, -1
         ):
             self.piece.col -= 1
-            if self.on_piece_moved:
-                self.on_piece_moved()
-            return True
-        return False
+            return MoveResult(True, False, 0, False)
+        return MoveResult(False, False, 0, False)
 
     def drop_piece(self):
-        while self.move_piece_down():
+        while self.move_piece_down().moved:
             pass
 
     def soft_drop_piece(self):
         self.move_piece_down() # already does on_piece_moved
 
-    def rotate_piece(self) -> bool:
+    def rotate_piece(self):
         new_rot = (self.piece.rot + 1) % 4
         if fits(
             self.cells,
@@ -129,10 +123,8 @@ class Board:
             rot=new_rot,
         ):
             self.piece.rot = new_rot
-            if self.on_piece_moved:
-                self.on_piece_moved()
-            return True
-        return False
+            return MoveResult(True, False, 0, False)
+        return MoveResult(False, False, 0, False)
 
     def add_garbage(self, n: int):
         gap = random.randint(0, self.width - 1)

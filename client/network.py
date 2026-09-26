@@ -4,13 +4,20 @@ import time
 
 from game.collision import fits
 from client.handlers.game import (
-    handle_welcome_info, handle_all_boards, handle_piece_moved,
-    handle_piece_killed, handle_lose,
+    handle_welcome_info,
+    handle_all_boards,
+    handle_piece_moved,
+    handle_piece_killed,
+    handle_lose,
 )
 from client.handlers.lobby import (
-    handle_match_state, handle_player_joined, handle_player_ready,
-    handle_player_unready, handle_countdown_tick, handle_player_left, handle_pong,
+    handle_player_ready,
+    handle_player_unready,
+    handle_countdown_tick,
 )
+from client.handlers.sync import handle_pong
+from client.handlers.match import handle_match_state
+from client.handlers.connection import handle_player_joined, handle_player_left
 from net.protocol import send_json
 
 HANDLERS = {
@@ -28,6 +35,7 @@ HANDLERS = {
     "pong": handle_pong,
 }
 
+
 async def receive_loop(ws, state):
     async for msg in ws:
         data = json.loads(msg)
@@ -39,17 +47,27 @@ async def receive_loop(ws, state):
 async def gravity_loop(state):
     while True:
         await asyncio.sleep(0.01)
-        target_ticks = int((time.monotonic() - state.start_time) * state.ticks_per_second)
+        target_ticks = int(
+            (time.monotonic() - state.start_time) * state.ticks_per_second
+        )
         while state.tick < target_ticks:
             state.tick += 1
             if state.tick % state.gravity_ticks == 0:
                 for board in state.boards.values():
                     if not board["game_over"] and fits(
-                        board["cells"], board["piece"], board["width"], board["height"], 1, 0
+                        board["cells"],
+                        board["piece"],
+                        board["width"],
+                        board["height"],
+                        1,
+                        0,
                     ):
                         board["piece"]["row"] += 1
 
+
 async def ping_loop(ws, state):
     while True:
-        await send_json(ws, "ping", {"client_tick": state.tick, "sent_at": time.monotonic()})
+        await send_json(
+            ws, "ping", {"player_tick": state.tick, "sent_at": time.monotonic()}
+        )
         await asyncio.sleep(1)
