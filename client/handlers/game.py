@@ -12,6 +12,8 @@ def handle_welcome_info(state: ClientState, data):
     state.tick = data["tick"]
     state.start_time = time.monotonic()
 
+    state.boards[state.my_id] = BoardState.from_dict(data["your_board"])
+
 
 def handle_all_boards(state: ClientState, data):
     state.boards = {

@@ -73,7 +73,7 @@ def draw(
             board.width + y - 1 + 8,
             10,
         )
-        draw_piece(board, stdscr, x, y, board.next_piece, 4, board.width + 4, 0)
+        draw_piece(board, stdscr, x, y, board.next_piece.shape, 4, board.width + 4, 0)
         stdscr.addstr(x + 1, (board.width + y) * 2 + 4, "NEXT PIECE:")
 
     if not board.game_over:
