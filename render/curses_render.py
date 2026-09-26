@@ -1,8 +1,9 @@
 import curses
+import asyncio
 
+from client.state.board import BoardState
 from game.collision import get_ghost_row
 from game.constants import SHAPES, COLORS
-import asyncio
 from server.match import MatchState
 
 
@@ -35,7 +36,11 @@ async def render_loop(stdscr, state):
                 if state.my_id in state.boards:
                     draw_boards(state.boards, stdscr, state.my_id)
             case MatchState.RESULTS:
-                stdscr.addstr(0, 0, f"{state.winners} win{"s" if len(state.winners) <= 1 else ""} the game!")
+                stdscr.addstr(
+                    0,
+                    0,
+                    f"{state.winners} win{"s" if len(state.winners) <= 1 else ""} the game!",
+                )
         await asyncio.sleep(0.02)
 
 
@@ -47,14 +52,14 @@ def fill_rect(stdscr, x1, y1, x2, y2, color_pair):
 
 
 def draw(
-    board: dict, stdscr, x: int, y: int, show_next: bool
+    board: BoardState, stdscr, x: int, y: int, show_next: bool
 ) -> list[int]:  # returns total height and width of render
     fill_rect(
         stdscr,
         x,
         y,
-        x + board["height"] - 1,
-        y + board["width"] - 1,
+        x + board.height - 1,
+        y + board.width - 1,
         10,
     )
     draw_border(board, stdscr, x, y)
@@ -63,72 +68,72 @@ def draw(
         fill_rect(
             stdscr,
             x + 2,
-            board["width"] + y - 1 + 3,
+            board.width + y - 1 + 3,
             x + 6,
-            board["width"] + y - 1 + 8,
+            board.width + y - 1 + 8,
             10,
         )
-        draw_piece(board, stdscr, x, y, board["next_piece"], 4, board["width"] + 4, 0)
-        stdscr.addstr(x + 1, (board["width"] + y) * 2 + 4, "NEXT PIECE:")
+        draw_piece(board, stdscr, x, y, board.next_piece, 4, board.width + 4, 0)
+        stdscr.addstr(x + 1, (board.width + y) * 2 + 4, "NEXT PIECE:")
 
-    if not board["game_over"]:
+    if not board.game_over:
         draw_ghost(board, stdscr, x, y)
 
-    p = board["piece"]
-    draw_piece(board, stdscr, x, y, p["shape"], p["row"], p["col"], p["rot"])
+    p = board.piece
+    draw_piece(board, stdscr, x, y, p.shape, p.row, p.col, p.rot)
 
-    for row in range(board["height"]):
-        for col in range(board["width"]):
-            cell = board["cells"][row][col]
+    for row in range(board.height):
+        for col in range(board.width):
+            cell = board.cells[row][col]
             if cell not in (0, None):
                 stdscr.addstr(
                     row + x,
                     (col + y) * 2,
                     "██",
-                    curses.color_pair(9 if board["game_over"] else COLORS[cell]),
+                    curses.color_pair(9 if board.game_over else COLORS[cell]),
                 )
 
-    return [board["height"] + 2, board["width"] + 2 + (7 if show_next else 0)]
+    return [board.height + 2, board.width + 2 + (7 if show_next else 0)]
 
 
-def draw_piece(board: dict, stdscr, bx, by, shape, row, col, rot):
+def draw_piece(board: BoardState, stdscr, bx, by, shape, row, col, rot):
     for dr, dc in SHAPES[shape][rot]:
         if row + dr + bx > 0:  # prevent from rendering above board
             stdscr.addstr(
                 row + dr + bx,
                 (col + dc + by) * 2,
                 "██",
-                curses.color_pair(9 if board["game_over"] else COLORS[shape]),
+                curses.color_pair(9 if board.game_over else COLORS[shape]),
             )
 
 
-def draw_ghost(board: dict, stdscr, bx, by):
-    gr = get_ghost_row(board["cells"], board["piece"], board["width"], board["height"])
-    p = board["piece"]
-    for dr, dc in SHAPES[p["shape"]][p["rot"]]:
+def draw_ghost(board: BoardState, stdscr, bx, by):
+    gr = get_ghost_row(board.cells, board.piece, board.width, board.height)
+    p = board.piece
+    for dr, dc in SHAPES[p.shape][p.rot]:
         stdscr.addstr(
-            p["row"] + gr + dr + bx,
-            (p["col"] + dc + by) * 2,
+            p.row + gr + dr + bx,
+            (p.col + dc + by) * 2,
             "░░",
-            curses.color_pair(COLORS[p["shape"]]),
+            curses.color_pair(COLORS[p.shape]),
         )
 
 
-def draw_border(board: dict, stdscr, bx, by):
+def draw_border(board: BoardState, stdscr, bx, by):
     top = bx - 1
     left = (by * 2) - 2
-    bottom = bx + board["height"]
-    right = (by + board["width"]) * 2
+    bottom = bx + board.height
+    right = (by + board.width) * 2
 
     stdscr.addstr(
-        top, left, " ▄" + "▄" * (board["width"] * 2) + "▄ ", curses.color_pair(11)
+        top, left, " ▄" + "▄" * (board.width * 2) + "▄ ", curses.color_pair(11)
     )
     # stdscr.addstr(top, left + 2, " USRNM ")
-    for row in range(board["height"]):
+    for row in range(board.height):
         stdscr.addstr(bx + row, left, " █", curses.color_pair(11))
         stdscr.addstr(bx + row, right, "█ ", curses.color_pair(11))
     stdscr.addstr(
-        bottom, left, " ▀" + "▀" * (board["width"] * 2) + "▀ ", curses.color_pair(11)
+        bottom, left, " ▀" + "▀" * (board.width * 2) + "▀ ", curses.color_pair(11)
     )
 
 

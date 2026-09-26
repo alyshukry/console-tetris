@@ -1,4 +1,5 @@
 from game.garbage import calc_garbage
+from net.serialization import serialize_board
 from server.player import Player
 
 
@@ -53,7 +54,7 @@ def handle_move_result(match, player, result):
 
 
 def board_update_event(p):
-    d = p.board.to_dict()
+    d = serialize_board(p.board)
     return (
         "piece_killed",
         {

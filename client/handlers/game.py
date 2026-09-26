@@ -1,6 +1,7 @@
 import time
 
 from client.input import apply_local_move
+from client.state.board import BoardState
 from client.state.client import ClientState
 
 
@@ -13,7 +14,10 @@ def handle_welcome_info(state: ClientState, data):
 
 
 def handle_all_boards(state: ClientState, data):
-    state.boards = {int(k): v for k, v in data["boards"].items()}
+    state.boards = {
+        int(player_id): BoardState.from_dict(board)
+        for player_id, board in data["boards"].items()
+    }
 
 
 def handle_piece_moved(state, data):
@@ -42,12 +46,16 @@ def handle_piece_moved(state, data):
         apply_local_move(board, key)
 
 
-def handle_piece_killed(state, data):
+from net.serialization import deserialize_piece
+
+
+def handle_piece_killed(state: ClientState, data):
     board_id = int(data["board_id"])
-    b = state.boards[board_id]
-    b.piece = data["new_piece"]
-    b.next_piece = data["next_piece"]
-    b.cells = data["cells"]
+    board = state.boards[board_id]
+
+    board.piece = deserialize_piece(data["new_piece"])
+    board.next_piece = deserialize_piece(data["next_piece"])
+    board.cells = data["cells"]
 
 
 def handle_lose(state, data):

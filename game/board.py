@@ -1,11 +1,11 @@
 import random
 
+from dataclasses import dataclass, field
+
 from .constants import SHAPES
 from .seven_bag import SevenBag
 from .piece import Piece
 from .collision import fits, fits_abs
-from typing import Callable
-from dataclasses import dataclass, field, asdict
 
 
 @dataclass
@@ -14,6 +14,7 @@ class MoveResult:
     locked: bool
     lines_cleared: int
     game_over: bool
+
 
 @dataclass
 class Board:
@@ -28,18 +29,6 @@ class Board:
     def __post_init__(self):
         self.cells = [[0] * self.width for _ in range(self.height)]
         self.piece = Piece(self.bag.get(0), 0, int(self.width / 2), 0)
-
-    def to_dict(self) -> dict:
-        return {
-            "cells": self.cells,
-            "width": self.width,
-            "height": self.height,
-            "piece": asdict(self.piece),
-            "next_piece": self.bag.get(
-                self.piece_index + 1
-            ),  # since player has no bag access
-            "game_over": self.game_over,
-        }
 
     def get_cell(self, row, col) -> None | str:
         if 0 <= row < len(self.cells) and 0 <= col < len(self.cells[0]):
@@ -70,7 +59,12 @@ class Board:
             self.piece_index += 1
             self.piece.shape = self.bag.get(self.piece_index)
             if not fits_abs(
-                self.cells, asdict(self.piece), self.width, self.height, 0, int(self.width / 2)
+                self.cells,
+                self.piece,
+                self.width,
+                self.height,
+                0,
+                int(self.width / 2),
             ):
                 self.lose()
                 return False
@@ -85,21 +79,19 @@ class Board:
         return MoveResult(False, False, 0, True)
 
     def move_piece_down(self):
-        if fits(self.cells, asdict(self.piece), self.width, self.height, 1, 0):
+        if fits(self.cells, self.piece, self.width, self.height, 1, 0):
             self.piece.row += 1
             return MoveResult(True, False, 0, False)
         return self.kill_piece()
 
     def move_piece_right(self):
-        if fits(self.cells, asdict(self.piece), self.width, self.height, 0, 1):
+        if fits(self.cells, self.piece, self.width, self.height, 0, 1):
             self.piece.col += 1
             return MoveResult(True, False, 0, False)
         return MoveResult(False, False, 0, False)
 
     def move_piece_left(self):
-        if fits(
-            self.cells, asdict(self.piece), self.width, self.height, 0, -1
-        ):
+        if fits(self.cells, self.piece, self.width, self.height, 0, -1):
             self.piece.col -= 1
             return MoveResult(True, False, 0, False)
         return MoveResult(False, False, 0, False)
@@ -117,7 +109,7 @@ class Board:
         new_rot = (self.piece.rot + 1) % 4
         if fits(
             self.cells,
-            asdict(self.piece),
+            self.piece,
             self.width,
             self.height,
             0,
