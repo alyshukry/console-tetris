@@ -6,12 +6,8 @@ from server.handlers.game import handle_move_result
 from server.player import Player
 from net.protocol import broadcast_json, send_json
 from server.handlers.input import handle_input, apply_input
-from server.handlers.lobby import (
-    check_ready,
-    start_countdown,
-    cancel_countdown,
-    reset_to_lobby,
-)
+from server.handlers.lobby import check_ready
+from server.handlers.life_cycle import start_countdown, cancel_countdown, reset_to_lobby
 from shared.match_state import MatchState, set_match_state
 from game.constants import TICKS_PER_SECOND
 
@@ -118,7 +114,9 @@ class Match:
         player = self.connections[ws]
         match data.get("type"):
             case "input":
-                handle_input(player, data.get("action"), data.get("tick"), data.get("seq"))
+                handle_input(
+                    player, data.get("action"), data.get("tick"), data.get("seq")
+                )
             case "ready":
                 player.ready = True
                 await broadcast_json(self, "player_ready", None, [ws])

@@ -2,6 +2,9 @@ import asyncio
 import json
 import time
 
+from websockets import ClientConnection
+
+from client.state.client import ClientState
 from game.collision import fits
 from client.handlers.game import (
     handle_welcome_info,
@@ -36,7 +39,7 @@ HANDLERS = {
 }
 
 
-async def receive_loop(ws, state):
+async def receive_loop(ws: ClientConnection, state: ClientState):
     async for msg in ws:
         data = json.loads(msg)
         handler = HANDLERS.get(data["type"])
@@ -44,7 +47,7 @@ async def receive_loop(ws, state):
             handler(state, data)
 
 
-async def gravity_loop(state):
+async def gravity_loop(state: ClientState):
     while True:
         await asyncio.sleep(0.01)
         target_ticks = int(
@@ -54,18 +57,18 @@ async def gravity_loop(state):
             state.tick += 1
             if state.tick % state.gravity_ticks == 0:
                 for board in state.boards.values():
-                    if not board["game_over"] and fits(
-                        board["cells"],
-                        board["piece"],
-                        board["width"],
-                        board["height"],
+                    if not board.game_over and fits(
+                        board.cells,
+                        board.piece,
+                        board.width,
+                        board.height,
                         1,
                         0,
                     ):
-                        board["piece"]["row"] += 1
+                        board.piece.row += 1
 
 
-async def ping_loop(ws, state):
+async def ping_loop(ws: ClientConnection, state: ClientState):
     while True:
         await send_json(
             ws, "ping", {"player_tick": state.tick, "sent_at": time.monotonic()}

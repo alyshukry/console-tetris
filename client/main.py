@@ -4,13 +4,13 @@ import websockets
 import sys
 
 from render.curses_render import setup_curses, render_loop
-from client.state import PlayerState
+from client.state.client import ClientState
 from client.network import ping_loop, receive_loop, gravity_loop
 from client.input import input_loop
 
 def main(stdscr):
     setup_curses(stdscr)
-    state = PlayerState()
+    state = ClientState()
     host = sys.argv[1] if len(sys.argv) > 1 else "127.0.0.1"
 
     async def run_player():

@@ -1,7 +1,8 @@
+from client.state.client import ClientState
 from shared.match_state import MatchState
 
 
-def handle_match_state(state, data):
+def handle_match_state(state: ClientState, data):
     state.match_state = MatchState(data["state"])
     if state.match_state == MatchState.LOBBY:
         state.player_count = data["player_count"]

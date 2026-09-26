@@ -1,6 +1,8 @@
 import time
 
-def handle_pong(state, data):
+from client.state.client import ClientState
+
+def handle_pong(state: ClientState, data):
     round_trip_seconds = time.monotonic() - data["player_sent_at"]
 
     one_way_seconds = round_trip_seconds / 2
