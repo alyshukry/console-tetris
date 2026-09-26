@@ -46,7 +46,7 @@ class Board:
 
         return lines_cleared
 
-    def kill_piece(self):
+    def lock_piece(self):
         for dr, dc in SHAPES[self.piece.shape][self.piece.rot]:
             self.cells[dr + self.piece.row][dc + self.piece.col] = self.piece.shape
 
@@ -82,7 +82,7 @@ class Board:
         if fits(self.cells, self.piece, self.width, self.height, 1, 0):
             self.piece.row += 1
             return MoveResult(True, False, 0, False)
-        return self.kill_piece()
+        return self.lock_piece()
 
     def move_piece_right(self):
         if fits(self.cells, self.piece, self.width, self.height, 0, 1):

@@ -10,7 +10,7 @@ from client.handlers.game import (
     handle_welcome_info,
     handle_all_boards,
     handle_piece_moved,
-    handle_piece_killed,
+    handle_piece_locked,
     handle_lose,
 )
 from client.handlers.lobby import (
@@ -27,7 +27,7 @@ HANDLERS = {
     "welcome_info": handle_welcome_info,
     "all_boards": handle_all_boards,
     "piece_moved": handle_piece_moved,
-    "piece_killed": handle_piece_killed,
+    "piece_locked": handle_piece_locked,
     "lose": handle_lose,
     "match_state": handle_match_state,
     "player_joined": handle_player_joined,

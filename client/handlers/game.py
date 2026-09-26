@@ -51,7 +51,7 @@ def handle_piece_moved(state, data):
 from net.serialization import deserialize_piece
 
 
-def handle_piece_killed(state: ClientState, data):
+def handle_piece_locked(state: ClientState, data):
     board_id = int(data["board_id"])
     board = state.boards[board_id]
 

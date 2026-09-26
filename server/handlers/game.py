@@ -56,7 +56,7 @@ def handle_move_result(match, player, result):
 def board_update_event(p):
     d = serialize_board(p.board)
     return (
-        "piece_killed",
+        "piece_locked",
         {
             "board_id": p.id,
             "cells": d.get("cells"),
