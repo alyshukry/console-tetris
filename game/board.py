@@ -115,9 +115,7 @@ class Board:
             pass
 
     def soft_drop_piece(self):
-        self.move_piece_down()
-        if self.on_piece_moved:
-            self.on_piece_moved()
+        self.move_piece_down() # already does on_piece_moved
 
     def rotate_piece(self) -> bool:
         new_rot = (self.piece.rot + 1) % 4

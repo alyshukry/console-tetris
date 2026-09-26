@@ -48,5 +48,3 @@ def apply_local_move(board, key):
         elif key == ord(" "):
             while fits(cells, piece, w, h, 1, 0):
                 piece["row"] += 1
-
-        return {"col": piece["col"], "row": piece["row"], "rot": piece["rot"]}

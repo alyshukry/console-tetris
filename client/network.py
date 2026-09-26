@@ -37,7 +37,6 @@ async def receive_loop(ws, state):
 
 
 async def gravity_loop(state):
-    global target_ticks
     while True:
         await asyncio.sleep(0.01)
         target_ticks = int((time.monotonic() - state.start_time) * state.ticks_per_second)

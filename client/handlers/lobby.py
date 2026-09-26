@@ -53,15 +53,4 @@ def handle_pong(state, data):
 
     target_offset = estimated_server_tick - state.tick
 
-    print(
-        f"rtt={round_trip_seconds * 1000:.1f}ms "
-        f"one_way_ticks={one_way_tick_estimate:.2f} "
-        f"one_way_est={state.one_way_tick_estimate:.2f} "
-        f"server_tick={data['server_tick']} "
-        f"client_tick_before={state.tick} "
-        f"raw_gap={data['server_tick'] - state.tick} "
-        f"offset={target_offset:.2f} "
-        f"tick={state.tick}->{state.tick + round(target_offset)}"
-    )
-
     state.tick += min(max(round(target_offset), -3), 3)

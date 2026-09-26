@@ -23,10 +23,9 @@ class Match:
         from game.seven_bag import SevenBag
 
         self.shared_bag = SevenBag()
-        self.gravity = 0.5
         self.tick = 0
         self.start_time = None
-        self.gravity_ticks = round(self.gravity * TICKS_PER_SECOND)
+        self.gravity_ticks = round(0.5 * TICKS_PER_SECOND)
         self.countdown_task: asyncio.Task | None = None
         self.countdown_seconds = 5
 
@@ -48,7 +47,6 @@ class Match:
                 {
                     "your_board": client.board.to_dict(),
                     "your_id": client.id,
-                    "gravity": self.gravity,
                     "ticks_per_second": TICKS_PER_SECOND,
                     "gravity_ticks": self.gravity_ticks,
                     "tick": self.tick,
