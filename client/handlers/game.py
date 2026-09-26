@@ -32,7 +32,6 @@ def handle_piece_moved(state, data):
         board.piece.rot = data["rot"]
         return
 
-    server_tick = data.get("tick")
     ack_input_tick = data.get("ack_input_tick")
 
     board.piece.col = data["col"]
