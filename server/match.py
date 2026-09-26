@@ -5,6 +5,7 @@ from websockets.asyncio.server import ServerConnection
 from server.handlers.game import handle_move_result
 from server.player import Player
 from net.protocol import broadcast_json, send_json
+from net.serialization import serialize_board
 from server.handlers.input import handle_input, apply_input
 from server.handlers.lobby import check_ready
 from server.handlers.life_cycle import start_countdown, cancel_countdown, reset_to_lobby
@@ -26,7 +27,11 @@ class Match:
         self.countdown_seconds = 5
 
     def all_boards_payload(self):
-        return {"boards": {p.id: p.board.to_dict() for p in self.connections.values()}}
+        return {
+            "boards": {
+                p.id: serialize_board(p.board) for p in self.connections.values()
+            }
+        }
 
     async def start_game(self):
         for ws, player in self.connections.items():
@@ -34,14 +39,13 @@ class Match:
                 ws,
                 "welcome_info",
                 {
-                    "your_board": player.board.to_dict(),
+                    "your_board": serialize_board(player.board),
                     "your_id": player.id,
                     "ticks_per_second": TICKS_PER_SECOND,
                     "gravity_ticks": self.gravity_ticks,
                     "tick": self.tick,
                 },
             )
-            await send_json(ws, "all_boards", self.all_boards_payload())
 
         self.start_time = time.monotonic()
         await set_match_state(self, MatchState.IN_GAME)
