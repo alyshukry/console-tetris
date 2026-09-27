@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "console-tetris"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "websockets>=14"
+]
+
+[tool.setuptools.packages.find]
+include = [
+    "client*",
+    "game*",
+    "net*",
+    "render*",
+    "server*",
+    "shared*"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "build",
+    "dist"
+]
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "W",
+    "I",
+    "B",
+    "UP"
+]
+
+[tool.ruff.format]
+indent-style = "space"
+quote-style = "double"
+
+[tool.pyright]
+include = [
+    "client",
+    "game",
+    "net",
+    "render",
+    "server",
+    "shared"
+]
+exclude = [
+    "**/__pycache__"
+]
+typeCheckingMode = "basic"

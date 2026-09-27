@@ -30,11 +30,6 @@ class Board:
         self.cells = [[0] * self.width for _ in range(self.height)]
         self.piece = Piece(self.bag.get(0), 0, int(self.width / 2), 0)
 
-    def get_cell(self, row, col) -> None | str:
-        if 0 <= row < len(self.cells) and 0 <= col < len(self.cells[0]):
-            return self.cells[row][col]
-        return None
-
     def clear_lines(self) -> int:
         new_rows = [row for row in self.cells if not all(cell != 0 for cell in row)]
         lines_cleared = self.height - len(new_rows)
