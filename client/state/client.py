@@ -21,5 +21,6 @@ class ClientState:
     gravity_ticks: int = 10
     one_way_tick_estimate: float = 0.0
     pending_inputs: list[tuple[int, int, int]] = field(default_factory=list)
+    latency: int = 60
     input_seq_by_tick: dict[int, int] = field(default_factory=dict)
     start_time: float = field(default_factory=time.monotonic)

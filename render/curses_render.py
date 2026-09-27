@@ -39,7 +39,7 @@ class RenderBounds:
 def draw_boards(boards, stdscr, my_id):
     screen_height, screen_width = stdscr.getmaxyx()
 
-    top = 1
+    top = 2
     left = 1
 
     ordered_boards = []
@@ -52,7 +52,7 @@ def draw_boards(boards, stdscr, my_id):
     )
 
     for _, board in ordered_boards:
-        if top >= screen_height - 1:
+        if left >= screen_width - 1:
             break
 
         bounds = draw_board(
@@ -65,7 +65,7 @@ def draw_boards(boards, stdscr, my_id):
             screen_width,
         )
 
-        top = bounds.max_row + 2
+        left = bounds.max_col + 2
 
 
 async def render_loop(stdscr, state):
@@ -102,6 +102,7 @@ async def render_loop(stdscr, state):
                         stdscr,
                         state.my_id,
                     )
+                addstr_safe(stdscr, 0, 1, f"{state.latency:.0f}ms")
 
             case MatchState.RESULTS:
                 suffix = "s" if len(state.winners) == 1 else ""
