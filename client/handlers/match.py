@@ -7,6 +7,8 @@ def handle_match_state(state: ClientState, data):
     if state.match_state == MatchState.LOBBY:
         state.player_count = data["player_count"]
         state.ready_count = data["ready_count"]
+        state.pending_inputs = []
         state.ready = False
+        state.reset_match()
     if state.match_state == MatchState.RESULTS:
         state.winners = data["winners"]

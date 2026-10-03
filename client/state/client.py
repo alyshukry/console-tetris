@@ -24,3 +24,8 @@ class ClientState:
     latency: int = 60
     input_seq_by_tick: dict[int, int] = field(default_factory=dict)
     start_time: float = field(default_factory=time.monotonic)
+
+    def reset_match(self):
+        self.pending_inputs.clear()
+        self.input_seq_by_tick.clear()
+        self.one_way_tick_estimate = 0.0
