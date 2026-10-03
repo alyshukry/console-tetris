@@ -20,4 +20,6 @@ def handle_pong(state: ClientState, data):
 
     target_offset = estimated_server_tick - state.tick
 
-    state.tick += min(max(round(target_offset), -3), 3)
+    adj = min(max(round(target_offset), -3), 3)
+    state.start_time -= adj / state.ticks_per_second
+    state.tick += adj
