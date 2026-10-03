@@ -1,3 +1,4 @@
 share next few pieces with client so it doesn't have to wait
 client prediction doesn't replay gravity tick (move could be sent, then gravity happens, then move sent back)
 server doesn't send back ack_seq only ack_tick
+better boards fitting, make it work like a flexbox in css
