@@ -28,6 +28,7 @@ def handle_move_result(match, player, result):
                     "rot": player.board.piece.rot,
                     "tick": match.tick,
                     "ack_input_tick": player.last_processed_input_tick,
+                    "ack_input_seq": player.last_processed_input_seq,
                 },
             )
         )

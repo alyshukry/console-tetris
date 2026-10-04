@@ -35,6 +35,7 @@ def handle_piece_moved(state, data):
         return
 
     ack_input_tick = data.get("ack_input_tick")
+    ack_input_seq = data.get("ack_input_seq")
 
     board.piece.col = data["col"]
     board.piece.row = data["row"]
@@ -42,7 +43,7 @@ def handle_piece_moved(state, data):
 
     if ack_input_tick is not None:
         state.pending_inputs = [
-            item for item in state.pending_inputs if item[0] > ack_input_tick
+            item for item in state.pending_inputs if (item[0] > ack_input_tick and item[1] > ack_input_seq)
         ]
 
     for tick, seq, key in sorted(state.pending_inputs):

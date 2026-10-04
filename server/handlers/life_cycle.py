@@ -14,6 +14,7 @@ async def reset_to_lobby(match):
         player.board = Board(match.shared_bag)
         player.input_queue.clear()
         player.last_processed_input_tick = -1
+        player.last_processed_input_seq = -1
 
     await set_match_state(
         match,

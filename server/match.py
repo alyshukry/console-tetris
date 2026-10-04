@@ -47,11 +47,7 @@ class Match:
                 },
             )
 
-            await send_json(
-                ws,
-                "all_boards",
-                self.all_boards_payload()
-            )
+            await send_json(ws, "all_boards", self.all_boards_payload())
 
         self.start_time = time.monotonic()
         await set_match_state(self, MatchState.IN_GAME)
@@ -87,6 +83,10 @@ class Match:
                             player.last_processed_input_tick = max(
                                 player.last_processed_input_tick,
                                 tick,
+                            )
+                            player.last_processed_input_seq = max(
+                                player.last_processed_input_seq,
+                                seq,
                             )
                             apply_input(self, player, action)
 
