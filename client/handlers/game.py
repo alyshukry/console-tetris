@@ -7,7 +7,7 @@ from client.state.client import ClientState
 
 def handle_welcome_info(state: ClientState, data):
     state.reset_match()
-    
+
     state.my_id = data["your_id"]
     state.ticks_per_second = data["ticks_per_second"]
     state.gravity_ticks = data["gravity_ticks"]
@@ -43,14 +43,26 @@ def handle_piece_moved(state, data):
 
     if ack_input_tick is not None and ack_input_seq is not None:
         state.pending_inputs = [
-            item for item in state.pending_inputs
+            item
+            for item in state.pending_inputs
             if (item[0], item[1]) > (ack_input_tick, ack_input_seq)
         ]
 
     for tick, seq, key in sorted(state.pending_inputs):
         apply_local_move(board, key)
+        if tick % state.gravity_ticks == 0:
+            if fits(
+                state.board.cells,
+                state.board.piece,
+                state.board.width,
+                state.board.height,
+                1,
+                0,
+            ):
+                board.piece.row += 1
 
 
+from game.collision import fits
 from net.serialization import deserialize_piece
 
 
