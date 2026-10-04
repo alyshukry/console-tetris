@@ -80,14 +80,9 @@ class Match:
                         for tick, seq, action in sorted(
                             due, key=lambda item: (item[0], item[1])
                         ):
-                            player.last_processed_input_tick = max(
-                                player.last_processed_input_tick,
-                                tick,
-                            )
-                            player.last_processed_input_seq = max(
-                                player.last_processed_input_seq,
-                                seq,
-                            )
+                            if (tick, seq) > (player.last_processed_input_tick, player.last_processed_input_seq):
+                                player.last_processed_input_tick = tick
+                                player.last_processed_input_seq = seq
                             apply_input(self, player, action)
 
                     if self.tick % self.gravity_ticks == 0:
