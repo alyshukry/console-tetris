@@ -3,14 +3,14 @@ from net.serialization import serialize_board
 from server.player import Player
 
 
-def handle_move_result(match, player, result):
+def handle_move_result(match, player: Player, result):
     if result.moved:
         broadcast_event(
             match,
             (
                 "piece_moved",
                 {
-                    "board_id": player.id,
+                    "board_id": player.player_id,
                     "row": player.board.piece.row,
                     "col": player.board.piece.col,
                     "rot": player.board.piece.rot,
@@ -22,7 +22,7 @@ def handle_move_result(match, player, result):
             (
                 "piece_moved",
                 {
-                    "board_id": player.id,
+                    "board_id": player.player_id,
                     "row": player.board.piece.row,
                     "col": player.board.piece.col,
                     "rot": player.board.piece.rot,
@@ -37,8 +37,9 @@ def handle_move_result(match, player, result):
         garbage = {}
         if result.lines_cleared > 0:
             recipients = [
-                p.id for p in match.connections.values()
-                if p.id != player.id and not p.board.game_over
+                p.id
+                for p in match.connections.values()
+                if p.id != player.player_id and not p.board.game_over
             ]
             garbage = calc_garbage(recipients, result.lines_cleared)
 
@@ -51,15 +52,15 @@ def handle_move_result(match, player, result):
             broadcast_event(match, board_update_event(recipient_player))
 
     if result.game_over:
-        broadcast_event(match, ("lose", {"board_id": player.id}))
+        broadcast_event(match, ("lose", {"board_id": player.player_id}))
 
 
-def board_update_event(p):
+def board_update_event(p: Player):
     d = serialize_board(p.board)
     return (
         "piece_locked",
         {
-            "board_id": p.id,
+            "board_id": p.player_id,
             "cells": d.get("cells"),
             "new_piece": d.get("piece"),
             "next_piece": d.get("next_piece"),
