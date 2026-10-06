@@ -4,7 +4,6 @@ from game.board import Board
 from game.seven_bag import SevenBag
 from net.protocol import broadcast_json
 from shared.match_state import MatchState
-from server.match import set_match_state
 
 
 async def reset_to_lobby(match):
@@ -55,3 +54,10 @@ async def cancel_countdown(match):
             await match.countdown_task
         except asyncio.CancelledError:
             pass
+
+
+async def set_match_state(match, new_state: "MatchState", extra: dict | None = None):
+    match.state = new_state
+    await broadcast_json(
+        match, "match_state", {"state": new_state.value, **(extra or {})}
+    )

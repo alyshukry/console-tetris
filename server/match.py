@@ -8,7 +8,7 @@ from net.protocol import broadcast_json, send_json
 from net.serialization import serialize_board
 from server.handlers.input import handle_input, apply_input
 from server.handlers.lobby import check_ready
-from server.handlers.life_cycle import start_countdown, cancel_countdown, reset_to_lobby
+from server.handlers.life_cycle import set_match_state, start_countdown, cancel_countdown, reset_to_lobby
 from shared.match_state import MatchState
 from game.constants import TICKS_PER_SECOND
 
@@ -140,10 +140,3 @@ class Match:
                     "pong",
                     {"player_sent_at": data.get("sent_at"), "server_tick": self.tick},
                 )
-
-
-async def set_match_state(match, new_state: "MatchState", extra: dict | None = None):
-    match.state = new_state
-    await broadcast_json(
-        match, "match_state", {"state": new_state.value, **(extra or {})}
-    )
