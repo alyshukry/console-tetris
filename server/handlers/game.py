@@ -39,7 +39,7 @@ def handle_move_result(match, player: Player, result):
             recipients = [
                 p.id
                 for p in match.connections.values()
-                if p.id != player.player_id and not p.board.game_over
+                if p.player_id != player.player_id and not p.board.game_over
             ]
             garbage = calc_garbage(recipients, result.lines_cleared)
 
