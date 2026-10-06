@@ -1,5 +1,8 @@
 import time
 
+
+from game.collision import fits
+from net.serialization import deserialize_piece
 from client.input import apply_local_move
 from client.state.board import BoardState
 from client.state.client import ClientState
@@ -48,22 +51,7 @@ def handle_piece_moved(state, data):
             if (item[0], item[1]) > (ack_input_tick, ack_input_seq)
         ]
 
-    for tick, seq, key in sorted(state.pending_inputs):
-        apply_local_move(board, key)
-        if tick % state.gravity_ticks == 0:
-            if fits(
-                state.board.cells,
-                state.board.piece,
-                state.board.width,
-                state.board.height,
-                1,
-                0,
-            ):
-                board.piece.row += 1
-
-
-from game.collision import fits
-from net.serialization import deserialize_piece
+    replay_pending(state, board, data["tick"])
 
 
 def handle_piece_locked(state: ClientState, data):
@@ -78,3 +66,19 @@ def handle_piece_locked(state: ClientState, data):
 def handle_lose(state, data):
     board_id = int(data["board_id"])
     state.boards[board_id].game_over = True
+
+
+def replay_pending(state: ClientState, board: BoardState, server_tick: int):
+    pending = sorted(state.pending_inputs)
+    i = 0
+    for t in range(server_tick + 1, state.tick + 1):
+        while i < len(pending) and pending[i][0] <= t:
+            apply_local_move(board, pending[i][2])
+            i += 1
+        if t % state.gravity_ticks == 0 and fits(
+            board.cells, board.piece, board.width, board.height, 1, 0
+        ):
+            board.piece.row += 1
+
+    for _, _, key in pending[i:]:
+        apply_local_move(board, key)
