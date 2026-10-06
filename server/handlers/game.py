@@ -1,9 +1,10 @@
 from game.garbage import calc_garbage
 from net.serialization import serialize_board
+from server.match import Match
 from server.player import Player
 
 
-def handle_move_result(match, player: Player, result):
+def handle_move_result(match: Match, player: Player, result):
     if result.moved:
         broadcast_event(
             match,
@@ -46,7 +47,7 @@ def handle_move_result(match, player: Player, result):
         broadcast_event(match, board_update_event(player))
         for recipient_id, amount in garbage.items():
             recipient_player = next(
-                p for p in match.connections.values() if p.id == recipient_id
+                p for p in match.connections.values() if p.player_id == recipient_id
             )
             recipient_player.board.add_garbage(amount)
             broadcast_event(match, board_update_event(recipient_player))
@@ -68,7 +69,7 @@ def board_update_event(p: Player):
     )
 
 
-def broadcast_event(match, event, exclude: list[Player] | None = None):
+def broadcast_event(match: Match, event, exclude: list[Player] | None = None):
     for p in match.connections.values():
         if not exclude or p not in exclude:
             p.outbox.append(event)
