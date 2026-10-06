@@ -17,15 +17,15 @@ GARBAGE_PAIR = 8
 
 
 def setup_colors():
-    curses.init_color(20, 0, 940, 940)      # I - cyan
-    curses.init_color(21, 0, 0, 940)        # J - blue
-    curses.init_color(22, 940, 630, 0)     # L - orange
-    curses.init_color(23, 940, 940, 0)     # O - yellow
-    curses.init_color(24, 0, 940, 0)       # S - green
-    curses.init_color(25, 630, 0, 940)     # T - purple
-    curses.init_color(26, 940, 0, 0)       # Z - red
-    curses.init_color(28, 600, 600, 600)    # gray
-    curses.init_color(29, 0, 0, 500)       # blue border
+    curses.init_color(20, 0, 940, 940)  # I - cyan
+    curses.init_color(21, 0, 0, 940)  # J - blue
+    curses.init_color(22, 940, 630, 0)  # L - orange
+    curses.init_color(23, 940, 940, 0)  # O - yellow
+    curses.init_color(24, 0, 940, 0)  # S - green
+    curses.init_color(25, 630, 0, 940)  # T - purple
+    curses.init_color(26, 940, 0, 0)  # Z - red
+    curses.init_color(28, 600, 600, 600)  # gray
+    curses.init_color(29, 0, 0, 500)  # blue border
 
     curses.init_pair(1, 20, curses.COLOR_BLACK)  # I
     curses.init_pair(2, 21, curses.COLOR_BLACK)  # J

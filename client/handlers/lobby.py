@@ -1,5 +1,3 @@
-
-
 def handle_player_ready(state, data):
     state.ready_count += 1
 

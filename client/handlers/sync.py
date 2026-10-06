@@ -12,9 +12,7 @@ def handle_pong(state: ClientState, data):
     one_way_seconds = round_trip_seconds / 2
     one_way_tick_estimate = one_way_seconds * state.ticks_per_second
 
-    state.one_way_tick_estimate = (
-        0.4 * state.one_way_tick_estimate + 0.6 * one_way_tick_estimate
-    )
+    state.one_way_tick_estimate = 0.4 * state.one_way_tick_estimate + 0.6 * one_way_tick_estimate
 
     estimated_server_tick = data["server_tick"] + state.one_way_tick_estimate
 

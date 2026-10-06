@@ -21,8 +21,7 @@ def handle_welcome_info(state: ClientState, data):
 
 def handle_all_boards(state: ClientState, data):
     state.boards = {
-        int(player_id): BoardState.from_dict(board)
-        for player_id, board in data["boards"].items()
+        int(player_id): BoardState.from_dict(board) for player_id, board in data["boards"].items()
     }
 
 

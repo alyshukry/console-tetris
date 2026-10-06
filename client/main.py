@@ -27,4 +27,5 @@ def main(stdscr):
 
     asyncio.run(run_player())
 
+
 curses.wrapper(main)

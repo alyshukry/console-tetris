@@ -3,9 +3,7 @@ from .piece import Piece
 
 
 def fits(cells, piece: Piece, width, height, drow, dcol, rot=None) -> bool:
-    return fits_abs(
-        cells, piece, width, height, piece.row + drow, piece.col + dcol, rot
-    )
+    return fits_abs(cells, piece, width, height, piece.row + drow, piece.col + dcol, rot)
 
 
 def fits_abs(cells, piece: Piece, width, height, abs_row, abs_col, rot=None) -> bool:

@@ -74,9 +74,7 @@ async def render_loop(stdscr, state):
 
         match state.match_state:
             case MatchState.LOBBY:
-                ready_text = (
-                    "Press K to get ready" if not state.ready else "You are ready"
-                )
+                ready_text = "Press K to get ready" if not state.ready else "You are ready"
 
                 addstr_safe(stdscr, 0, 0, ready_text)
                 addstr_safe(

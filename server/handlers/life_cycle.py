@@ -58,6 +58,4 @@ async def cancel_countdown(match):
 
 async def set_match_state(match, new_state: "MatchState", extra: dict | None = None):
     match.state = new_state
-    await broadcast_json(
-        match, "match_state", {"state": new_state.value, **(extra or {})}
-    )
+    await broadcast_json(match, "match_state", {"state": new_state.value, **(extra or {})})

@@ -7,6 +7,7 @@ def handle_input(player: Player, action, tick, seq):
         return
     player.input_queue.append((tick, seq, action))
 
+
 def apply_input(match, player: Player, action):
     fn = {
         "left": player.board.move_piece_left,

@@ -50,9 +50,7 @@ async def receive_loop(ws: ClientConnection, state: ClientState):
 async def gravity_loop(state: ClientState):
     while True:
         await asyncio.sleep(0.01)
-        target_ticks = int(
-            (time.monotonic() - state.start_time) * state.ticks_per_second
-        )
+        target_ticks = int((time.monotonic() - state.start_time) * state.ticks_per_second)
         while state.tick < target_ticks:
             state.tick += 1
             if state.tick % state.gravity_ticks == 0:
@@ -70,7 +68,5 @@ async def gravity_loop(state: ClientState):
 
 async def ping_loop(ws: ClientConnection, state: ClientState):
     while True:
-        await send_json(
-            ws, "ping", {"player_tick": state.tick, "sent_at": time.monotonic()}
-        )
+        await send_json(ws, "ping", {"player_tick": state.tick, "sent_at": time.monotonic()})
         await asyncio.sleep(1)

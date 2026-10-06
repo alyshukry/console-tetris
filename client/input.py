@@ -47,7 +47,6 @@ def key_to_action(key) -> str | None:
 
 def apply_local_move(board: BoardState, key):
     if not board.game_over:
-
         piece: Piece = board.piece
         w, h, cells = board.width, board.height, board.cells
 
