@@ -29,7 +29,7 @@ class Match:
     def all_boards_payload(self):
         return {
             "boards": {
-                p.id: serialize_board(p.board) for p in self.connections.values()
+                p.player_id: serialize_board(p.board) for p in self.connections.values()
             }
         }
 
@@ -40,7 +40,7 @@ class Match:
                 "welcome_info",
                 {
                     "your_board": serialize_board(player.board),
-                    "your_id": player.id,
+                    "your_id": player.player_id,
                     "ticks_per_second": TICKS_PER_SECOND,
                     "gravity_ticks": self.gravity_ticks,
                     "tick": self.tick,
@@ -54,7 +54,7 @@ class Match:
 
     async def end_game(self, winners: list[Player]):
         await set_match_state(
-            self, MatchState.RESULTS, {"winners": [p.id for p in winners]}
+            self, MatchState.RESULTS, {"winners": [p.player_id for p in winners]}
         )
         await asyncio.sleep(5)
         await reset_to_lobby(self)

@@ -4,7 +4,7 @@ from game.board import Board
 @dataclass
 class Player:
     board: Board
-    id: int
+    player_id: int
     ready: bool = False
     outbox: list[tuple[str, dict]] = field(default_factory=list)
     input_queue: list[tuple[int, int, str]] = field(default_factory=list)

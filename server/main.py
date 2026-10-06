@@ -45,7 +45,7 @@ async def handler(ws: ServerConnection):
             await broadcast_json(
                 match,
                 "player_left",
-                {"player_id": leaver.id, "was_ready": leaver.ready},
+                {"player_id": leaver.player_id, "was_ready": leaver.ready},
             )
 
 
