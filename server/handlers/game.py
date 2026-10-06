@@ -37,7 +37,7 @@ def handle_move_result(match, player: Player, result):
         garbage = {}
         if result.lines_cleared > 0:
             recipients = [
-                p.id
+                p.player_id
                 for p in match.connections.values()
                 if p.player_id != player.player_id and not p.board.game_over
             ]
