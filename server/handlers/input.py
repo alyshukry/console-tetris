@@ -1,5 +1,5 @@
-from server.player import Player
 from server.handlers.game import handle_move_result
+from server.player import Player
 
 
 def handle_input(player: Player, action, tick, seq):

@@ -1,6 +1,5 @@
 import curses
 
-
 PIECE_COLORS = {
     "I": 1,
     "J": 2,

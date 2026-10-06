@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
+
 from game.board import Board
+
 
 @dataclass
 class Player:

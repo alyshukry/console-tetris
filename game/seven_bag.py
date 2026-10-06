@@ -2,6 +2,7 @@ import random
 
 from .constants import SHAPES
 
+
 class SevenBag:
     def __init__(self, seed=None):
         self.rng = random.Random(seed)

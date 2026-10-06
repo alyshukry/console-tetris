@@ -8,9 +8,9 @@ from websockets.asyncio.server import ServerConnection
 from websockets.exceptions import ConnectionClosed
 
 from game.board import Board
-from server.player import Player
 from net.protocol import broadcast_json, send_json
 from server.match import Match
+from server.player import Player
 from shared.match_state import MatchState
 
 logging.basicConfig(level=logging.DEBUG)

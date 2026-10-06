@@ -1,6 +1,6 @@
 import time
-
 from dataclasses import dataclass, field
+
 from client.state.board import BoardState
 from game.constants import TICKS_PER_SECOND
 from shared.match_state import MatchState

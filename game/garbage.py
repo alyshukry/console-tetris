@@ -1,5 +1,6 @@
 import random
 
+
 def calc_garbage(recipients: list[int], lines: int) -> dict[int, int]:
     if lines <= 1:
         return {}
@@ -15,5 +16,5 @@ def calc_garbage(recipients: list[int], lines: int) -> dict[int, int]:
         amount = per_board + (1 if receiver in extra_recipients else 0)
         if amount > 0:
             garbage[receiver] = amount
-            
+
     return garbage

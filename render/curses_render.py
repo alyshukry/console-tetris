@@ -9,8 +9,8 @@ from render.colors import (
     BORDER_PAIR,
     EMPTY_PAIR,
     GAME_OVER_PAIR,
-    PIECE_COLORS,
     GARBAGE_PAIR,
+    PIECE_COLORS,
     setup_colors,
 )
 from shared.match_state import MatchState

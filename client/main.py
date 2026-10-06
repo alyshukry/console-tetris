@@ -1,12 +1,14 @@
 import asyncio
 import curses
-import websockets
 import sys
 
-from render.curses_render import setup_curses, render_loop
-from client.state.client import ClientState
-from client.network import ping_loop, receive_loop, gravity_loop
+import websockets
+
 from client.input import input_loop
+from client.network import gravity_loop, ping_loop, receive_loop
+from client.state.client import ClientState
+from render.curses_render import render_loop, setup_curses
+
 
 def main(stdscr):
     setup_curses(stdscr)

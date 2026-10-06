@@ -2,15 +2,21 @@ import asyncio
 import time
 
 from websockets.asyncio.server import ServerConnection
-from server.handlers.game import handle_move_result
-from server.player import Player
+
+from game.constants import TICKS_PER_SECOND
 from net.protocol import broadcast_json, send_json
 from net.serialization import serialize_board
-from server.handlers.input import handle_input, apply_input
+from server.handlers.game import handle_move_result
+from server.handlers.input import apply_input, handle_input
+from server.handlers.life_cycle import (
+    cancel_countdown,
+    reset_to_lobby,
+    set_match_state,
+    start_countdown,
+)
 from server.handlers.lobby import check_ready
-from server.handlers.life_cycle import set_match_state, start_countdown, cancel_countdown, reset_to_lobby
+from server.player import Player
 from shared.match_state import MatchState
-from game.constants import TICKS_PER_SECOND
 
 
 class Match:

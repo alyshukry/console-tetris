@@ -1,4 +1,3 @@
-from shared.match_state import MatchState
 
 
 def handle_player_ready(state, data):

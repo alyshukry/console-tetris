@@ -1,11 +1,10 @@
 import time
 
-
-from game.collision import fits
-from net.serialization import deserialize_piece
 from client.input import apply_local_move
 from client.state.board import BoardState
 from client.state.client import ClientState
+from game.collision import fits
+from net.serialization import deserialize_piece
 
 
 def handle_welcome_info(state: ClientState, data):

@@ -4,23 +4,23 @@ import time
 
 from websockets import ClientConnection
 
-from client.state.client import ClientState
-from game.collision import fits
+from client.handlers.connection import handle_player_joined, handle_player_left
 from client.handlers.game import (
-    handle_welcome_info,
     handle_all_boards,
-    handle_piece_moved,
-    handle_piece_locked,
     handle_lose,
+    handle_piece_locked,
+    handle_piece_moved,
+    handle_welcome_info,
 )
 from client.handlers.lobby import (
+    handle_countdown_tick,
     handle_player_ready,
     handle_player_unready,
-    handle_countdown_tick,
 )
-from client.handlers.sync import handle_pong
 from client.handlers.match import handle_match_state
-from client.handlers.connection import handle_player_joined, handle_player_left
+from client.handlers.sync import handle_pong
+from client.state.client import ClientState
+from game.collision import fits
 from net.protocol import send_json
 
 HANDLERS = {

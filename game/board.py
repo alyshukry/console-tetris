@@ -1,11 +1,10 @@
 import random
-
 from dataclasses import dataclass, field
 
-from .constants import SHAPES
-from .seven_bag import SevenBag
-from .piece import Piece
 from .collision import fits, fits_abs
+from .constants import SHAPES
+from .piece import Piece
+from .seven_bag import SevenBag
 
 
 @dataclass
