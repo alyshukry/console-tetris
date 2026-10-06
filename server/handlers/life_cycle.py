@@ -3,7 +3,8 @@ import asyncio
 from game.board import Board
 from game.seven_bag import SevenBag
 from net.protocol import broadcast_json
-from shared.match_state import MatchState, set_match_state
+from shared.match_state import MatchState
+from server.match import set_match_state
 
 
 async def reset_to_lobby(match):
