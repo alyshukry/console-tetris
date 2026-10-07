@@ -3,10 +3,10 @@ from net.serialization import serialize_board
 from server.player import Player
 
 
-def handle_move_result(match, player: Player, result):
+def handle_move_result(room, player: Player, result):
     if result.moved:
         broadcast_event(
-            match,
+            room,
             (
                 "piece_moved",
                 {
@@ -26,7 +26,7 @@ def handle_move_result(match, player: Player, result):
                     "row": player.board.piece.row,
                     "col": player.board.piece.col,
                     "rot": player.board.piece.rot,
-                    "tick": match.tick,
+                    "tick": room.tick,
                     "ack_input_tick": player.last_processed_input_tick,
                     "ack_input_seq": player.last_processed_input_seq,
                 },
@@ -38,21 +38,21 @@ def handle_move_result(match, player: Player, result):
         if result.lines_cleared > 0:
             recipients = [
                 p.player_id
-                for p in match.connections.values()
+                for p in room.connections.values()
                 if p.player_id != player.player_id and not p.board.game_over
             ]
             garbage = calc_garbage(recipients, result.lines_cleared)
 
-        broadcast_event(match, board_update_event(player))
+        broadcast_event(room, board_update_event(player))
         for recipient_id, amount in garbage.items():
             recipient_player = next(
-                p for p in match.connections.values() if p.player_id == recipient_id
+                p for p in room.connections.values() if p.player_id == recipient_id
             )
             recipient_player.board.add_garbage(amount)
-            broadcast_event(match, board_update_event(recipient_player))
+            broadcast_event(room, board_update_event(recipient_player))
 
     if result.game_over:
-        broadcast_event(match, ("lose", {"board_id": player.player_id}))
+        broadcast_event(room, ("lose", {"board_id": player.player_id}))
 
 
 def board_update_event(p: Player):
@@ -68,7 +68,7 @@ def board_update_event(p: Player):
     )
 
 
-def broadcast_event(match, event, exclude: list[Player] | None = None):
-    for p in match.connections.values():
+def broadcast_event(room, event, exclude: list[Player] | None = None):
+    for p in room.connections.values():
         if not exclude or p not in exclude:
             p.outbox.append(event)

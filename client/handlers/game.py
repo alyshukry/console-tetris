@@ -8,7 +8,7 @@ from net.serialization import deserialize_piece
 
 
 def handle_welcome_info(state: ClientState, data):
-    state.reset_match()
+    state.reset_room()
 
     state.my_id = data["your_id"]
     state.ticks_per_second = data["ticks_per_second"]

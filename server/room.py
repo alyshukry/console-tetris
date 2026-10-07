@@ -11,18 +11,18 @@ from server.handlers.input import apply_input, handle_input
 from server.handlers.life_cycle import (
     cancel_countdown,
     reset_to_lobby,
-    set_match_state,
+    set_room_state,
     start_countdown,
 )
 from server.handlers.lobby import check_ready
 from server.player import Player
-from shared.match_state import MatchState
+from shared.room_state import RoomState
 
 
-class Match:
+class Room:
     def __init__(self):
         self.connections: dict[ServerConnection, Player] = {}
-        self.state = MatchState.LOBBY
+        self.state = RoomState.LOBBY
         from game.seven_bag import SevenBag
 
         self.shared_bag = SevenBag()
@@ -54,16 +54,16 @@ class Match:
             await send_json(ws, "all_boards", self.all_boards_payload())
 
         self.start_time = time.monotonic()
-        await set_match_state(self, MatchState.IN_GAME)
+        await set_room_state(self, RoomState.IN_GAME)
 
     async def end_game(self, winners: list[Player]):
-        await set_match_state(self, MatchState.RESULTS, {"winners": [p.player_id for p in winners]})
+        await set_room_state(self, RoomState.RESULTS, {"winners": [p.player_id for p in winners]})
         await asyncio.sleep(5)
         await reset_to_lobby(self)
 
     async def game_loop(self):
         while True:
-            if self.state == MatchState.IN_GAME:
+            if self.state == RoomState.IN_GAME:
                 target_ticks = int((time.monotonic() - (self.start_time or 0)) * TICKS_PER_SECOND)
                 while self.tick < target_ticks:
                     self.tick += 1

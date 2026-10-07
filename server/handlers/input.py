@@ -8,7 +8,7 @@ def handle_input(player: Player, action, tick, seq):
     player.input_queue.append((tick, seq, action))
 
 
-def apply_input(match, player: Player, action):
+def apply_input(room, player: Player, action):
     fn = {
         "left": player.board.move_piece_left,
         "right": player.board.move_piece_right,
@@ -18,4 +18,4 @@ def apply_input(match, player: Player, action):
     }.get(action)
     if fn is None:
         return
-    handle_move_result(match, player, fn())
+    handle_move_result(room, player, fn())

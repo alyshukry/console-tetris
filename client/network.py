@@ -17,7 +17,7 @@ from client.handlers.lobby import (
     handle_player_ready,
     handle_player_unready,
 )
-from client.handlers.match import handle_match_state
+from client.handlers.room import handle_room_state
 from client.handlers.sync import handle_pong
 from client.state.client import ClientState
 from game.collision import fits
@@ -29,7 +29,7 @@ HANDLERS = {
     "piece_moved": handle_piece_moved,
     "piece_locked": handle_piece_locked,
     "lose": handle_lose,
-    "match_state": handle_match_state,
+    "room_state": handle_room_state,
     "player_joined": handle_player_joined,
     "player_ready": handle_player_ready,
     "player_unready": handle_player_unready,

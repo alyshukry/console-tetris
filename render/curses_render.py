@@ -13,7 +13,7 @@ from render.colors import (
     PIECE_COLORS,
     setup_colors,
 )
-from shared.match_state import MatchState
+from shared.room_state import RoomState
 
 CELL_WIDTH = 2
 CELL = "██"
@@ -72,8 +72,8 @@ async def render_loop(stdscr, state):
     while True:
         stdscr.erase()
 
-        match state.match_state:
-            case MatchState.LOBBY:
+        match state.room_state:
+            case RoomState.LOBBY:
                 ready_text = "Press K to get ready" if not state.ready else "You are ready"
 
                 addstr_safe(stdscr, 0, 0, ready_text)
@@ -84,7 +84,7 @@ async def render_loop(stdscr, state):
                     f"{state.ready_count}/{state.player_count} players ready...",
                 )
 
-            case MatchState.COUNTDOWN:
+            case RoomState.COUNTDOWN:
                 dots = "." * (state.countdown % 3 + 1)
                 addstr_safe(
                     stdscr,
@@ -93,7 +93,7 @@ async def render_loop(stdscr, state):
                     f"Starting in {state.countdown} seconds{dots}",
                 )
 
-            case MatchState.IN_GAME:
+            case RoomState.IN_GAME:
                 if state.my_id in state.boards:
                     draw_boards(
                         state.boards,
@@ -102,7 +102,7 @@ async def render_loop(stdscr, state):
                     )
                 addstr_safe(stdscr, 0, 1, f"{state.latency:.0f}ms")
 
-            case MatchState.RESULTS:
+            case RoomState.RESULTS:
                 suffix = "s" if len(state.winners) == 1 else ""
                 addstr_safe(
                     stdscr,

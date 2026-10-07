@@ -3,59 +3,59 @@ import asyncio
 from game.board import Board
 from game.seven_bag import SevenBag
 from net.protocol import broadcast_json
-from shared.match_state import MatchState
+from shared.room_state import RoomState
 
 
-async def reset_to_lobby(match):
-    match.shared_bag = SevenBag()
-    match.tick = 0
-    for player in match.connections.values():
+async def reset_to_lobby(room):
+    room.shared_bag = SevenBag()
+    room.tick = 0
+    for player in room.connections.values():
         player.ready = False
-        player.board = Board(match.shared_bag)
+        player.board = Board(room.shared_bag)
         player.input_queue.clear()
         player.last_processed_input_tick = -1
         player.last_processed_input_seq = -1
 
-    await set_match_state(
-        match,
-        MatchState.LOBBY,
+    await set_room_state(
+        room,
+        RoomState.LOBBY,
         {
-            "player_count": len(match.connections),
+            "player_count": len(room.connections),
             "ready_count": 0,
         },
     )
 
 
-async def start_countdown(match):
-    await set_match_state(match, MatchState.COUNTDOWN)
+async def start_countdown(room):
+    await set_room_state(room, RoomState.COUNTDOWN)
 
     try:
-        for remaining in range(match.countdown_seconds, 0, -1):
-            await broadcast_json(match, "countdown_tick", {"seconds": remaining})
+        for remaining in range(room.countdown_seconds, 0, -1):
+            await broadcast_json(room, "countdown_tick", {"seconds": remaining})
             await asyncio.sleep(1)
-        await match.start_game()
+        await room.start_game()
     except asyncio.CancelledError:
-        await set_match_state(
-            match,
-            MatchState.LOBBY,
+        await set_room_state(
+            room,
+            RoomState.LOBBY,
             {
-                "player_count": len(match.connections),
-                "ready_count": sum(p.ready for p in match.connections.values()),
+                "player_count": len(room.connections),
+                "ready_count": sum(p.ready for p in room.connections.values()),
             },
         )
     finally:
-        match.countdown_task = None
+        room.countdown_task = None
 
 
-async def cancel_countdown(match):
-    if match.countdown_task is not None:
-        match.countdown_task.cancel()
+async def cancel_countdown(room):
+    if room.countdown_task is not None:
+        room.countdown_task.cancel()
         try:
-            await match.countdown_task
+            await room.countdown_task
         except asyncio.CancelledError:
             pass
 
 
-async def set_match_state(match, new_state: "MatchState", extra: dict | None = None):
-    match.state = new_state
-    await broadcast_json(match, "match_state", {"state": new_state.value, **(extra or {})})
+async def set_room_state(room, new_state: "RoomState", extra: dict | None = None):
+    room.state = new_state
+    await broadcast_json(room, "room_state", {"state": new_state.value, **(extra or {})})

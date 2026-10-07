@@ -5,7 +5,7 @@ from websockets.asyncio.client import ClientConnection
 from websockets.asyncio.server import ServerConnection
 
 if TYPE_CHECKING:
-    from server.match import Match
+    from server.room import Room
 
 
 async def send_json(
@@ -16,12 +16,12 @@ async def send_json(
 
 
 async def broadcast_json(
-    match: "Match",
+    room: "Room",
     msg_type: str,
     data: dict | None = None,
     exclude: list[ServerConnection] | None = None,
 ):
-    connections = match.connections
+    connections = room.connections
     for ws in connections.keys():
         if not exclude or ws not in exclude:
             await send_json(ws, msg_type, data)

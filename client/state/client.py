@@ -3,14 +3,14 @@ from dataclasses import dataclass, field
 
 from client.state.board import BoardState
 from game.constants import TICKS_PER_SECOND
-from shared.match_state import MatchState
+from shared.room_state import RoomState
 
 
 @dataclass
 class ClientState:
     boards: dict[int, BoardState] = field(default_factory=dict)
     my_id: int = -1
-    match_state: MatchState = MatchState.LOBBY
+    room_state: RoomState = RoomState.LOBBY
     ready: bool = False
     player_count: int = 1
     ready_count: int = 0
@@ -25,7 +25,7 @@ class ClientState:
     input_seq_by_tick: dict[int, int] = field(default_factory=dict)
     start_time: float = field(default_factory=time.monotonic)
 
-    def reset_match(self):
+    def reset_room(self):
         self.pending_inputs.clear()
         self.input_seq_by_tick.clear()
         self.one_way_tick_estimate = 0.0
