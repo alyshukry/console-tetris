@@ -27,7 +27,7 @@ async def handler(ws: ServerConnection):
         ws,
         "room_state",
         {
-            "state": room.state,
+            "state": room.state.value,
             "player_count": len(room.connections),
             "ready_count": sum(p.ready for p in room.connections.values()),
         },
