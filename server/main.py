@@ -31,7 +31,7 @@ async def handler(ws: ServerConnection):
             },
         )
     )
-    room.broadcast("player_joined", None, [ws])
+    room.broadcast("player_joined", None, [room.connections[ws]])
 
     try:
         async for msg in ws:

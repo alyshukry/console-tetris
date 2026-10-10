@@ -145,12 +145,12 @@ class Room:
                     handle_input(player, action, tick, seq)
             case "ready":
                 player.ready = True
-                self.broadcast("player_ready", None, [ws])
+                self.broadcast("player_ready", None, [player])
                 if check_ready(self) and self.countdown_task is None:
                     self.countdown_task = asyncio.create_task(start_countdown(self))
             case "unready":
                 player.ready = False
-                self.broadcast("player_unready", None, [ws])
+                self.broadcast("player_unready", None, [player])
                 await cancel_countdown(self)
             case "ping":
                 await send_json(  # not going thru player's outbox to bypass delay
