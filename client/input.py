@@ -6,6 +6,7 @@ from game.collision import fits
 from game.piece import Piece
 from net.protocol import send_json
 from shared.action import Action
+from shared.room_state import RoomState
 
 
 async def input_loop(ws, stdscr, state):
@@ -15,7 +16,7 @@ async def input_loop(ws, stdscr, state):
             await send_json(ws, "unready" if state.ready else "ready")
             state.ready = not state.ready
             state.ready_count += 1 if state.ready else -1
-        if key != -1 and key in (
+        if state.room_state == RoomState.IN_GAME and key in (
             curses.KEY_LEFT,
             curses.KEY_RIGHT,
             curses.KEY_UP,

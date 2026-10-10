@@ -128,9 +128,10 @@ class Room:
         player = self.connections[ws]
         match data.get("type"):
             case "input":
-                handle_input(
-                    player, data.get("action"), data.get("tick"), data.get("seq")
-                )
+                if RoomState.IN_GAME:
+                    handle_input(
+                        player, data.get("action"), data.get("tick"), data.get("seq")
+                    )
             case "ready":
                 player.ready = True
                 await broadcast_json(self, "player_ready", None, [ws])
