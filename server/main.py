@@ -40,8 +40,10 @@ async def handler(ws: ServerConnection):
                 data = json.loads(msg)
             except json.JSONDecodeError:
                 await ws.close(1003)
+                return
             if not isinstance(data, dict):
                 await ws.close(1003)
+                return
             await room.handle_message(ws, data)
     except ConnectionClosed:
         pass
