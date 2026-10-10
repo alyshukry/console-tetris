@@ -133,9 +133,11 @@ class Room:
         player = self.connections[ws]
         match data.get("type"):
             case "input":
-                if self.state == RoomState.IN_GAME:
+                tick = data.get("tick")
+                seq = data.get("seq")
+                if self.state == RoomState.IN_GAME and isinstance(tick, int) and isinstance(seq, int):
                     handle_input(
-                        player, data.get("action"), data.get("tick"), data.get("seq")
+                        player, data.get("action"), tick, seq
                     )
             case "ready":
                 player.ready = True
