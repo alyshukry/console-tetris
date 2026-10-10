@@ -16,12 +16,12 @@ from shared.room_state import RoomState
 logging.basicConfig(level=logging.DEBUG)
 
 room = Room()
-_id_counter = itertools.count()
+_player_id_counter = itertools.count()
 
 
 async def handler(ws: ServerConnection):
-    id = next(_id_counter)
-    room.connections[ws] = Player(Board(room.shared_bag), id)
+    player_id = next(_player_id_counter)
+    room.connections[ws] = Player(Board(room.shared_bag), player_id)
     await send_json(
         ws,
         "room_state",
