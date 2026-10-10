@@ -40,7 +40,7 @@ class Room:
         }
 
     async def start_game(self):
-        for ws, player in self.connections.items():
+        for ws, player in list(self.connections.items()):
             await send_json(
                 ws,
                 "welcome_info",

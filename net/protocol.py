@@ -21,7 +21,6 @@ async def broadcast_json(
     data: dict | None = None,
     exclude: list[ServerConnection] | None = None,
 ):
-    connections = room.connections
-    for ws in connections.keys():
+    for ws in list(room.connections):
         if not exclude or ws not in exclude:
             await send_json(ws, msg_type, data)
