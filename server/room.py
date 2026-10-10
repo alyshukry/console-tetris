@@ -1,6 +1,8 @@
 import asyncio
+import logging
 import time
 
+from websockets import ConnectionClosed
 from websockets.asyncio.server import ServerConnection
 
 from game.constants import TICKS_PER_SECOND
@@ -121,7 +123,10 @@ class Room:
                         tasks.append(send_json(ws, msg_type=e[0], data=e[1]))
                     player.outbox.clear()
             if tasks:
-                await asyncio.gather(*tasks)
+                results = await asyncio.gather(*tasks, return_exceptions=True)
+                for r in results:
+                    if isinstance(r, Exception) and not isinstance(r, ConnectionClosed):
+                        logging.error("Send failed", exc_info=r)
             await asyncio.sleep(0.01)
 
     async def handle_message(self, ws, data):
