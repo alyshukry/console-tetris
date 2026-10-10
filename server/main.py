@@ -9,6 +9,7 @@ from websockets.exceptions import ConnectionClosed
 
 from game.board import Board
 from net.protocol import broadcast_json, send_json
+from server.handlers.lobby import handle_leave
 from server.player import Player
 from server.room import Room
 from shared.room_state import RoomState
@@ -45,13 +46,7 @@ async def handler(ws: ServerConnection):
     except ConnectionClosed:
         pass
     finally:
-        leaver = room.connections.pop(ws, None)
-        if leaver:
-            await broadcast_json(
-                room,
-                "player_left",
-                {"player_id": leaver.player_id, "was_ready": leaver.ready},
-            )
+        await handle_leave(room, ws)
 
 
 async def main():
