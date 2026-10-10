@@ -133,7 +133,7 @@ class Room:
         player = self.connections[ws]
         match data.get("type"):
             case "input":
-                if RoomState.IN_GAME:
+                if self.state == RoomState.IN_GAME:
                     handle_input(
                         player, data.get("action"), data.get("tick"), data.get("seq")
                     )
