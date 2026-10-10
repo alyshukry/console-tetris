@@ -41,36 +41,40 @@ class Board:
         return lines_cleared
 
     def lock_piece(self):
-        for dr, dc in SHAPES[self.piece.shape][self.piece.rot]:
-            self.cells[dr + self.piece.row][dc + self.piece.col] = self.piece.shape
+        cells = [
+            (dr + self.piece.row, dc + self.piece.col)
+            for dr, dc in SHAPES[self.piece.shape][self.piece.rot]
+        ]
+
+        if any(r < 0 for r, _ in cells):  # lock out
+            self.lose()
+            return MoveResult(False, True, 0, True)
+
+        for r, c in cells:
+            self.cells[r][c] = self.piece.shape
 
         lines_cleared = self.clear_lines()
         spawn_ok = self.spawn_piece()
         return MoveResult(False, True, lines_cleared, not spawn_ok)
 
     def spawn_piece(self) -> bool:
-        if not self.game_over:
-            self.piece_index += 1
-            self.piece.shape = self.bag.get(self.piece_index)
-            if not fits_abs(
-                self.cells,
-                self.piece,
-                self.width,
-                self.height,
-                0,
-                int(self.width / 2),
-            ):
-                self.lose()
-                return False
-            self.piece.row = 0
-            self.piece.col = int(self.width / 2)
-            self.piece.rot = 0
-            return True
-        return False
+        if self.game_over:
+            return False
+
+        self.piece_index += 1
+        candidate = Piece(self.bag.get(self.piece_index), 0, self.width // 2, 0)
+
+        if not fits_abs(
+            self.cells, candidate, self.width, self.height, candidate.row, candidate.col
+        ):
+            self.lose()
+            return False
+
+        self.piece = candidate
+        return True
 
     def lose(self):
         self.game_over = True
-        return MoveResult(False, False, 0, True)
 
     def move_piece_down(self):
         if fits(self.cells, self.piece, self.width, self.height, 1, 0):
