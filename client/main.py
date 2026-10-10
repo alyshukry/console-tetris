@@ -28,4 +28,5 @@ def main(stdscr):
     asyncio.run(run_player())
 
 
-curses.wrapper(main)
+if __name__ == "__main__":
+    curses.wrapper(main)
