@@ -2,7 +2,6 @@ import asyncio
 
 from game.board import Board
 from game.seven_bag import SevenBag
-from net.protocol import broadcast_json
 from shared.room_state import RoomState
 
 
@@ -31,7 +30,7 @@ async def start_countdown(room):
 
     try:
         for remaining in range(room.countdown_seconds, 0, -1):
-            await broadcast_json(room, "countdown_tick", {"seconds": remaining})
+            room.broadcast("countdown_tick", {"seconds": remaining})
             await asyncio.sleep(1)
         await room.start_game()
     except asyncio.CancelledError:
@@ -58,4 +57,4 @@ async def cancel_countdown(room):
 
 async def set_room_state(room, new_state: "RoomState", extra: dict | None = None):
     room.state = new_state
-    await broadcast_json(room, "room_state", {"state": new_state.value, **(extra or {})})
+    room.broadcast("room_state", {"state": new_state.value, **(extra or {})})

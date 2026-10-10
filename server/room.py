@@ -7,9 +7,9 @@ from websockets.asyncio.server import ServerConnection
 
 from game.constants import TICKS_PER_SECOND
 from game.seven_bag import SevenBag
-from net.protocol import broadcast_json, send_json
+from net.protocol import send_json
 from net.serialization import serialize_board
-from server.handlers.game import broadcast_event, handle_move_result
+from server.handlers.game import handle_move_result
 from server.handlers.input import apply_input, handle_input
 from server.handlers.life_cycle import (
     cancel_countdown,
@@ -43,20 +43,20 @@ class Room:
         }
 
     async def start_game(self):
-        for ws, player in list(self.connections.items()):
-            await send_json(
-                ws,
-                "welcome_info",
-                {
-                    "your_board": serialize_board(player.board),
-                    "your_id": player.player_id,
-                    "ticks_per_second": TICKS_PER_SECOND,
-                    "gravity_ticks": self.gravity_ticks,
-                    "tick": self.tick,
-                },
+        for player in list(self.connections.values()):
+            player.outbox.append(
+                (
+                    "welcome_info",
+                    {
+                        "your_board": serialize_board(player.board),
+                        "your_id": player.player_id,
+                        "ticks_per_second": TICKS_PER_SECOND,
+                        "gravity_ticks": self.gravity_ticks,
+                        "tick": self.tick,
+                    },
+                )
             )
-
-            await send_json(ws, "all_boards", self.all_boards_payload())
+            player.outbox.append(("all_boards", self.all_boards_payload()))
 
         self.start_time = time.monotonic()
         await set_room_state(self, RoomState.IN_GAME)
@@ -111,7 +111,7 @@ class Room:
 
                     just_died = [p for p in alive_before if p.board.game_over]
                     for p in just_died:
-                        broadcast_event(self, ("lose", {"board_id": p.player_id}))
+                        self.broadcast("lose", {"board_id": p.player_id})
 
                     alive_after = [p for p in alive_before if not p.board.game_over]
                     if len(alive_after) <= 1:
@@ -121,17 +121,10 @@ class Room:
 
     async def net_loop(self):
         while True:
-            tasks = []
-            for ws, player in list(self.connections.items()):
-                if player.outbox:
-                    for e in player.outbox:
-                        tasks.append(send_json(ws, msg_type=e[0], data=e[1]))
-                    player.outbox.clear()
-            if tasks:
-                results = await asyncio.gather(*tasks, return_exceptions=True)
-                for r in results:
-                    if isinstance(r, Exception) and not isinstance(r, ConnectionClosed):
-                        logging.error("Send failed", exc_info=r)
+            await asyncio.gather(
+                *(flush(ws, p) for ws, p in list(self.connections.items()) if p.outbox),
+                return_exceptions=True,
+            )
             await asyncio.sleep(0.01)
 
     async def handle_message(self, ws, data):
@@ -152,16 +145,27 @@ class Room:
                     handle_input(player, action, tick, seq)
             case "ready":
                 player.ready = True
-                await broadcast_json(self, "player_ready", None, [ws])
+                self.broadcast("player_ready", None, [ws])
                 if check_ready(self) and self.countdown_task is None:
                     self.countdown_task = asyncio.create_task(start_countdown(self))
             case "unready":
                 player.ready = False
-                await broadcast_json(self, "player_unready", None, [ws])
+                self.broadcast("player_unready", None, [ws])
                 await cancel_countdown(self)
             case "ping":
-                await send_json(
+                await send_json(  # not going thru player's outbox to bypass delay
                     ws,
                     "pong",
                     {"player_sent_at": data.get("sent_at"), "server_tick": self.tick},
                 )
+
+    def broadcast(self, msg_type: str, data=None, exclude=None):
+        for p in list(self.connections.values()):
+            if not exclude or p not in exclude:
+                p.outbox.append((msg_type, data or {}))
+
+
+async def flush(ws, player):
+    msgs, player.outbox = player.outbox, []
+    for t, d in msgs:
+        await send_json(ws, t, d)

@@ -1,6 +1,5 @@
 import asyncio
 
-from net.protocol import broadcast_json
 from server.handlers.life_cycle import cancel_countdown, start_countdown
 from shared.room_state import RoomState
 
@@ -20,8 +19,8 @@ async def handle_leave(room, ws):
     if leaver is None:
         return
 
-    await broadcast_json(
-        room, "player_left", {"player_id": leaver.player_id, "was_ready": leaver.ready}
+    room.broadcast(
+        "player_left", {"player_id": leaver.player_id, "was_ready": leaver.ready}
     )
 
     if room.state == RoomState.COUNTDOWN and len(room.connections) < MIN_PLAYERS:

@@ -5,17 +5,14 @@ from server.player import Player
 
 def handle_move_result(room, player: Player, result):
     if result.moved:
-        broadcast_event(
-            room,
-            (
-                "piece_moved",
-                {
-                    "board_id": player.player_id,
-                    "row": player.board.piece.row,
-                    "col": player.board.piece.col,
-                    "rot": player.board.piece.rot,
-                },
-            ),
+        room.broadcast(
+            "piece_moved",
+            {
+                "board_id": player.player_id,
+                "row": player.board.piece.row,
+                "col": player.board.piece.col,
+                "rot": player.board.piece.rot,
+            },
             [player],
         )
         player.outbox.append(
@@ -43,29 +40,22 @@ def handle_move_result(room, player: Player, result):
             ]
             garbage = calc_garbage(recipients, result.lines_cleared)
 
-        broadcast_event(room, board_update_event(player))
+        msg_type, data = board_update_event(player)
+        room.broadcast(msg_type, data)
         for recipient_id, amount in garbage.items():
             recipient_player = next(
                 p for p in room.connections.values() if p.player_id == recipient_id
             )
             recipient_player.board.add_garbage(amount)
-            broadcast_event(room, board_update_event(recipient_player))
+            msg_type, data = board_update_event(player)
+            room.broadcast(msg_type, data)
 
 
 def board_update_event(p: Player):
     d = serialize_board(p.board)
-    return (
-        "piece_locked",
-        {
-            "board_id": p.player_id,
-            "cells": d.get("cells"),
-            "new_piece": d.get("piece"),
-            "next_piece": d.get("next_piece"),
-        },
-    )
-
-
-def broadcast_event(room, event, exclude: list[Player] | None = None):
-    for p in room.connections.values():
-        if not exclude or p not in exclude:
-            p.outbox.append(event)
+    return "piece_locked", {
+        "board_id": p.player_id,
+        "cells": d.get("cells"),
+        "new_piece": d.get("piece"),
+        "next_piece": d.get("next_piece"),
+    }

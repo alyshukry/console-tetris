@@ -8,7 +8,6 @@ from websockets.asyncio.server import ServerConnection
 from websockets.exceptions import ConnectionClosed
 
 from game.board import Board
-from net.protocol import broadcast_json, send_json
 from server.handlers.lobby import handle_leave
 from server.player import Player
 from server.room import Room
@@ -22,16 +21,17 @@ _player_id_counter = itertools.count()
 async def handler(ws: ServerConnection):
     player_id = next(_player_id_counter)
     room.connections[ws] = Player(Board(room.shared_bag), player_id)
-    await send_json(
-        ws,
-        "room_state",
-        {
-            "state": room.state.value,
-            "player_count": len(room.connections),
-            "ready_count": sum(p.ready for p in room.connections.values()),
-        },
+    room.connections[ws].outbox.append(
+        (
+            "room_state",
+            {
+                "state": room.state.value,
+                "player_count": len(room.connections),
+                "ready_count": sum(p.ready for p in room.connections.values()),
+            },
+        )
     )
-    await broadcast_json(room, "player_joined", None, [ws])
+    room.broadcast("player_joined", None, [ws])
 
     try:
         async for msg in ws:
