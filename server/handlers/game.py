@@ -51,9 +51,6 @@ def handle_move_result(room, player: Player, result):
             recipient_player.board.add_garbage(amount)
             broadcast_event(room, board_update_event(recipient_player))
 
-    if result.game_over:
-        broadcast_event(room, ("lose", {"board_id": player.player_id}))
-
 
 def board_update_event(p: Player):
     d = serialize_board(p.board)

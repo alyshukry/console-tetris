@@ -119,8 +119,15 @@ class Board:
         return MoveResult(False, False, 0, False)
 
     def add_garbage(self, n: int):
+        if any(any(c != 0 for c in row) for row in self.cells[:n]):
+            self.lose()
         gap = random.randint(0, self.width - 1)
         for _ in range(n):
             self.cells.pop(0)  # remove top row to make room
             garbage_row = ["X" if col != gap else 0 for col in range(self.width)]
             self.cells.append(garbage_row)
+        while not fits(self.cells, self.piece, self.width, self.height, 0, 0):
+            self.piece.row -= 1
+            if self.piece.row < -2:
+                self.lose()
+                break

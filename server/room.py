@@ -8,7 +8,7 @@ from websockets.asyncio.server import ServerConnection
 from game.constants import TICKS_PER_SECOND
 from net.protocol import broadcast_json, send_json
 from net.serialization import serialize_board
-from server.handlers.game import handle_move_result
+from server.handlers.game import broadcast_event, handle_move_result
 from server.handlers.input import apply_input, handle_input
 from server.handlers.life_cycle import (
     cancel_countdown,
@@ -67,6 +67,7 @@ class Room:
         await asyncio.sleep(5)
         await reset_to_lobby(self)
 
+
     async def game_loop(self):
         while True:
             if self.state == RoomState.IN_GAME:
@@ -75,15 +76,16 @@ class Room:
                 )
                 while self.tick < target_ticks:
                     self.tick += 1
+                    alive_before = [
+                        p for p in self.connections.values() if not p.board.game_over
+                    ]
 
-                    for player in self.connections.values():
-                        if player.board.game_over:
+                    for player in alive_before:
+                        if player.board.game_over:  # died earlier this tick (e.g. garbage)
                             continue
-                        due = [
-                            item for item in player.input_queue if item[0] <= self.tick
-                        ]
+                        due = [item for item in player.input_queue if item[0] <= self.tick]
                         player.input_queue = [
-                            item for item in player.input_queue if item[0] > self.tick
+                            i for i in player.input_queue if i[0] > self.tick
                         ]
                         for tick, seq, action in sorted(
                             due, key=lambda item: (item[0], item[1])
@@ -97,21 +99,20 @@ class Room:
                             apply_input(self, player, action)
 
                     if self.tick % self.gravity_ticks == 0:
-                        alive_before = [
-                            p
-                            for p in self.connections.values()
-                            if not p.board.game_over
-                        ]
                         for player in alive_before:
-                            result = player.board.move_piece_down()
-                            handle_move_result(self, player, result)
-                        just_died = [p for p in alive_before if p.board.game_over]
-                        alive_after = [p for p in alive_before if not p.board.game_over]
-                        if len(alive_after) <= 1:
-                            await self.end_game(
-                                alive_after if alive_after else just_died
-                            )
-                            break
+                            if not player.board.game_over:
+                                handle_move_result(
+                                    self, player, player.board.move_piece_down()
+                                )
+
+                    just_died = [p for p in alive_before if p.board.game_over]
+                    for p in just_died:
+                        broadcast_event(self, ("lose", {"board_id": p.player_id}))
+
+                    alive_after = [p for p in alive_before if not p.board.game_over]
+                    if len(alive_after) <= 1:
+                        await self.end_game(alive_after or just_died)
+                        break
             await asyncio.sleep(1 / TICKS_PER_SECOND)
 
     async def net_loop(self):
@@ -135,10 +136,12 @@ class Room:
             case "input":
                 tick = data.get("tick")
                 seq = data.get("seq")
-                if self.state == RoomState.IN_GAME and isinstance(tick, int) and isinstance(seq, int):
-                    handle_input(
-                        player, data.get("action"), tick, seq
-                    )
+                if (
+                    self.state == RoomState.IN_GAME
+                    and isinstance(tick, int)
+                    and isinstance(seq, int)
+                ):
+                    handle_input(player, data.get("action"), tick, seq)
             case "ready":
                 player.ready = True
                 await broadcast_json(self, "player_ready", None, [ws])
