@@ -4,8 +4,6 @@ from client.state.client import ClientState
 
 
 def handle_pong(state: ClientState, data):
-    global latency
-
     round_trip_seconds = time.monotonic() - data["player_sent_at"]
     state.latency = round_trip_seconds * 1000 * 0.3 + state.latency * 0.7
 
