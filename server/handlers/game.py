@@ -47,8 +47,8 @@ def handle_move_result(room, player: Player, result):
                 p for p in room.connections.values() if p.player_id == recipient_id
             )
             recipient_player.board.add_garbage(amount)
-            msg_type, data = board_update_event(player)
-            room.broadcast(msg_type, data)
+        msg_type, data = board_update_event(recipient_player)
+        room.broadcast(msg_type, data)
 
 
 def board_update_event(p: Player):
