@@ -2,7 +2,7 @@ import random
 
 
 def calc_garbage(recipients: list[int], lines: int) -> dict[int, int]:
-    if lines <= 1:
+    if lines <= 1 or not recipients:
         return {}
 
     total_garbage = lines - 1
