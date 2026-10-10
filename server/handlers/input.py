@@ -1,11 +1,13 @@
 from server.handlers.game import handle_move_result
 from server.player import Player
+from shared.action import Action
 
 
-def handle_input(player: Player, action, tick, seq):
+def handle_input(player: Player, action: Action, tick: int, seq: int):
     if player.board.game_over:
         return
-    player.input_queue.append((tick, seq, action))
+    if len(player.input_queue) < 50:
+        player.input_queue.append((tick, seq, action))
 
 
 def apply_input(room, player: Player, action):

@@ -5,6 +5,7 @@ from client.state.board import BoardState
 from game.collision import fits
 from game.piece import Piece
 from net.protocol import send_json
+from shared.action import Action
 
 
 async def input_loop(ws, stdscr, state):
@@ -35,13 +36,13 @@ async def input_loop(ws, stdscr, state):
         await asyncio.sleep(0.025)
 
 
-def key_to_action(key) -> str | None:
+def key_to_action(key) -> Action | None:
     return {
-        curses.KEY_LEFT: "left",
-        curses.KEY_RIGHT: "right",
-        curses.KEY_UP: "rotate",
-        curses.KEY_DOWN: "soft_drop",
-        ord(" "): "drop",
+        curses.KEY_LEFT: Action.LEFT,
+        curses.KEY_RIGHT: Action.RIGHT,
+        curses.KEY_UP: Action.ROTATE,
+        curses.KEY_DOWN: Action.SOFT_DROP,
+        ord(" "): Action.DROP,
     }.get(key)
 
 
