@@ -144,13 +144,17 @@ class Room:
                 ):
                     handle_input(player, action, tick, seq)
             case "ready":
+                if player.ready or self.state not in (RoomState.LOBBY, RoomState.COUNTDOWN):
+                    return
                 player.ready = True
-                self.broadcast("player_ready", None, [player])
+                self.broadcast_lobby()
                 if check_ready(self) and self.countdown_task is None:
                     self.countdown_task = asyncio.create_task(start_countdown(self))
             case "unready":
+                if not player.ready or self.state not in (RoomState.LOBBY, RoomState.COUNTDOWN):
+                    return
                 player.ready = False
-                self.broadcast("player_unready", None, [player])
+                self.broadcast_lobby()
                 await cancel_countdown(self)
             case "ping":
                 await send_json(  # not going thru player's outbox to bypass delay
@@ -158,6 +162,21 @@ class Room:
                     "pong",
                     {"player_sent_at": data.get("sent_at"), "server_tick": self.tick},
                 )
+                
+    def broadcast_lobby(self):
+        player_count = len(self.connections)
+        ready_count = sum(p.ready for p in self.connections.values())
+        for p in self.connections.values():
+            p.outbox.append(
+                (
+                    "lobby_update",
+                    {
+                        "player_count": player_count,
+                        "ready_count": ready_count,
+                        "you_ready": p.ready,
+                    },
+                )
+            )
 
     def broadcast(self, msg_type: str, data=None, exclude=None):
         for p in list(self.connections.values()):

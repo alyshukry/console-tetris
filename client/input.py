@@ -14,8 +14,6 @@ async def input_loop(ws, stdscr, state):
         key = stdscr.getch()
         if key == ord("k"):
             await send_json(ws, "unready" if state.ready else "ready")
-            state.ready = not state.ready
-            state.ready_count += 1 if state.ready else -1
         if state.room_state == RoomState.IN_GAME and key in (
             curses.KEY_LEFT,
             curses.KEY_RIGHT,

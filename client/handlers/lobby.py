@@ -1,9 +1,7 @@
-def handle_player_ready(state, data):
-    state.ready_count += 1
-
-
-def handle_player_unready(state, data):
-    state.ready_count -= 1
+def handle_lobby_update(state, data):
+    state.player_count = data["player_count"]
+    state.ready_count = data["ready_count"]
+    state.ready = data["you_ready"]
 
 
 def handle_countdown_tick(state, data):

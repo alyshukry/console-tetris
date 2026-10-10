@@ -19,9 +19,8 @@ async def handle_leave(room, ws):
     if leaver is None:
         return
 
-    room.broadcast(
-        "player_left", {"player_id": leaver.player_id, "was_ready": leaver.ready}
-    )
+    room.broadcast("player_left", {"player_id": leaver.player_id})
+    room.broadcast_lobby()
 
     if room.state == RoomState.COUNTDOWN and len(room.connections) < MIN_PLAYERS:
         await cancel_countdown(room)

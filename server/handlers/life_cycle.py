@@ -15,14 +15,8 @@ async def reset_to_lobby(room):
         player.last_processed_input_tick = -1
         player.last_processed_input_seq = -1
 
-    await set_room_state(
-        room,
-        RoomState.LOBBY,
-        {
-            "player_count": len(room.connections),
-            "ready_count": 0,
-        },
-    )
+    await set_room_state(room, RoomState.LOBBY)
+    room.broadcast_lobby()
 
 
 async def start_countdown(room):
@@ -34,14 +28,8 @@ async def start_countdown(room):
             await asyncio.sleep(1)
         await room.start_game()
     except asyncio.CancelledError:
-        await set_room_state(
-            room,
-            RoomState.LOBBY,
-            {
-                "player_count": len(room.connections),
-                "ready_count": sum(p.ready for p in room.connections.values()),
-            },
-        )
+        await set_room_state(room, RoomState.LOBBY)
+        room.broadcast_lobby()
     finally:
         room.countdown_task = None
 

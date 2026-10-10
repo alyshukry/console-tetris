@@ -4,7 +4,7 @@ import time
 
 from websockets import ClientConnection
 
-from client.handlers.connection import handle_player_joined, handle_player_left
+from client.handlers.connection import handle_player_left
 from client.handlers.game import (
     handle_all_boards,
     handle_lose,
@@ -12,11 +12,7 @@ from client.handlers.game import (
     handle_piece_moved,
     handle_welcome_info,
 )
-from client.handlers.lobby import (
-    handle_countdown_tick,
-    handle_player_ready,
-    handle_player_unready,
-)
+from client.handlers.lobby import handle_countdown_tick, handle_lobby_update
 from client.handlers.room import handle_room_state
 from client.handlers.sync import handle_pong
 from client.state.client import ClientState
@@ -30,9 +26,7 @@ HANDLERS = {
     "piece_locked": handle_piece_locked,
     "lose": handle_lose,
     "room_state": handle_room_state,
-    "player_joined": handle_player_joined,
-    "player_ready": handle_player_ready,
-    "player_unready": handle_player_unready,
+    "lobby_update": handle_lobby_update,
     "countdown_tick": handle_countdown_tick,
     "player_left": handle_player_left,
     "pong": handle_pong,

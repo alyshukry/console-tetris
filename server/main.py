@@ -21,17 +21,8 @@ _player_id_counter = itertools.count()
 async def handler(ws: ServerConnection):
     player_id = next(_player_id_counter)
     room.connections[ws] = Player(Board(room.shared_bag), player_id)
-    room.connections[ws].outbox.append(
-        (
-            "room_state",
-            {
-                "state": room.state.value,
-                "player_count": len(room.connections),
-                "ready_count": sum(p.ready for p in room.connections.values()),
-            },
-        )
-    )
-    room.broadcast("player_joined", None, [room.connections[ws]])
+    room.connections[ws].outbox.append(("room_state", {"state": room.state.value}))
+    room.broadcast_lobby()
 
     try:
         async for msg in ws:
