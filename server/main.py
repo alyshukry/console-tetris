@@ -9,8 +9,8 @@ from websockets.exceptions import ConnectionClosed
 
 from game.board import Board
 from net.protocol import broadcast_json, send_json
-from server.room import Room
 from server.player import Player
+from server.room import Room
 from shared.room_state import RoomState
 
 logging.basicConfig(level=logging.DEBUG)
