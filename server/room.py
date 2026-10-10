@@ -19,6 +19,7 @@ from server.handlers.life_cycle import (
 from game.seven_bag import SevenBag
 from server.handlers.lobby import check_ready
 from server.player import Player
+from shared.action import Action
 from shared.room_state import RoomState
 
 
@@ -67,7 +68,6 @@ class Room:
         await asyncio.sleep(5)
         await reset_to_lobby(self)
 
-
     async def game_loop(self):
         while True:
             if self.state == RoomState.IN_GAME:
@@ -81,9 +81,13 @@ class Room:
                     ]
 
                     for player in alive_before:
-                        if player.board.game_over:  # died earlier this tick (e.g. garbage)
+                        if (
+                            player.board.game_over
+                        ):  # died earlier this tick (e.g. garbage)
                             continue
-                        due = [item for item in player.input_queue if item[0] <= self.tick]
+                        due = [
+                            item for item in player.input_queue if item[0] <= self.tick
+                        ]
                         player.input_queue = [
                             i for i in player.input_queue if i[0] > self.tick
                         ]
@@ -134,14 +138,16 @@ class Room:
         player = self.connections[ws]
         match data.get("type"):
             case "input":
+                action = data.get("action")
                 tick = data.get("tick")
                 seq = data.get("seq")
                 if (
                     self.state == RoomState.IN_GAME
+                    and isinstance(action, Action)
                     and isinstance(tick, int)
                     and isinstance(seq, int)
                 ):
-                    handle_input(player, data.get("action"), tick, seq)
+                    handle_input(player, action, tick, seq)
             case "ready":
                 player.ready = True
                 await broadcast_json(self, "player_ready", None, [ws])
