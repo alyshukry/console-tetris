@@ -12,7 +12,6 @@ from net.protocol import broadcast_json, send_json
 from server.handlers.lobby import handle_leave
 from server.player import Player
 from server.room import Room
-from shared.room_state import RoomState
 
 logging.basicConfig(level=logging.DEBUG)
 

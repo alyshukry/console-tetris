@@ -6,6 +6,7 @@ from websockets import ConnectionClosed
 from websockets.asyncio.server import ServerConnection
 
 from game.constants import TICKS_PER_SECOND
+from game.seven_bag import SevenBag
 from net.protocol import broadcast_json, send_json
 from net.serialization import serialize_board
 from server.handlers.game import broadcast_event, handle_move_result
@@ -16,7 +17,6 @@ from server.handlers.life_cycle import (
     set_room_state,
     start_countdown,
 )
-from game.seven_bag import SevenBag
 from server.handlers.lobby import check_ready
 from server.player import Player
 from shared.action import Action

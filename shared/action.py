@@ -1,5 +1,6 @@
 from enum import StrEnum
 
+
 class Action(StrEnum):
     LEFT = "left"
     RIGHT = "right"
