@@ -14,6 +14,7 @@ from server.handlers.life_cycle import (
     set_room_state,
     start_countdown,
 )
+from game.seven_bag import SevenBag
 from server.handlers.lobby import check_ready
 from server.player import Player
 from shared.room_state import RoomState
@@ -23,7 +24,6 @@ class Room:
     def __init__(self):
         self.connections: dict[ServerConnection, Player] = {}
         self.state = RoomState.LOBBY
-        from game.seven_bag import SevenBag
 
         self.shared_bag = SevenBag()
         self.tick = 0
@@ -34,7 +34,9 @@ class Room:
 
     def all_boards_payload(self):
         return {
-            "boards": {p.player_id: serialize_board(p.board) for p in self.connections.values()}
+            "boards": {
+                p.player_id: serialize_board(p.board) for p in self.connections.values()
+            }
         }
 
     async def start_game(self):
@@ -57,25 +59,33 @@ class Room:
         await set_room_state(self, RoomState.IN_GAME)
 
     async def end_game(self, winners: list[Player]):
-        await set_room_state(self, RoomState.RESULTS, {"winners": [p.player_id for p in winners]})
+        await set_room_state(
+            self, RoomState.RESULTS, {"winners": [p.player_id for p in winners]}
+        )
         await asyncio.sleep(5)
         await reset_to_lobby(self)
 
     async def game_loop(self):
         while True:
             if self.state == RoomState.IN_GAME:
-                target_ticks = int((time.monotonic() - (self.start_time or 0)) * TICKS_PER_SECOND)
+                target_ticks = int(
+                    (time.monotonic() - (self.start_time or 0)) * TICKS_PER_SECOND
+                )
                 while self.tick < target_ticks:
                     self.tick += 1
 
                     for player in self.connections.values():
                         if player.board.game_over:
                             continue
-                        due = [item for item in player.input_queue if item[0] <= self.tick]
+                        due = [
+                            item for item in player.input_queue if item[0] <= self.tick
+                        ]
                         player.input_queue = [
                             item for item in player.input_queue if item[0] > self.tick
                         ]
-                        for tick, seq, action in sorted(due, key=lambda item: (item[0], item[1])):
+                        for tick, seq, action in sorted(
+                            due, key=lambda item: (item[0], item[1])
+                        ):
                             if (tick, seq) > (
                                 player.last_processed_input_tick,
                                 player.last_processed_input_seq,
@@ -86,7 +96,9 @@ class Room:
 
                     if self.tick % self.gravity_ticks == 0:
                         alive_before = [
-                            p for p in self.connections.values() if not p.board.game_over
+                            p
+                            for p in self.connections.values()
+                            if not p.board.game_over
                         ]
                         for player in alive_before:
                             result = player.board.move_piece_down()
@@ -94,7 +106,9 @@ class Room:
                         just_died = [p for p in alive_before if p.board.game_over]
                         alive_after = [p for p in alive_before if not p.board.game_over]
                         if len(alive_after) <= 1:
-                            await self.end_game(alive_after if alive_after else just_died)
+                            await self.end_game(
+                                alive_after if alive_after else just_died
+                            )
                             break
             await asyncio.sleep(1 / TICKS_PER_SECOND)
 
@@ -114,7 +128,9 @@ class Room:
         player = self.connections[ws]
         match data.get("type"):
             case "input":
-                handle_input(player, data.get("action"), data.get("tick"), data.get("seq"))
+                handle_input(
+                    player, data.get("action"), data.get("tick"), data.get("seq")
+                )
             case "ready":
                 player.ready = True
                 await broadcast_json(self, "player_ready", None, [ws])
