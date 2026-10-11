@@ -1,8 +1,6 @@
 import asyncio
 import time
 
-import websockets
-
 from game.constants import TICKS_PER_SECOND
 from net.protocol import send_json
 from server.engine.inputs import apply_input
@@ -74,5 +72,4 @@ async def flush(ws, player):
 
 
 async def run_room(room):
-    async with websockets.serve(handler, "0.0.0.0", 8888):
-        await asyncio.gather(game_loop(room), net_loop(room))
+    await asyncio.gather(game_loop(room), net_loop(room))
