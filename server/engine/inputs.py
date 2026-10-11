@@ -1,13 +1,8 @@
-from server.engine.moves import handle_move_result
+from server.engine.moves import resolve_move
 from server.models.player import Player
 from shared.action import Action
 
 
-def handle_input(player: Player, action: Action, tick: int, seq: int):
-    if player.board.game_over:
-        return
-    if len(player.input_queue) < 50:
-        player.input_queue.append((tick, seq, action))
 
 
 def apply_input(room, player: Player, action):
@@ -20,4 +15,4 @@ def apply_input(room, player: Player, action):
     }.get(action)
     if fn is None:
         return
-    handle_move_result(room, player, fn())
+    resolve_move(room, player, fn())

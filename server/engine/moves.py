@@ -3,7 +3,7 @@ from net.serialization import serialize_board
 from server.models.player import Player
 
 
-def handle_move_result(room, player: Player, result):
+def resolve_move(room, player: Player, result):
     if result.moved:
         room.broadcast(
             "piece_moved",

@@ -1,9 +1,10 @@
 import asyncio
 
+from server.config import MIN_PLAYERS
 from server.engine.lifecycle import cancel_countdown, start_countdown
 from shared.room_state import RoomState
 
-MIN_PLAYERS = 2
+
 
 
 def check_ready(room) -> bool:
