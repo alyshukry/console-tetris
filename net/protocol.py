@@ -1,14 +1,11 @@
-import asyncio
 import json
-import logging
 from typing import TYPE_CHECKING
 
-from websockets import ConnectionClosed
 from websockets.asyncio.client import ClientConnection
 from websockets.asyncio.server import ServerConnection
 
 if TYPE_CHECKING:
-    from server.models.room import Room
+    pass
 
 
 async def send_json(

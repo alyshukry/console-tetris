@@ -5,8 +5,6 @@ from server.engine.lifecycle import cancel_countdown, start_countdown
 from shared.room_state import RoomState
 
 
-
-
 def check_ready(room) -> bool:
     return (
         room.state == RoomState.LOBBY

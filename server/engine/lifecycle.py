@@ -71,15 +71,15 @@ async def start_game(room):
 
         room.start_time = time.monotonic()
         await set_room_state(room, RoomState.IN_GAME)
-        
-        
+
+
 async def end_game(room, winners: list[Player]):
     await set_room_state(
         room, RoomState.RESULTS, {"winners": [p.player_id for p in winners]}
     )
     await asyncio.sleep(5)
     await reset_to_lobby(room)
-    
+
 def all_boards_payload(room):
     return {
         "boards": {

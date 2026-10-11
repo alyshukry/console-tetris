@@ -1,8 +1,15 @@
 import asyncio
+import itertools
+import json
 
+from websockets import ConnectionClosed, ServerConnection
+
+from game.board import Board
 from net.protocol import send_json
 from server.engine.lifecycle import cancel_countdown, start_countdown
-from server.engine.lobby import check_ready
+from server.engine.lobby import check_ready, handle_leave
+from server.models.player import Player
+from server.models.room import Room
 from shared.action import Action
 from shared.room_state import RoomState
 
@@ -48,17 +55,6 @@ async def handle_message(room, ws, data):
                 "pong",
                 {"player_sent_at": data.get("sent_at"), "server_tick": room.tick},
             )
-            
-import itertools
-import json
-
-from websockets import ConnectionClosed, ServerConnection
-
-from game.board import Board
-from server.engine.lobby import handle_leave
-from server.models.player import Player
-from server.models.room import Room
-from server.routes.ws import handle_message
 
 
 room = Room()
