@@ -1,5 +1,5 @@
-from server.handlers.game import handle_move_result
-from server.player import Player
+from server.engine.moves import handle_move_result
+from server.models.player import Player
 from shared.action import Action
 
 

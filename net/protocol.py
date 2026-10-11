@@ -8,7 +8,7 @@ from websockets.asyncio.client import ClientConnection
 from websockets.asyncio.server import ServerConnection
 
 if TYPE_CHECKING:
-    from server.room import Room
+    from server.models.room import Room
 
 
 async def send_json(

@@ -9,16 +9,16 @@ from game.constants import TICKS_PER_SECOND
 from game.seven_bag import SevenBag
 from net.protocol import send_json
 from net.serialization import serialize_board
-from server.handlers.game import handle_move_result
-from server.handlers.input import apply_input, handle_input
-from server.handlers.life_cycle import (
+from server.engine.moves import handle_move_result
+from server.engine.inputs import apply_input, handle_input
+from server.engine.lifecycle import (
     cancel_countdown,
     reset_to_lobby,
     set_room_state,
     start_countdown,
 )
-from server.handlers.lobby import check_ready
-from server.player import Player
+from server.engine.lobby import check_ready
+from server.models.player import Player
 from shared.action import Action
 from shared.room_state import RoomState
 

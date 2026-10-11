@@ -1,6 +1,6 @@
 import asyncio
 
-from server.handlers.life_cycle import cancel_countdown, start_countdown
+from server.engine.lifecycle import cancel_countdown, start_countdown
 from shared.room_state import RoomState
 
 MIN_PLAYERS = 2

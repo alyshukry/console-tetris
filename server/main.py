@@ -8,9 +8,9 @@ from websockets.asyncio.server import ServerConnection
 from websockets.exceptions import ConnectionClosed
 
 from game.board import Board
-from server.handlers.lobby import handle_leave
-from server.player import Player
-from server.room import Room
+from server.engine.lobby import handle_leave
+from server.models.player import Player
+from server.models.room import Room
 
 logging.basicConfig(level=logging.DEBUG)
 
