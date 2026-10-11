@@ -13,7 +13,7 @@ from server.engine.loop import run_room
 from server.models.player import Player
 from server.models.room import Room
 from server.routes.ws import handle_message
-from server.handler import room
+from server.routes.ws import room
 
 logging.basicConfig(level=logging.DEBUG)
 

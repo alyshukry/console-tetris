@@ -8,7 +8,7 @@ from net.protocol import send_json
 from server.engine.inputs import apply_input
 from server.engine.lifecycle import end_game
 from server.engine.moves import resolve_move
-from server.handler import handler
+from server.routes.ws import handler
 from shared.room_state import RoomState
 
 
