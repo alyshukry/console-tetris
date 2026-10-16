@@ -1,25 +1,29 @@
+
 import asyncio
+from contextlib import asynccontextmanager, suppress
 import logging
 
 from fastapi import FastAPI
-import websockets
 
 from server.engine.loop import run_room
-from server.routes.ws import room
-from server.routes import health
-from server.routes import ws
+from server.routes import health, ws
 
 logging.basicConfig(level=logging.DEBUG)
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    room_task = asyncio.create_task(run_room(ws.room))
+
+    try:
+        yield
+    finally:
+        room_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await room_task
+
+
+app = FastAPI(lifespan=lifespan)
+
 app.include_router(health.router)
-app.include_router(ws.ws_endpoint)
-
-
-async def main():
-    async with websockets.serve(handler, "0.0.0.0", 8888):
-        await run_room(room)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+app.include_router(ws.router)

@@ -8,7 +8,6 @@ from net.protocol import encode
 from server.engine.inputs import apply_input
 from server.engine.lifecycle import end_game
 from server.engine.moves import resolve_move
-from server.routes.ws import handler
 from shared.room_state import RoomState
 
 

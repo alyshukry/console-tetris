@@ -1,7 +1,7 @@
 import asyncio
 import curses
 
-from websockets.client import ClientConnection
+from websockets import ClientConnection
 
 from client.state.board import BoardState
 from game.collision import fits

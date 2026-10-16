@@ -66,6 +66,7 @@ router = APIRouter()
 @router.websocket("/ws")
 async def ws_endpoint(ws: WebSocket):
     await ws.accept()
+
     player_id = next(_player_id_counter)
     room.connections[ws] = Player(Board(room.shared_bag), player_id)
     room.connections[ws].outbox.append(("room_state", {"state": room.state.value}))
@@ -78,9 +79,11 @@ async def ws_endpoint(ws: WebSocket):
             except json.JSONDecodeError:
                 await ws.close(code=1003)
                 return
+
             if not isinstance(data, dict):
                 await ws.close(code=1003)
                 return
+
             await handle_message(room, ws, data)
     finally:
         await handle_leave(room, ws)
