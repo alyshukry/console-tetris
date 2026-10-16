@@ -16,7 +16,7 @@ def main(stdscr):
     host = sys.argv[1] if len(sys.argv) > 1 else "127.0.0.1"
 
     async def run_player():
-        async with websockets.connect(f"ws://{host}:8888/ws") as ws:
+        async with websockets.connect(f"ws://{host}:8888/ws?host=hi") as ws:
             await asyncio.gather(
                 ping_loop(ws, state),
                 input_loop(ws, stdscr, state),

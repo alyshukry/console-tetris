@@ -60,7 +60,7 @@ router = APIRouter()
 
 
 @router.websocket("/ws")
-async def ws_endpoint(ws: WebSocket, host: str, password: str | None = None):
+async def ws_endpoint(ws: WebSocket, host: str, password_hash: str | None = None):
     await ws.accept()
 
     room_manager = ws.app.state.room_manager
@@ -69,7 +69,7 @@ async def ws_endpoint(ws: WebSocket, host: str, password: str | None = None):
     if room is None:
         await ws.close(code=1008, reason="Room not found")
         return
-    if room.password is not None and password != room.password:
+    if room.password_hash is not None and password_hash != room.password_hash:
         await ws.close(code=1008, reason="Incorrect password")
         return
 
