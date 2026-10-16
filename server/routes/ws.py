@@ -1,10 +1,8 @@
 import asyncio
-import itertools
 import json
 
 from fastapi import APIRouter, WebSocket
 
-from game.board import Board
 from net.protocol import encode
 from server.engine.lifecycle import cancel_countdown, start_countdown
 from server.engine.lobby import check_ready, handle_leave

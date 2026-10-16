@@ -28,7 +28,7 @@ class RoomManager:
         room = self.rooms.get(room_id)
         if room is not None:
             room.task.cancel()
-            try: 
+            try:
                 await room.task
             except asyncio.CancelledError:
                 return True

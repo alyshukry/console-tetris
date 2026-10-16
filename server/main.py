@@ -1,10 +1,8 @@
-import asyncio
-from contextlib import asynccontextmanager, suppress
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from server.models.room import Room
 from server.routes import health, ws
 from server.services.room_manager import RoomManager
 
