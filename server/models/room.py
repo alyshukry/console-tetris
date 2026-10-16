@@ -1,4 +1,5 @@
 import asyncio
+import itertools
 
 from fastapi import WebSocket
 
@@ -12,9 +13,13 @@ from shared.room_state import RoomState
 
 class Room:
     def __init__(self):
+        self.host: str
+        self.password_hash: str | None = None
+        self.max_players: int = 16
+        self._player_id_counter = itertools.count()
+        
         self.connections: dict[WebSocket, Player] = {}
         self.state = RoomState.LOBBY
-
         self.shared_bag = SevenBag()
         self.tick = 0
         self.start_time = None

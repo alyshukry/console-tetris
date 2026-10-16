@@ -8,8 +8,6 @@ from game.board import Board
 from net.protocol import encode
 from server.engine.lifecycle import cancel_countdown, start_countdown
 from server.engine.lobby import check_ready, handle_leave
-from server.models.player import Player
-from server.models.room import Room
 from shared.action import Action
 from shared.room_state import RoomState
 
@@ -58,19 +56,26 @@ async def handle_message(room, ws, data):
             )
 
 
-room = Room()
-_player_id_counter = itertools.count()
 router = APIRouter()
 
 
 @router.websocket("/ws")
-async def ws_endpoint(ws: WebSocket):
+async def ws_endpoint(ws: WebSocket, host: str, password: str | None = None):
     await ws.accept()
 
-    player_id = next(_player_id_counter)
-    room.connections[ws] = Player(Board(room.shared_bag), player_id)
-    room.connections[ws].outbox.append(("room_state", {"state": room.state.value}))
-    room.broadcast_lobby()
+    room_manager = ws.app.state.room_manager
+    room = room_manager.get_room(host)
+
+    if room is None:
+        await ws.close(code=1008, reason="Room not found")
+        return
+    if room.password is not None and password != room.password:
+        await ws.close(code=1008, reason="Incorrect password")
+        return
+
+    if not room_manager.join_room(host, ws):
+        await ws.close(code=1008, reason="Unable to join room")
+        return
 
     try:
         async for msg in ws.iter_text():
