@@ -1,8 +1,10 @@
 import asyncio
 import time
 
+from fastapi import WebSocket
+
 from game.constants import TICKS_PER_SECOND
-from net.protocol import send_json
+from net.protocol import encode
 from server.engine.inputs import apply_input
 from server.engine.lifecycle import end_game
 from server.engine.moves import resolve_move
@@ -65,10 +67,10 @@ async def net_loop(room):
         await asyncio.sleep(0.01)
 
 
-async def flush(ws, player):
+async def flush(ws: WebSocket, player):
     msgs, player.outbox = player.outbox, []
     for t, d in msgs:
-        await send_json(ws, t, d)
+        await ws.send_text(encode(t, d))
 
 
 async def run_room(room):

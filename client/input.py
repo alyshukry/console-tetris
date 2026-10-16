@@ -1,19 +1,21 @@
 import asyncio
 import curses
 
+from websockets.client import ClientConnection
+
 from client.state.board import BoardState
 from game.collision import fits
 from game.piece import Piece
-from net.protocol import send_json
+from net.protocol import encode
 from shared.action import Action
 from shared.room_state import RoomState
 
 
-async def input_loop(ws, stdscr, state):
+async def input_loop(ws: ClientConnection, stdscr, state):
     while True:
         key = stdscr.getch()
         if key == ord("k"):
-            await send_json(ws, "unready" if state.ready else "ready")
+            await ws.send(encode("unready" if state.ready else "ready"))
         if state.room_state == RoomState.IN_GAME and key in (
             curses.KEY_LEFT,
             curses.KEY_RIGHT,
@@ -27,10 +29,11 @@ async def input_loop(ws, stdscr, state):
             seq = state.input_seq_by_tick.get(tick, 0)
             state.pending_inputs.append((tick, seq, key))
             state.input_seq_by_tick[tick] = seq + 1
-            await send_json(
-                ws,
-                "input",
-                {"action": key_to_action(key), "tick": tick, "seq": seq},
+            await ws.send(
+                encode(
+                    "input",
+                    {"action": key_to_action(key), "tick": tick, "seq": seq},
+                )
             )
         await asyncio.sleep(0.025)
 

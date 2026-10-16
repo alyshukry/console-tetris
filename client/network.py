@@ -17,7 +17,7 @@ from client.handlers.room import handle_room_state
 from client.handlers.sync import handle_pong
 from client.state.client import ClientState
 from game.collision import fits
-from net.protocol import send_json
+from net.protocol import encode
 
 HANDLERS = {
     "welcome_info": handle_welcome_info,
@@ -69,7 +69,7 @@ async def gravity_loop(state: ClientState):
 
 async def ping_loop(ws: ClientConnection, state: ClientState):
     while True:
-        await send_json(
-            ws, "ping", {"player_tick": state.tick, "sent_at": time.monotonic()}
+        await ws.send(
+            encode("ping", {"player_tick": state.tick, "sent_at": time.monotonic()})
         )
         await asyncio.sleep(1)

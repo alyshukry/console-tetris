@@ -2,10 +2,10 @@ import asyncio
 import itertools
 import json
 
-from websockets import ConnectionClosed, ServerConnection
+from fastapi import APIRouter, WebSocket
 
 from game.board import Board
-from net.protocol import send_json
+from net.protocol import encode
 from server.engine.lifecycle import cancel_countdown, start_countdown
 from server.engine.lobby import check_ready, handle_leave
 from server.models.player import Player
@@ -50,35 +50,37 @@ async def handle_message(room, ws, data):
             room.broadcast_lobby()
             await cancel_countdown(room)
         case "ping":
-            await send_json(  # not going thru player's outbox to bypass delay
-                ws,
-                "pong",
-                {"player_sent_at": data.get("sent_at"), "server_tick": room.tick},
+            await ws.send_text(
+                encode(  # not going thru player's outbox to bypass delay
+                    "pong",
+                    {"player_sent_at": data.get("sent_at"), "server_tick": room.tick},
+                )
             )
 
 
 room = Room()
 _player_id_counter = itertools.count()
+router = APIRouter()
 
 
-async def handler(ws: ServerConnection):
+@router.websocket("/ws")
+async def ws_endpoint(ws: WebSocket):
+    await ws.accept()
     player_id = next(_player_id_counter)
     room.connections[ws] = Player(Board(room.shared_bag), player_id)
     room.connections[ws].outbox.append(("room_state", {"state": room.state.value}))
     room.broadcast_lobby()
 
     try:
-        async for msg in ws:
+        async for msg in ws.iter_text():
             try:
                 data = json.loads(msg)
             except json.JSONDecodeError:
-                await ws.close(1003)
+                await ws.close(code=1003)
                 return
             if not isinstance(data, dict):
-                await ws.close(1003)
+                await ws.close(code=1003)
                 return
             await handle_message(room, ws, data)
-    except ConnectionClosed:
-        pass
     finally:
         await handle_leave(room, ws)

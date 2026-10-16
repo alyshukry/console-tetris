@@ -1,6 +1,6 @@
 import asyncio
 
-from websockets.asyncio.server import ServerConnection
+from fastapi import WebSocket
 
 from game.constants import TICKS_PER_SECOND
 from game.seven_bag import SevenBag
@@ -12,7 +12,7 @@ from shared.room_state import RoomState
 
 class Room:
     def __init__(self):
-        self.connections: dict[ServerConnection, Player] = {}
+        self.connections: dict[WebSocket, Player] = {}
         self.state = RoomState.LOBBY
 
         self.shared_bag = SevenBag()
