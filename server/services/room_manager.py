@@ -5,7 +5,7 @@ from fastapi import WebSocket
 from game.board import Board
 from server.models.player import Player
 from server.models.room import Room
-from server.types import Rooms
+from server.types import Rooms, Username
 from shared.room_state import RoomState
 
 
@@ -16,7 +16,7 @@ class RoomManager:
     def get_room(self, room_id: str) -> Room | None:
         return self.rooms.get(room_id)
 
-    def create_room(self, host: str, password_hash: str | None = None) -> bool:
+    def create_room(self, host: Username, password_hash: str | None = None) -> bool:
         if self.rooms.get(host) is None:
             self.rooms[host] = Room(
                 host, password_hash if password_hash is not None else None

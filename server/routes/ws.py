@@ -6,6 +6,7 @@ from fastapi import APIRouter, WebSocket
 from net.protocol import encode
 from server.engine.lifecycle import cancel_countdown, start_countdown
 from server.engine.lobby import check_ready, handle_leave
+from server.types import Username
 from shared.action import Action
 from shared.room_state import RoomState
 
@@ -58,7 +59,7 @@ router = APIRouter()
 
 
 @router.websocket("/ws")
-async def ws_endpoint(ws: WebSocket, host: str, password_hash: str | None = None):
+async def ws_endpoint(ws: WebSocket, host: Username, password_hash: str | None = None):
     await ws.accept()
 
     room_manager = ws.app.state.room_manager

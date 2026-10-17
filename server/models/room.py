@@ -8,12 +8,13 @@ from game.seven_bag import SevenBag
 from server.config import GRAVITY_IN_SECONDS
 from server.engine.loop import run_room
 from server.models.player import Player
+from server.types import Username
 from shared.action import Action
 from shared.room_state import RoomState
 
 
 class Room:
-    def __init__(self, host: str, password_hash: str | None = None):
+    def __init__(self, host: Username, password_hash: str | None = None):
         self.host = host
         self.password_hash = password_hash
         self.max_players: int = 16
