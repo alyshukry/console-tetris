@@ -6,7 +6,6 @@ from fastapi import WebSocket
 from game.constants import TICKS_PER_SECOND
 from game.seven_bag import SevenBag
 from server.config import GRAVITY_IN_SECONDS
-from server.engine.loop import run_room
 from server.models.player import Player
 from server.schemas.common import Username
 from shared.action import Action
@@ -19,7 +18,7 @@ class Room:
         self.password_hash = password_hash
         self.max_players: int = 16
         self._player_id_counter = itertools.count()
-        self.task = asyncio.create_task(run_room(self))
+        self.task: asyncio.Task
         self.connections: dict[WebSocket, Player] = {}
         self.state = RoomState.LOBBY
         self.shared_bag = SevenBag()

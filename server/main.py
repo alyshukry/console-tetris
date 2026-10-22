@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.DEBUG)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.room_manager = RoomManager()
-    app.state.room_manager.create_room("hi")
+    app.state.room_manager.create_room("hilo")
 
     yield
     print("closing")

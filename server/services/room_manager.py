@@ -4,6 +4,7 @@ from typing import TypeAlias
 from fastapi import WebSocket
 
 from game.board import Board
+from server.engine.loop import run_room
 from server.models.player import Player
 from server.models.room import Room
 from server.schemas.common import Username
@@ -24,18 +25,18 @@ class RoomManager:
             self.rooms[host] = Room(
                 host, password_hash if password_hash is not None else None
             )
+            self.rooms[host].task = asyncio.create_task(run_room(self.rooms[host]))
             return True
         return False
 
-    async def delete_room(self, room_id: str) -> bool:
-        room = self.rooms.get(room_id)
+    async def delete_room(self, room_id: str):
+        room = self.rooms.pop(room_id)
         if room is not None:
             room.task.cancel()
             try:
                 await room.task
             except asyncio.CancelledError:
-                return True
-        return False
+                pass
 
     def join_room(self, room_id: str, player: WebSocket) -> bool:
         room = self.rooms.get(room_id)
