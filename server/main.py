@@ -15,7 +15,6 @@ logging.basicConfig(level=logging.DEBUG)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     room_manager = RoomManager()
-    room_manager.create_room("hilo", hash_password("supersecret"))
 
     yield {"room_manager": room_manager}
 

@@ -14,8 +14,7 @@ from server.errors import (
 )
 from server.models.player import Player
 from server.models.room import Room
-from server.schemas.common import Username
-from server.security import verify_password
+from server.security import hash_password, verify_password
 from shared.room_state import RoomState
 
 Rooms: TypeAlias = dict[str, Room]
@@ -41,7 +40,7 @@ class RoomManager:
 
     def attach_player(self, room: Room, ws: WebSocket) -> Player:
         self._check_joinable(room)
-        player = Player(Board(room.shared_bag), next(room._player_id_counter))
+        player = Player(Board(room.shared_bag), room.next_player_id())
         room.connections[ws] = player
         player.outbox.append(("room_state", {"state": room.state.value}))
         room.broadcast_lobby()
@@ -50,14 +49,20 @@ class RoomManager:
     def get_room(self, room_id: str) -> Room | None:
         return self.rooms.get(room_id)
 
-    def create_room(self, host: Username, password_hash: str | None = None):
-        if self.rooms.get(host) is None:
-            self.rooms[host] = Room(
-                host, password_hash if password_hash is not None else None
-            )
-            self.rooms[host].task = asyncio.create_task(run_room(self.rooms[host]))
-            return self.rooms[host]
-        raise RoomNameTaken()
+    async def create_room(self, host: str, password: str | None = None):
+        if host in self.rooms:
+            raise RoomNameTaken()
+        room = Room(
+            host,
+            (
+                await asyncio.to_thread(hash_password, password)
+                if password is not None
+                else None
+            ),
+        )
+        room.task = asyncio.create_task(run_room(room))
+        self.rooms[host] = room
+        return room
 
     def check_password(self, room: Room, password: str | None):
         if room.password_hash and not verify_password(
@@ -66,10 +71,13 @@ class RoomManager:
             raise WrongPassword()
 
     async def delete_room(self, room_id: str):
-        room = self.rooms.pop(room_id)
-        if room is not None:
-            room.task.cancel()
-            try:
-                await room.task
-            except asyncio.CancelledError:
-                pass
+        try:
+            room = self.rooms.pop(room_id)
+        except KeyError:
+            raise RoomNotFound()
+
+        room.task.cancel()
+        try:
+            await room.task
+        except asyncio.CancelledError:
+            pass

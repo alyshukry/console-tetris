@@ -7,13 +7,12 @@ from game.constants import TICKS_PER_SECOND
 from game.seven_bag import SevenBag
 from server.config import GRAVITY_IN_SECONDS
 from server.models.player import Player
-from server.schemas.common import Username
 from shared.action import Action
 from shared.room_state import RoomState
 
 
 class Room:
-    def __init__(self, host: Username, password_hash: str | None = None):
+    def __init__(self, host: str, password_hash: str | None = None):
         self.host = host
         self.password_hash = password_hash
         self.max_players: int = 16
@@ -26,6 +25,9 @@ class Room:
         self.start_time = None
         self.gravity_ticks = round(GRAVITY_IN_SECONDS * TICKS_PER_SECOND)
         self.countdown_task: asyncio.Task | None = None
+
+    def next_player_id(self):
+        return next(self._player_id_counter)
 
     def queue_input(self, player: Player, action: Action, tick: int, seq: int):
         if player.board.game_over:

@@ -1,16 +1,14 @@
 import asyncio
 import json
-from typing import Annotated
 
-from fastapi import APIRouter, Depends, WebSocket
+from fastapi import APIRouter, WebSocket
 
 from net.protocol import encode
-from server.dependencies import get_websocket_room_manager
+from server.dependencies import RoomManagerDep
 from server.engine.lifecycle import cancel_countdown, start_countdown
 from server.engine.lobby import check_ready, handle_leave
 from server.errors import AppError
 from server.schemas.common import Username
-from server.services.room_manager import RoomManager
 from shared.action import Action
 from shared.room_state import RoomState
 
@@ -66,12 +64,10 @@ router = APIRouter()
 async def ws_endpoint(
     ws: WebSocket,
     host: Username,
-    room_manager: Annotated[RoomManager, Depends(get_websocket_room_manager)],
+    room_manager: RoomManagerDep,
     password: str | None = None,
 ):
     await ws.accept()
-
-    room = room_manager.get_room(host)
 
     try:
         room = await asyncio.to_thread(room_manager.authorize_join, host, password)

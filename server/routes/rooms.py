@@ -1,11 +1,7 @@
-from typing import Annotated
+from fastapi import APIRouter
 
-from fastapi import APIRouter, Depends
-
-from server.dependencies import get_room_manager
+from server.dependencies import RoomManagerDep
 from server.schemas.rooms import CreateRoomRequest, RoomSummary
-from server.security import hash_password
-from server.services.room_manager import RoomManager
 
 router = APIRouter()
 
@@ -13,8 +9,7 @@ router = APIRouter()
 @router.post("/rooms", status_code=201, response_model=RoomSummary)
 async def create_room(
     body: CreateRoomRequest,
-    room_manager: Annotated[RoomManager, Depends(get_room_manager)],
+    room_manager: RoomManagerDep,
 ):
-    password_hash = hash_password(body.password) if body.password is not None else None
-    room = room_manager.create_room(body.host, password_hash)
+    room = await room_manager.create_room(body.host, body.password)
     return RoomSummary.from_room(room)

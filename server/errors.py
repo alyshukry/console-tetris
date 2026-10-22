@@ -1,4 +1,4 @@
-class AppError(Exception):  # main
+class AppError(Exception):
     status_code = 400
     detail = "Bad request"
 
