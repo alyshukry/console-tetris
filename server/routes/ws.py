@@ -63,9 +63,10 @@ router = APIRouter()
 @router.websocket("/ws")
 async def ws_endpoint(
     ws: WebSocket,
+    *,
     host: Username,
-    room_manager: RoomManagerDep,
     password: str | None = None,
+    room_manager: RoomManagerDep,
 ):
     await ws.accept()
 
