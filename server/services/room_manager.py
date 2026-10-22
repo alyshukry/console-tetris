@@ -6,7 +6,6 @@ from fastapi import WebSocket
 from game.board import Board
 from server.engine.loop import run_room
 from server.errors import (
-    AppError,
     RoomFull,
     RoomInProgress,
     RoomNameTaken,

@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from server.errors import AppError
-from server.routes import health, ws, rooms
+from server.routes import health, rooms, ws
 from server.security import hash_password
 from server.services.room_manager import RoomManager
 

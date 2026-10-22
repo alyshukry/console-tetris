@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 
+from server.models.room import Room
 from server.schemas.common import Username
 from shared.room_state import RoomState
-from server.models.room import Room
 
 
 class CreateRoomRequest(BaseModel):

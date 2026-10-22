@@ -1,11 +1,10 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 
 from server.dependencies import get_room_manager
-from server.errors import AppError
-from server.security import hash_password
 from server.schemas.rooms import CreateRoomRequest, RoomSummary
+from server.security import hash_password
 from server.services.room_manager import RoomManager
 
 router = APIRouter()
