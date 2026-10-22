@@ -1,13 +1,16 @@
 import asyncio
+from typing import TypeAlias
 
 from fastapi import WebSocket
 
 from game.board import Board
 from server.models.player import Player
 from server.models.room import Room
-from server.types import Rooms, Username
+from server.schemas.common import Username
 from shared.room_state import RoomState
 
+
+Rooms: TypeAlias = dict[str, Room]
 
 class RoomManager:
     def __init__(self):
