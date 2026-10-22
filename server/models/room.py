@@ -8,7 +8,7 @@ from game.seven_bag import SevenBag
 from server.config import GRAVITY_IN_SECONDS
 from server.engine.loop import run_room
 from server.models.player import Player
-from server.types import Username
+from server.schemas.common import Username
 from shared.action import Action
 from shared.room_state import RoomState
 
