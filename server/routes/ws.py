@@ -1,12 +1,16 @@
 import asyncio
 import json
+from typing import Annotated
 
-from fastapi import APIRouter, WebSocket
+from fastapi import APIRouter, Depends, WebSocket
 
 from net.protocol import encode
+from server.dependencies import get_websocket_room_manager
 from server.engine.lifecycle import cancel_countdown, start_countdown
 from server.engine.lobby import check_ready, handle_leave
+from server.errors import AppError
 from server.schemas.common import Username
+from server.services.room_manager import RoomManager
 from shared.action import Action
 from shared.room_state import RoomState
 
@@ -59,21 +63,21 @@ router = APIRouter()
 
 
 @router.websocket("/ws")
-async def ws_endpoint(ws: WebSocket, host: Username, password_hash: str | None = None):
+async def ws_endpoint(
+    ws: WebSocket,
+    host: Username,
+    room_manager: Annotated[RoomManager, Depends(get_websocket_room_manager)],
+    password: str | None = None,
+):
     await ws.accept()
 
-    room_manager = ws.app.state.room_manager
     room = room_manager.get_room(host)
 
-    if room is None:
-        await ws.close(code=1008, reason="Room not found")
-        return
-    if room.password_hash is not None and password_hash != room.password_hash:
-        await ws.close(code=1008, reason="Incorrect password")
-        return
-
-    if not room_manager.join_room(host, ws):
-        await ws.close(code=1008, reason="Unable to join room")
+    try:
+        room = await asyncio.to_thread(room_manager.authorize_join, host, password)
+        room_manager.attach_player(room, ws)
+    except AppError as e:
+        await ws.close(code=1008, reason=e.detail)
         return
 
     try:

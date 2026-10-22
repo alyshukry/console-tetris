@@ -1,6 +1,7 @@
+import argparse
 import asyncio
 import curses
-import sys
+from urllib.parse import urlencode
 
 import websockets
 
@@ -10,13 +11,13 @@ from client.state.client import ClientState
 from render.curses_render import render_loop, setup_curses
 
 
-def main(stdscr):
+def main(stdscr, ip, host, password):
     setup_curses(stdscr)
     state = ClientState()
-    host = sys.argv[1] if len(sys.argv) > 1 else "127.0.0.1"
+    query = urlencode({"host": host, "password": password})
 
     async def run_player():
-        async with websockets.connect(f"ws://{host}:8888/ws?host=hilo") as ws:
+        async with websockets.connect(f"ws://{ip}:8888/ws?{query}") as ws:
             await asyncio.gather(
                 ping_loop(ws, state),
                 input_loop(ws, stdscr, state),
@@ -29,4 +30,9 @@ def main(stdscr):
 
 
 if __name__ == "__main__":
-    curses.wrapper(main)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("ip", help="Server IP address")
+    parser.add_argument("host", help="Player username")
+    parser.add_argument("password", help="Room password")
+    args = parser.parse_args()
+    curses.wrapper(main, args.ip, args.host, args.password)

@@ -9,7 +9,8 @@ requires-python = ">=3.11"
 dependencies = [
     "websockets>=14",
     "fastapi",
-    "uvicorn[standard]"
+    "uvicorn[standard]",
+    "argon2-cffi"
 ]
 
 [dependency-groups]
