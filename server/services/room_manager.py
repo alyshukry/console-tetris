@@ -48,6 +48,9 @@ class RoomManager:
 
     def get_room(self, room_id: str) -> Room | None:
         return self.rooms.get(room_id)
+    
+    def list_rooms(self) -> list[Room]:
+        return list(self.rooms.values())
 
     async def create_room(self, host: str, password: str | None = None):
         if host in self.rooms:
