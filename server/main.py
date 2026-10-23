@@ -9,7 +9,7 @@ from server.services.room_manager import RoomManager
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     room_manager = RoomManager()
 
     yield {"room_manager": room_manager}
