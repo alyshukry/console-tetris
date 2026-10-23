@@ -17,7 +17,6 @@ from server.schemas.messages import (
     UnreadyMsg,
     parse_client_message,
 )
-from shared.action import Action
 from shared.room_state import RoomState
 
 

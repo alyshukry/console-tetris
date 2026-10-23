@@ -48,7 +48,7 @@ class RoomManager:
 
     def get_room(self, room_id: str) -> Room | None:
         return self.rooms.get(room_id)
-    
+
     def list_rooms(self) -> list[Room]:
         return list(self.rooms.values())
 
@@ -77,7 +77,7 @@ class RoomManager:
         try:
             room = self.rooms.pop(room_id)
         except KeyError:
-            raise RoomNotFound()
+            raise RoomNotFound() from None
 
         room.task.cancel()
         try:
