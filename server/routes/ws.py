@@ -91,4 +91,4 @@ async def ws_endpoint(
 
             await handle_message(room, ws, data)
     finally:
-        await handle_leave(room, ws)
+        await handle_leave(room, ws, room_manager)

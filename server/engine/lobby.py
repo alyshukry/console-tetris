@@ -13,7 +13,7 @@ def check_ready(room) -> bool:
     )
 
 
-async def handle_leave(room, ws):
+async def handle_leave(room, ws, room_manager):
     leaver = room.connections.pop(ws, None)
     if leaver is None:
         return
@@ -21,7 +21,9 @@ async def handle_leave(room, ws):
     room.broadcast("player_left", {"player_id": leaver.player_id})
     room.broadcast_lobby()
 
-    if room.state == RoomState.COUNTDOWN and len(room.connections) < MIN_PLAYERS:
+    if len(room.connections) < 1:
+        await room_manager.delete_room(room.host)
+    elif room.state == RoomState.COUNTDOWN and len(room.connections) < MIN_PLAYERS:
         await cancel_countdown(room)
     elif check_ready(room) and room.countdown_task is None:
         room.countdown_task = asyncio.create_task(start_countdown(room))
