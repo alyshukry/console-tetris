@@ -5,7 +5,7 @@ from server.schemas.common import Username
 from shared.room_state import RoomState
 
 
-class CreateRoomRequest(BaseModel):
+class RoomCreate(BaseModel):
     host: Username
     password: str | None = None
 
