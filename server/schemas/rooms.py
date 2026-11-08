@@ -5,19 +5,19 @@ from server.schemas.common import Username
 from shared.room_state import RoomState
 
 
-class RoomCreate(BaseModel):
+class RoomPost(BaseModel):
     host: Username
     password: str | None = None
 
 
-class RoomSummary(BaseModel):
+class RoomResponse(BaseModel):
     host: str
     player_count: int
     has_password: bool
     state: RoomState
 
     @classmethod
-    def from_room(cls, room: Room) -> "RoomSummary":
+    def from_room(cls, room: Room) -> "RoomResponse":
         return cls(
             host=room.host,
             player_count=len(room.connections),

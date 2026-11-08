@@ -1,20 +1,20 @@
 from fastapi import APIRouter
 
 from server.dependencies import RoomManagerDep
-from server.schemas.rooms import RoomCreate, RoomSummary
+from server.schemas.rooms import RoomPost, RoomResponse
 
 router = APIRouter()
 
 
-@router.post("/rooms", status_code=201, response_model=RoomSummary)
+@router.post("/rooms", status_code=201, response_model=RoomResponse)
 async def create_room(
-    body: RoomCreate,
+    body: RoomPost,
     room_manager: RoomManagerDep,
-) -> RoomSummary:
+) -> RoomResponse:
     room = await room_manager.create_room(body.host, body.password)
-    return RoomSummary.from_room(room)
+    return RoomResponse.from_room(room)
 
 
-@router.get("/rooms", response_model=list[RoomSummary])
-def get_rooms(room_manager: RoomManagerDep) -> list[RoomSummary]:
-    return [RoomSummary.from_room(room) for room in room_manager.list_rooms()]
+@router.get("/rooms", response_model=list[RoomResponse])
+def get_rooms(room_manager: RoomManagerDep) -> list[RoomResponse]:
+    return [RoomResponse.from_room(room) for room in room_manager.list_rooms()]
