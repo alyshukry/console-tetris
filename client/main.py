@@ -17,7 +17,7 @@ def main(stdscr, ip, host, password):
     query = urlencode({"host": host, "password": password})
 
     async def run_player():
-        async with websockets.connect(f"ws://{ip}:8888/ws?{query}") as ws:
+        async with websockets.connect(f"ws://{ip}/ws?{query}") as ws:
             await asyncio.gather(
                 ping_loop(ws, state),
                 input_loop(ws, stdscr, state),
