@@ -34,7 +34,7 @@ def login(body: UserLogin):
 
 
 @router.post("/refresh", status_code=200, response_model=TokenPair)
-def refresh(body: TokenRefresh):
+def refresh_token(body: TokenRefresh):
     payload = verify_refresh_token(body.token)
     return {
         "refresh_token": sign_refresh_token(payload["user_id"]),
