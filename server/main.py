@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from server.errors import AppError
-from server.routes import health, rooms, ws
+from server.routes import health, rooms, ws, auth
 from server.services.room_manager import RoomManager
 
 
@@ -24,6 +24,7 @@ app = FastAPI(lifespan=lifespan)
 app.include_router(health.router)
 app.include_router(ws.router)
 app.include_router(rooms.router)
+app.include_router(auth.router)
 
 
 @app.exception_handler(AppError)
