@@ -10,11 +10,12 @@ USERS: dict[int, User] = {}  # dict[user_id, tuple[username, password_hash, crea
 user_id_counter = itertools.count()
 
 
-def get_user(username: Username) -> User:
-    for user in USERS.values():
-        if user.username == username:
-            return user
-    raise UserNotFound()
+def get_user(user_id: int) -> User:
+    try:
+        return USERS[user_id]
+    except KeyError:
+        raise UserNotFound from None
+
 
 def validate_user_login(username: Username, password: str) -> User:
     for user in USERS.values():
