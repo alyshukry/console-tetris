@@ -60,13 +60,14 @@ class RoomManager:
     async def create_room(self, host: str, password: str | None = None):
         if host in self.rooms:
             raise RoomNameTaken()
+        hashed_password = (
+            await asyncio.to_thread(hash_password, password)
+            if password is not None
+            else None
+        )
         room = Room(
             host,
-            (
-                await asyncio.to_thread(hash_password, password)
-                if password is not None
-                else None
-            ),
+            hashed_password,
         )
         room.task = asyncio.create_task(run_room(room))
         self.rooms[host] = room
