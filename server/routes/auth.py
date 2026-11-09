@@ -9,7 +9,8 @@ from server.schemas.user import (
     UserLogin,
     UserResponse,
 )
-from server.security import sign_access_token, sign_refresh_token, verify_refresh_token
+from server.security import sign_token, verify_token
+from server.config import settings
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -28,15 +29,15 @@ def register(body: UserCreate, db: DatabaseDep):
 def login(body: UserLogin, db: DatabaseDep):
     user = validate_user_login(db, body.username, body.password)
     return {
-        "refresh_token": sign_refresh_token(user.user_id),
-        "access_token": sign_access_token(user.user_id),
+        "refresh_token": sign_token(user.user_id, settings.refresh_secret, 10080),
+        "access_token": sign_token(user.user_id, settings.access_secret, 15),
     }
 
 
 @router.post("/refresh", status_code=200, response_model=TokenPair)
 def refresh_token(body: TokenRefresh):
-    payload = verify_refresh_token(body.token)
+    payload = verify_token(body.token, settings.refresh_secret)
     return {
-        "refresh_token": sign_refresh_token(payload["user_id"]),
-        "access_token": sign_access_token(payload["user_id"]),
+        "refresh_token": sign_token(payload["user_id"], settings.refresh_secret, 10080),
+        "access_token": sign_token(payload["user_id"], settings.access_secret, 15),
     }

@@ -23,34 +23,16 @@ def verify_password(password: str, hashed: str) -> bool:
         return False
 
 
-def sign_access_token(user_id: int) -> str:
+def sign_token(user_id: int, secret: str, ttl: int) -> str:
     payload = {
         "user_id": user_id,
-        "exp": datetime.now(UTC) + timedelta(minutes=15),
+        "exp": datetime.now(UTC) + timedelta(minutes=ttl),
     }
-    return jwt.encode(payload, settings.access_secret, algorithm=ALGORITHM)
+    return jwt.encode(payload, secret, algorithm=ALGORITHM)
 
-
-def sign_refresh_token(user_id: int) -> str:
-    payload = {
-        "user_id": user_id,
-        "exp": datetime.now(UTC) + timedelta(days=7),
-    }
-    return jwt.encode(payload, settings.refresh_secret, algorithm=ALGORITHM)
-
-
-def verify_access_token(token: str) -> dict:
+def verify_token(token: str, secret: str) -> dict:
     try:
-        return jwt.decode(token, settings.access_secret, algorithms=["HS256"])
-    except jwt.ExpiredSignatureError:
-        raise TokenExpired() from None
-    except jwt.InvalidTokenError:
-        raise InvalidToken() from None
-
-
-def verify_refresh_token(token: str) -> dict:
-    try:
-        return jwt.decode(token, settings.refresh_secret, algorithms=["HS256"])
+        return jwt.decode(token, secret, algorithms=[ALGORITHM])
     except jwt.ExpiredSignatureError:
         raise TokenExpired() from None
     except jwt.InvalidTokenError:

@@ -10,8 +10,9 @@ from server.db.models.user import User
 from server.db.session import SessionLocal
 from server.db.store import get_user
 from server.errors import InvalidToken, UserNotFound
-from server.security import verify_access_token
+from server.security import verify_token
 from server.services.room_manager import RoomManager
+from server.config import settings
 
 bearer = HTTPBearer(auto_error=False)
 
@@ -33,7 +34,7 @@ def get_current_user(
 ) -> User:
     if creds is None:
         raise InvalidToken()
-    payload = verify_access_token(creds.credentials)
+    payload = verify_token(creds.credentials, settings.access_secret)
     with SessionLocal() as db:
         try:
             return get_user(db, payload["user_id"])
