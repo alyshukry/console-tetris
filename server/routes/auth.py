@@ -11,7 +11,7 @@ from server.schemas.user import (
 from server.security import sign_access_token, sign_refresh_token, verify_refresh_token
 from server.store import create_user, validate_user_login
 
-router = APIRouter()
+router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post("/register", status_code=201, response_model=UserResponse)
