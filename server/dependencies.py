@@ -14,8 +14,6 @@ from server.security import verify_token
 from server.services.room_manager import RoomManager
 from server.config import settings
 
-bearer = HTTPBearer(auto_error=False)
-
 
 class Bearer(HTTPBearer):
     async def __call__(self, conn: HTTPConnection):  # type: ignore[override]
@@ -32,8 +30,6 @@ BearerDep = Annotated[HTTPAuthorizationCredentials, Depends(Bearer(auto_error=Fa
 def get_current_user(
     creds: BearerDep,
 ) -> User:
-    if creds is None:
-        raise InvalidToken()
     payload = verify_token(creds.credentials, settings.access_secret)
     with SessionLocal() as db:
         try:
