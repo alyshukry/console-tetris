@@ -41,7 +41,7 @@ class UsernameTaken(AppError):
 class InvalidCredentials(AppError):
     status_code = 401
     detail = "Invalid username or password"
-    
+
 class InvalidToken(AppError):
     status_code = 401
     detail = "Invalid token"
@@ -49,7 +49,7 @@ class InvalidToken(AppError):
 class TokenExpired(AppError):
     status_code = 401
     detail = "Token expired"
-    
+
 class AlreadyInRoom(AppError):
     status_code = 409
     detail = "User is already inside a room"
