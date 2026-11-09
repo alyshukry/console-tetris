@@ -45,3 +45,7 @@ class InvalidCredentials(AppError):
 class InvalidToken(AppError):
     status_code = 401
     detail = "Invalid token"
+
+class TokenExpired(AppError):
+    status_code = 401
+    detail = "Token expired"
