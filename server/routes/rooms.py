@@ -10,11 +10,11 @@ router = APIRouter()
 async def create_room(
     body: RoomCreate,
     room_manager: RoomManagerDep,
-) -> RoomResponse:
+):
     room = await room_manager.create_room(body.host, body.password)
     return RoomResponse.from_room(room)
 
 
 @router.get("/rooms", response_model=list[RoomResponse])
-def get_rooms(room_manager: RoomManagerDep) -> list[RoomResponse]:
+def get_rooms(room_manager: RoomManagerDep):
     return [RoomResponse.from_room(room) for room in room_manager.list_rooms()]

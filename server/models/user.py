@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 from server.schemas.common import Username
 
@@ -8,3 +9,4 @@ class User:
     user_id: int
     username: Username
     password_hash: str
+    created_at: datetime

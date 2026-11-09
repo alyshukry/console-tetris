@@ -5,7 +5,7 @@ from game.board import Board
 from game.constants import TICKS_PER_SECOND
 from game.seven_bag import SevenBag
 from net.serialization import serialize_board
-from server.config import COUNTDOWN_SECONDS
+from server.constants import COUNTDOWN_SECONDS
 from server.models.player import Player
 from shared.room_state import RoomState
 

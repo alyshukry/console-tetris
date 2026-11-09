@@ -1,3 +1,11 @@
-MIN_PLAYERS = 2
-COUNTDOWN_SECONDS = 5
-GRAVITY_IN_SECONDS = 0.5
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    access_secret: str
+    refresh_secret: str
+
+    model_config = SettingsConfigDict(env_file=".env")
+
+
+settings = Settings()  # type: ignore[call-arg]

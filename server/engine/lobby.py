@@ -1,6 +1,6 @@
 import asyncio
 
-from server.config import MIN_PLAYERS
+from server.constants import MIN_PLAYERS
 from server.engine.lifecycle import cancel_countdown, start_countdown
 from shared.room_state import RoomState
 

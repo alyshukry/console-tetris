@@ -16,3 +16,7 @@ dist/
 
 .coverage
 htmlcov/
+
+.env
+server/.env
+client/.env

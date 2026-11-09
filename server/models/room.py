@@ -5,7 +5,7 @@ from fastapi import WebSocket
 
 from game.constants import TICKS_PER_SECOND
 from game.seven_bag import SevenBag
-from server.config import GRAVITY_IN_SECONDS
+from server.constants import GRAVITY_IN_SECONDS
 from server.models.player import Player
 from shared.action import Action
 from shared.room_state import RoomState
