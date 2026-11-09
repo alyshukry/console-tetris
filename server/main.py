@@ -19,7 +19,6 @@ async def lifespan(_app: FastAPI):
 
     for host in list(room_manager.rooms):
         await room_manager.delete_room(host)
-    print("Closing server")
 
 
 app = FastAPI(lifespan=lifespan)
