@@ -17,9 +17,7 @@ def get_user(db: Session, user_id: int) -> User:
 
 def validate_user_login(db: Session, username: Username, password: str) -> User:
     user = db.scalar(select(User).where(User.username == username))
-    if user is None:
-        raise UserNotFound()
-    if not verify_password(password, user.password_hash):
+    if user is None or not verify_password(password, user.password_hash):
         raise InvalidCredentials()
     return user
 
