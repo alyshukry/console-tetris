@@ -6,10 +6,13 @@ from fastapi.responses import JSONResponse
 from server.errors import AppError
 from server.routes import health, rooms, ws, auth
 from server.services.room_manager import RoomManager
+from server.db import Base, engine
+from server.models import user as _user  # noqa: F401  (registers the table)
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    Base.metadata.create_all(engine)
     room_manager = RoomManager()
 
     yield {"room_manager": room_manager}

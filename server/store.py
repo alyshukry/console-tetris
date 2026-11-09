@@ -1,37 +1,36 @@
-import itertools
-from datetime import datetime
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 from server.errors import InvalidCredentials, UserNotFound, UsernameTaken
 from server.models.user import User
 from server.schemas.common import Username
 from server.security import hash_password, verify_password
 
-USERS: dict[int, User] = {}  # dict[user_id, tuple[username, password_hash, created_at]]
-user_id_counter = itertools.count()
+
+def get_user(db: Session, user_id: int) -> User:
+    user = db.get(User, user_id)
+    if user is None:
+        raise UserNotFound()
+    return user
 
 
-def get_user(user_id: int) -> User:
+def validate_user_login(db: Session, username: Username, password: str) -> User:
+    user = db.scalar(select(User).where(User.username == username))
+    if user is None:
+        raise UserNotFound()
+    if not verify_password(password, user.password_hash):
+        raise InvalidCredentials()
+    return user
+
+
+def create_user(db: Session, username: Username, password: str) -> User:
+    user = User(username=username, password_hash=hash_password(password))
+    db.add(user)
     try:
-        return USERS[user_id]
-    except KeyError:
-        raise UserNotFound from None
-
-
-def validate_user_login(username: Username, password: str) -> User:
-    for user in USERS.values():
-        if user.username == username:
-            if verify_password(password, user.password_hash):
-                return user
-            else:
-                raise InvalidCredentials()
-    raise UserNotFound()
-
-
-def create_user(username: Username, password: str) -> User:
-    if username not in (user.username for user in USERS.values()):
-        user_id = next(user_id_counter)
-        USERS[user_id] = User(
-            user_id, username, hash_password(password), datetime.now()
-        )
-        return USERS[user_id]
-    raise UsernameTaken()
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise UsernameTaken() from None
+    db.refresh(user)
+    return user

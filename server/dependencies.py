@@ -4,6 +4,7 @@ from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from starlette.requests import HTTPConnection
 
+from server.db import SessionLocal
 from server.errors import InvalidToken, UserNotFound
 from server.models.user import User
 from server.security import verify_access_token
@@ -31,10 +32,11 @@ def get_current_user(
     if creds is None:
         raise InvalidToken()
     payload = verify_access_token(creds.credentials)
-    try:
-        return get_user(payload["user_id"])
-    except UserNotFound:
-        raise InvalidToken() from None
+    with SessionLocal() as db:
+        try:
+            return get_user(db, payload["user_id"])
+        except UserNotFound:
+            raise InvalidToken() from None
 
 
 RoomManagerDep = Annotated[RoomManager, Depends(get_room_manager)]

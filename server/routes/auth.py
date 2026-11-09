@@ -1,6 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
-from server.errors import UsernameTaken
+from server.db import get_db
 from server.schemas.user import (
     TokenPair,
     TokenRefresh,
@@ -15,8 +16,8 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post("/register", status_code=201, response_model=UserResponse)
-def register(body: UserCreate):
-    user = create_user(body.username, body.password)
+def register(body: UserCreate, db: Session = Depends(get_db)):
+    user = create_user(db, body.username, body.password)
     return {
         "username": user.username,
         "user_id": user.user_id,
@@ -25,8 +26,8 @@ def register(body: UserCreate):
 
 
 @router.post("/login", status_code=200, response_model=TokenPair)
-def login(body: UserLogin):
-    user = validate_user_login(body.username, body.password)
+def login(body: UserLogin, db: Session = Depends(get_db)):
+    user = validate_user_login(db, body.username, body.password)
     return {
         "refresh_token": sign_refresh_token(user.user_id),
         "access_token": sign_access_token(user.user_id),

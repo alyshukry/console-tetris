@@ -1,12 +1,17 @@
-from dataclasses import dataclass
 from datetime import datetime
 
-from server.schemas.common import Username
+from sqlalchemy import DateTime, String, func
+from sqlalchemy.orm import Mapped, mapped_column
+
+from server.db import Base
 
 
-@dataclass
-class User:
-    user_id: int
-    username: Username
-    password_hash: str
-    created_at: datetime
+class User(Base):
+    __tablename__ = "users"
+
+    user_id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str] = mapped_column(String(16), unique=True)
+    password_hash: Mapped[str]
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )

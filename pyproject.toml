@@ -10,7 +10,10 @@ dependencies = [
     "websockets>=14",
     "fastapi",
     "uvicorn[standard]",
-    "argon2-cffi"
+    "argon2-cffi",
+    "sqlalchemy>=2",
+    "psycopg[binary]>=3.2",
+    "pydantic-settings",
 ]
 
 [dependency-groups]
