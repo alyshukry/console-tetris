@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from server.dependencies import RoomManagerDep
+from server.dependencies import CurrentUserDep, RoomManagerDep
 from server.schemas.rooms import RoomCreate, RoomResponse
 
 router = APIRouter(tags=["Rooms"])
@@ -10,8 +10,9 @@ router = APIRouter(tags=["Rooms"])
 async def create_room(
     body: RoomCreate,
     room_manager: RoomManagerDep,
+    user: CurrentUserDep
 ):
-    room = await room_manager.create_room(body.host, body.password)
+    room = await room_manager.create_room(user.username, body.password)
     return RoomResponse.from_room(room)
 
 

@@ -6,7 +6,6 @@ from shared.room_state import RoomState
 
 
 class RoomCreate(BaseModel):
-    host: Username
     password: str | None = None
 
 
