@@ -1,7 +1,9 @@
+from collections.abc import Iterator
 from typing import Annotated
 
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy.orm import Session
 from starlette.requests import HTTPConnection
 
 from server.db import SessionLocal
@@ -39,5 +41,11 @@ def get_current_user(
             raise InvalidToken() from None
 
 
+def get_db() -> Iterator[Session]:
+    with SessionLocal() as db:
+        yield db
+
+
 RoomManagerDep = Annotated[RoomManager, Depends(get_room_manager)]
 CurrentUserDep = Annotated[User, Depends(get_current_user)]
+DatabaseDep = Annotated[Session, Depends(get_db)]
