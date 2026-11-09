@@ -5,6 +5,7 @@ from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 
 from server.config import settings
+from server.errors import InvalidToken, TokenExpired
 
 ALGORITHM = "HS256"
 
@@ -39,8 +40,18 @@ def sign_refresh_token(user_id: int) -> str:
 
 
 def verify_access_token(token: str) -> dict:
-    return jwt.decode(token, settings.access_secret, algorithms=[ALGORITHM])
+    try:
+        return jwt.decode(token, settings.access_secret, algorithms=["HS256"])
+    except jwt.ExpiredSignatureError:
+        raise TokenExpired()
+    except jwt.InvalidTokenError:
+        raise InvalidToken()
 
 
 def verify_refresh_token(token: str) -> dict:
-    return jwt.decode(token, settings.refresh_secret, algorithms=[ALGORITHM])
+    try:
+        return jwt.decode(token, settings.refresh_secret, algorithms=["HS256"])
+    except jwt.ExpiredSignatureError:
+        raise TokenExpired()
+    except jwt.InvalidTokenError:
+        raise InvalidToken()
