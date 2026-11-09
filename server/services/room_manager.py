@@ -6,6 +6,7 @@ from fastapi import WebSocket
 from game.board import Board
 from server.engine.loop import run_room
 from server.errors import (
+    AlreadyInRoom,
     RoomFull,
     RoomInProgress,
     RoomNameTaken,
@@ -23,6 +24,7 @@ Rooms: TypeAlias = dict[str, Room]
 class RoomManager:
     def __init__(self):
         self.rooms: Rooms = {}
+        self.player_rooms: dict[int, str] = {}
 
     def _check_joinable(self, room: Room):
         if room.state != RoomState.LOBBY:
@@ -30,17 +32,20 @@ class RoomManager:
         if len(room.connections) >= room.max_players:
             raise RoomFull()
 
-    def authorize_join(self, host: str, password: str | None) -> Room:
+    def authorize_join(self, host: str, password: str | None, user_id: int) -> Room:
         room = self.rooms.get(host)
         if room is None:
             raise RoomNotFound()
+        if user_id in self.player_rooms:
+            raise AlreadyInRoom()
         self.check_password(room, password)
         self._check_joinable(room)
         return room
 
-    def attach_player(self, room: Room, ws: WebSocket) -> Player:
+    def attach_player(self, room: Room, ws: WebSocket, user_id: int) -> Player:
         self._check_joinable(room)
-        player = Player(Board(room.shared_bag), room.next_player_id())
+        self.player_rooms[user_id] = room.host
+        player = Player(Board(room.shared_bag), user_id)
         room.connections[ws] = player
         player.outbox.append(("room_state", {"state": room.state.value}))
         room.broadcast_lobby()

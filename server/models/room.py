@@ -26,9 +26,6 @@ class Room:
         self.gravity_ticks = round(GRAVITY_IN_SECONDS * TICKS_PER_SECOND)
         self.countdown_task: asyncio.Task | None = None
 
-    def next_player_id(self):
-        return next(self._player_id_counter)
-
     def queue_input(self, player: Player, action: Action, tick: int, seq: int):
         if player.board.game_over:
             return

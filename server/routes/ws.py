@@ -4,7 +4,7 @@ from fastapi import APIRouter, WebSocket
 from pydantic import ValidationError
 
 from net.protocol import encode
-from server.dependencies import RoomManagerDep
+from server.dependencies import CurrentUserDep, RoomManagerDep
 from server.engine.lifecycle import cancel_countdown, start_countdown
 from server.engine.lobby import check_ready, handle_leave
 from server.errors import AppError
@@ -63,12 +63,13 @@ async def ws_endpoint(
     host: Username,
     password: str | None = None,
     room_manager: RoomManagerDep,
+    user: CurrentUserDep
 ):
     await ws.accept()
 
     try:
-        room = await asyncio.to_thread(room_manager.authorize_join, host, password)
-        room_manager.attach_player(room, ws)
+        room = await asyncio.to_thread(room_manager.authorize_join, host, password, user.user_id)
+        room_manager.attach_player(room, ws, user.user_id)
     except AppError as e:
         await ws.close(code=1008, reason=e.detail)
         return

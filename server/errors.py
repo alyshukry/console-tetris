@@ -49,3 +49,7 @@ class InvalidToken(AppError):
 class TokenExpired(AppError):
     status_code = 401
     detail = "Token expired"
+    
+class AlreadyInRoom(AppError):
+    status_code = 409
+    detail = "User is already inside a room"
