@@ -13,6 +13,14 @@ from server.store import get_user
 bearer = HTTPBearer(auto_error=False)
 
 
+class Bearer(HTTPBearer):
+    async def __call__(self, conn: HTTPConnection):  # type: ignore[override]
+        return await super().__call__(conn)  # type: ignore[arg-type]
+
+
+bearer = Bearer(auto_error=False)
+
+
 def get_room_manager(conn: HTTPConnection) -> RoomManager:
     return conn.state.room_manager
 
