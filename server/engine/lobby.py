@@ -1,6 +1,6 @@
 import asyncio
 
-from server.constants import MIN_PLAYERS
+from server.config import settings
 from server.engine.lifecycle import cancel_countdown, start_countdown
 from shared.room_state import RoomState
 
@@ -8,7 +8,7 @@ from shared.room_state import RoomState
 def check_ready(room) -> bool:
     return (
         room.state == RoomState.LOBBY
-        and len(room.connections) >= MIN_PLAYERS
+        and len(room.connections) >= settings.min_players_to_start
         and all(p.ready for p in room.connections.values())
     )
 
@@ -23,7 +23,10 @@ async def handle_leave(room, ws, room_manager):
 
     if len(room.connections) < 1:
         await room_manager.delete_room(room.host)
-    elif room.state == RoomState.COUNTDOWN and len(room.connections) < MIN_PLAYERS:
+    elif (
+        room.state == RoomState.COUNTDOWN
+        and len(room.connections) < settings.min_players_to_start
+    ):
         await cancel_countdown(room)
     elif check_ready(room) and room.countdown_task is None:
         room.countdown_task = asyncio.create_task(start_countdown(room))

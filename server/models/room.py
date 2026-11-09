@@ -5,7 +5,7 @@ from fastapi import WebSocket
 
 from game.constants import TICKS_PER_SECOND
 from game.seven_bag import SevenBag
-from server.constants import GRAVITY_IN_SECONDS
+from server.config import settings
 from server.models.player import Player
 from shared.action import Action
 from shared.room_state import RoomState
@@ -23,7 +23,7 @@ class Room:
         self.shared_bag = SevenBag()
         self.tick = 0
         self.start_time = None
-        self.gravity_ticks = round(GRAVITY_IN_SECONDS * TICKS_PER_SECOND)
+        self.gravity_ticks = round(settings.gravity_in_seconds * TICKS_PER_SECOND)
         self.countdown_task: asyncio.Task | None = None
 
     def queue_input(self, player: Player, action: Action, tick: int, seq: int):

@@ -5,7 +5,7 @@ from game.board import Board
 from game.constants import TICKS_PER_SECOND
 from game.seven_bag import SevenBag
 from net.serialization import serialize_board
-from server.constants import COUNTDOWN_SECONDS
+from server.config import settings
 from server.models.player import Player
 from shared.room_state import RoomState
 
@@ -28,7 +28,7 @@ async def start_countdown(room):
     await set_room_state(room, RoomState.COUNTDOWN)
 
     try:
-        for remaining in range(COUNTDOWN_SECONDS, 0, -1):
+        for remaining in range(settings.ready_countdown_seconds, 0, -1):
             room.broadcast("countdown_tick", {"seconds": remaining})
             await asyncio.sleep(1)
         await start_game(room)
