@@ -3,7 +3,7 @@ from fastapi import APIRouter
 from server.dependencies import RoomManagerDep
 from server.schemas.rooms import RoomCreate, RoomResponse
 
-router = APIRouter()
+router = APIRouter(tags=["Rooms"])
 
 
 @router.post("/rooms", status_code=201, response_model=RoomResponse)
