@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import jwt
 from argon2 import PasswordHasher
@@ -26,7 +26,7 @@ def verify_password(password: str, hashed: str) -> bool:
 def sign_access_token(user_id: int) -> str:
     payload = {
         "user_id": user_id,
-        "exp": datetime.now(timezone.utc) + timedelta(minutes=15),
+        "exp": datetime.now(UTC) + timedelta(minutes=15),
     }
     return jwt.encode(payload, settings.access_secret, algorithm=ALGORITHM)
 
@@ -34,7 +34,7 @@ def sign_access_token(user_id: int) -> str:
 def sign_refresh_token(user_id: int) -> str:
     payload = {
         "user_id": user_id,
-        "exp": datetime.now(timezone.utc) + timedelta(days=7),
+        "exp": datetime.now(UTC) + timedelta(days=7),
     }
     return jwt.encode(payload, settings.refresh_secret, algorithm=ALGORITHM)
 
