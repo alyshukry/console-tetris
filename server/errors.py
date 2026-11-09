@@ -41,3 +41,7 @@ class UsernameTaken(AppError):
 class InvalidCredentials(AppError):
     status_code = 401
     detail = "Invalid username or password"
+    
+class InvalidToken(AppError):
+    status_code = 401
+    detail = "Invalid token"
