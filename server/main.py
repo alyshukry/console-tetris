@@ -3,9 +3,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from server.db import Base, engine
+from server.db.session import Base, engine
 from server.errors import AppError
-from server.models import user as _user  # noqa: F401  (registers the table)
+from server.db.models import user as _user  # noqa: F401  (registers the table)
 from server.routes import auth, health, rooms, ws
 from server.services.room_manager import RoomManager
 

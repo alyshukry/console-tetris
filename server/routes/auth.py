@@ -9,7 +9,7 @@ from server.schemas.user import (
     UserResponse,
 )
 from server.security import sign_access_token, sign_refresh_token, verify_refresh_token
-from server.store import create_user, validate_user_login
+from server.db.store import create_user, validate_user_login
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
