@@ -43,15 +43,15 @@ def verify_access_token(token: str) -> dict:
     try:
         return jwt.decode(token, settings.access_secret, algorithms=["HS256"])
     except jwt.ExpiredSignatureError:
-        raise TokenExpired()
+        raise TokenExpired() from None
     except jwt.InvalidTokenError:
-        raise InvalidToken()
+        raise InvalidToken() from None
 
 
 def verify_refresh_token(token: str) -> dict:
     try:
         return jwt.decode(token, settings.refresh_secret, algorithms=["HS256"])
     except jwt.ExpiredSignatureError:
-        raise TokenExpired()
+        raise TokenExpired() from None
     except jwt.InvalidTokenError:
-        raise InvalidToken()
+        raise InvalidToken() from None

@@ -2,8 +2,8 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from server.errors import InvalidCredentials, UsernameTaken, UserNotFound
 from server.db.models.user import User
+from server.errors import InvalidCredentials, UsernameTaken, UserNotFound
 from server.schemas.common import Username
 from server.security import hash_password, verify_password
 

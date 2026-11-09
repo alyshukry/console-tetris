@@ -6,12 +6,12 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 from starlette.requests import HTTPConnection
 
-from server.db.session import SessionLocal
-from server.errors import InvalidToken, UserNotFound
 from server.db.models.user import User
+from server.db.session import SessionLocal
+from server.db.store import get_user
+from server.errors import InvalidToken, UserNotFound
 from server.security import verify_access_token
 from server.services.room_manager import RoomManager
-from server.db.store import get_user
 
 bearer = HTTPBearer(auto_error=False)
 
@@ -21,15 +21,15 @@ class Bearer(HTTPBearer):
         return await super().__call__(conn)  # type: ignore[arg-type]
 
 
-bearer = Bearer(auto_error=False)
-
-
 def get_room_manager(conn: HTTPConnection) -> RoomManager:
     return conn.state.room_manager
 
 
+BearerDep = Annotated[HTTPAuthorizationCredentials, Depends(Bearer(auto_error=False))]
+
+
 def get_current_user(
-    creds: HTTPAuthorizationCredentials | None = Depends(bearer),
+    creds: BearerDep,
 ) -> User:
     if creds is None:
         raise InvalidToken()
