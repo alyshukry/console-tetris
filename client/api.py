@@ -19,8 +19,9 @@ def _detail(res: httpx.Response) -> str:
 
 
 class Api:
-    def __init__(self, ip: str):
-        self.http = httpx.Client(base_url=f"http://{ip}", timeout=5)
+    def __init__(self, http_base: str):
+        # long timeout: a sleeping free-tier server can take a while to wake up
+        self.http = httpx.Client(base_url=http_base, timeout=30, follow_redirects=True)
         self.username: str | None = None
         self.access_token: str | None = None
         self.refresh_token: str | None = None
