@@ -1,11 +1,10 @@
 services:
-  db:
-    image: postgres:16
+  api:
+    build: .
+    ports:
+      - "8000:8000"
     environment:
-      POSTGRES_USER: tetris
-      POSTGRES_PASSWORD: tetris
-      POSTGRES_DB: tetris
-    ports: ["5432:5432"]
-    volumes: [pgdata:/var/lib/postgresql/data]
-volumes:
-  pgdata:
+      - DATABASE_URL=${DATABASE_URL}
+      - ACCESS_SECRET=${ACCESS_SECRET}
+      - REFRESH_SECRET=${REFRESH_SECRET}
+    restart: always

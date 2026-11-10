@@ -8,11 +8,26 @@ from server.db.session import Base, engine
 from server.errors import AppError
 from server.routes import auth, health, rooms, ws
 from server.services.room_manager import RoomManager
+import time
+from sqlalchemy.exc import OperationalError
 
+MAX_RETRIES = 5
+RETRY_INTERVAL = 2
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    Base.metadata.create_all(engine)
+    for attempt in range(MAX_RETRIES):
+        try:
+            Base.metadata.create_all(bind=engine)
+            print("Database connected and tables created successfully!")
+            break
+        except OperationalError as e:
+            if attempt < MAX_RETRIES - 1:
+                print(f"Database not ready yet (attempt {attempt + 1}/{MAX_RETRIES}). Retrying in {RETRY_INTERVAL}s...")
+                time.sleep(RETRY_INTERVAL)
+            else:
+                print("Could not connect to the database. Exiting.")
+                raise e
     room_manager = RoomManager()
 
     yield {"room_manager": room_manager}
