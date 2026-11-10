@@ -16,8 +16,7 @@ client = [
     "windows-curses; sys_platform == 'win32'",
 ]
 server = [
-    "fastapi",
-    "uvicorn[standard]",
+    "fastapi[standard]",
     "argon2-cffi",
     "pyjwt",
     "sqlalchemy>=2",
