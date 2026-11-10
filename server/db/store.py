@@ -7,6 +7,7 @@ from server.errors import InvalidCredentials, UsernameTaken, UserNotFound
 from server.schemas.common import Username
 from server.security import hash_password, verify_password
 
+_DUMMY_HASH = hash_password("dummy hash")
 
 def get_user(db: Session, user_id: int) -> User:
     user = db.get(User, user_id)
@@ -17,7 +18,8 @@ def get_user(db: Session, user_id: int) -> User:
 
 def validate_user_login(db: Session, username: Username, password: str) -> User:
     user = db.scalar(select(User).where(User.username == username))
-    if user is None or not verify_password(password, user.password_hash):
+    password_ok = verify_password(password, user.password_hash if user else _DUMMY_HASH)
+    if user is None or not password_ok:
         raise InvalidCredentials()
     return user
 
