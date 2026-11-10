@@ -11,7 +11,7 @@ COPY net ./net
 COPY shared ./shared
 COPY server ./server
 
-RUN pip install --no-cache-dir .
+RUN pip install ".[server]"
 
 RUN useradd --create-home app
 USER app

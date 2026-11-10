@@ -7,14 +7,22 @@ name = "console-tetris"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
-    "websockets>=14",
-    "fastapi[standard]",
+    "websockets>=14",   # needed by both
+]
+
+[project.optional-dependencies]
+client = [
+    "httpx",
+    "windows-curses; sys_platform == 'win32'",
+]
+server = [
+    "fastapi",
+    "uvicorn[standard]",
     "argon2-cffi",
+    "pyjwt",
     "sqlalchemy>=2",
     "psycopg[binary]>=3.2",
     "pydantic-settings",
-    "pyjwt",
-    "httpx"
 ]
 
 [dependency-groups]
