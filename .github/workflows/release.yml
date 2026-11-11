@@ -1,0 +1,40 @@
+name: release
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: console-tetris-linux
+          - os: macos-latest
+            name: console-tetris-macos
+          - os: windows-latest
+            name: console-tetris-windows.exe
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install client deps only
+        shell: bash
+        run: |
+          pip install websockets httpx pyinstaller
+          if [ "$RUNNER_OS" = "Windows" ]; then pip install windows-curses; fi
+      - name: Build
+        run: pyinstaller --onefile --name console-tetris --paths . client/main.py
+      - name: Rename
+        shell: bash
+        run: |
+          mkdir out
+          cp dist/console-tetris* out/${{ matrix.name }}
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: out/${{ matrix.name }}
