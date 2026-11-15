@@ -14,6 +14,7 @@ GAME_OVER_PAIR = 9
 EMPTY_PAIR = 10
 BORDER_PAIR = 11
 GARBAGE_PAIR = 8
+ERROR_PAIR = 12
 
 
 def setup_colors():
@@ -38,3 +39,4 @@ def setup_colors():
     curses.init_pair(EMPTY_PAIR, curses.COLOR_BLACK, curses.COLOR_BLACK)
     curses.init_pair(BORDER_PAIR, 29, curses.COLOR_BLACK)
     curses.init_pair(GARBAGE_PAIR, curses.COLOR_WHITE, curses.COLOR_BLACK)
+    curses.init_pair(ERROR_PAIR, 26, curses.COLOR_BLACK)  # menu errors (same red as Z)

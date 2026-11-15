@@ -11,9 +11,15 @@ from shared.action import Action
 from shared.room_state import RoomState
 
 
+class LeaveRoom(Exception):
+    """Raised when the player presses Esc to go back to the menu."""
+
+
 async def input_loop(ws: ClientConnection, stdscr, state):
     while True:
         key = stdscr.getch()
+        if key == 27:  # Esc
+            raise LeaveRoom
         if key == ord("k"):
             await ws.send(encode("unready" if state.ready else "ready"))
         if state.room_state == RoomState.IN_GAME and key in (
