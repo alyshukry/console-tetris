@@ -11,14 +11,13 @@ from render.colors import (
     GAME_OVER_PAIR,
     GARBAGE_PAIR,
     PIECE_COLORS,
+    setup_colors,
 )
-from render.terminal import addstr_safe
 from shared.room_state import RoomState
 
 CELL_WIDTH = 2
 CELL = "██"
 GHOST_CELL = "░░"
-LEAVE_HINT = "Esc: leave room"
 
 
 @dataclass(frozen=True)
@@ -84,7 +83,6 @@ async def render_loop(stdscr, state):
                     0,
                     f"{state.ready_count}/{state.player_count} players ready...",
                 )
-                addstr_safe(stdscr, 3, 0, LEAVE_HINT, curses.A_DIM)
 
             case RoomState.COUNTDOWN:
                 dots = "." * (state.countdown % 3 + 1)
@@ -94,7 +92,6 @@ async def render_loop(stdscr, state):
                     0,
                     f"Starting in {state.countdown} seconds{dots}",
                 )
-                addstr_safe(stdscr, 2, 0, LEAVE_HINT, curses.A_DIM)
 
             case RoomState.IN_GAME:
                 if state.my_id in state.boards:
@@ -113,9 +110,8 @@ async def render_loop(stdscr, state):
                     0,
                     f"{state.winners} win{suffix} the game!",
                 )
-                addstr_safe(stdscr, 2, 0, LEAVE_HINT, curses.A_DIM)
 
-        await asyncio.sleep(0.0167)
+        await asyncio.sleep(0.02)
 
 
 def fill_rect(
@@ -393,3 +389,40 @@ def draw_border(
         " ▀" + "▀" * (board.width * CELL_WIDTH) + "▀ ",
         pair,
     )
+
+
+def setup_curses(stdscr):
+    curses.curs_set(0)
+    curses.start_color()
+
+    stdscr.keypad(True)
+    stdscr.nodelay(True)
+    stdscr.timeout(50)
+
+    setup_colors()
+
+
+def addstr_safe(stdscr, row, col, text, attributes=0):
+    screen_height, screen_width = stdscr.getmaxyx()
+
+    if row < 0 or row >= screen_height:
+        return
+
+    if col < 0:
+        text = text[-col:]
+        col = 0
+
+    if col >= screen_width or not text:
+        return
+
+    text = text[: screen_width - col]
+
+    try:
+        stdscr.addstr(
+            row,
+            col,
+            text,
+            attributes,
+        )
+    except curses.error:
+        pass

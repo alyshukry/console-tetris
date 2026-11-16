@@ -1,47 +1,75 @@
 import argparse
+import asyncio
 import curses
-import os
+from urllib.parse import urlencode
+
+import websockets
+from websockets.exceptions import ConnectionClosed, InvalidStatus
 
 from client.api import Api, ApiError
 from client.endpoints import DEFAULT_SERVER, endpoints
-from client.menu import auth_menu, main_menu
-from client.session import play
-from render.terminal import setup_curses
-from render.widgets import busy, notice
+from client.input import input_loop
+from client.menu import Target, auth_menu, main_menu
+from client.network import gravity_loop, ping_loop, receive_loop
+from client.state.client import ClientState
+from render.curses_render import render_loop, setup_curses
 
 
-def app(stdscr, server: str):
-    http_base, ws_base = endpoints(server)
+def play(stdscr, ws_base: str, token: str, target: Target) -> str | None:
     setup_curses(stdscr)
+    state = ClientState()
+    params = {"host": target.host}
+    if target.password:
+        params["password"] = target.password
+    url = f"{ws_base}/ws?{urlencode(params)}"
+    headers = {"Authorization": f"Bearer {token}"}
+
+    async def run_player():
+        async with websockets.connect(url, additional_headers=headers) as ws:
+            await asyncio.gather(
+                ping_loop(ws, state),
+                input_loop(ws, stdscr, state),
+                receive_loop(ws, state),
+                gravity_loop(state),
+                render_loop(stdscr, state),
+            )
+
+    try:
+        asyncio.run(run_player())
+    except ConnectionClosed as e:
+        return e.rcvd.reason if e.rcvd and e.rcvd.reason else "Disconnected"
+    except InvalidStatus:
+        return "Server rejected the connection"
+    except OSError:
+        return "Can't reach the server"
+    except KeyboardInterrupt:
+        pass
+    return None
+
+
+def main(server: str):
+    http_base, ws_base = endpoints(server)
+    print(f"Connecting to {http_base} (may take a moment if the server is asleep)...")
     api = Api(http_base)
     while True:
-        if api.access_token is None and not auth_menu(stdscr, api):
+        if api.access_token is None and not auth_menu(api):
             return
-        target = main_menu(stdscr, api)
+        target = main_menu(api)
         if target is None:
             if api.access_token is None:
                 continue  # session expired -> back to login
             return
-        busy(stdscr, "Joining room...")
         try:
             api.refresh()  # make sure the token is fresh at connect time
         except ApiError as e:
-            notice(stdscr, e.detail)
+            print(e.detail)
             continue
         token = api.access_token
         if token is None:
             continue
-        error = play(stdscr, ws_base, token, target)
+        error = curses.wrapper(play, ws_base, token, target)
         if error:
-            notice(stdscr, error)
-
-
-def main(server: str):
-    os.environ.setdefault("ESCDELAY", "25")  # makes Esc instant; must be set before curses starts
-    try:
-        curses.wrapper(app, server)
-    except KeyboardInterrupt:
-        pass
+            print(error)
 
 
 if __name__ == "__main__":
