@@ -8,41 +8,10 @@ from websockets.exceptions import ConnectionClosed, InvalidStatus
 from client.input import input_loop
 from client.network import gravity_loop, ping_loop, receive_loop
 from client.state.game import PlayerState
-from client.state.menu import MENUS, MenuState, TextField
+from client.state.menu import MENUS
+from client.state.types import Button, MenuState, TextField
 from render.curses_render import render_loop, setup_curses
 from render.menu import draw_menu
-
-
-def connect_to_room(
-    stdscr, host: str, token: str, password: str | None = None
-) -> str | None:
-
-    player_state = PlayerState()
-
-    async def ws_connect():
-        async with websockets.connect(
-            f"wss://console-tetris.onrender.com/ws?host={host}{"?password=" + password if password is not None else ""}",
-            additional_headers={"Authorization": f"Bearer {token}"},
-        ) as ws:
-            await asyncio.gather(
-                ping_loop(ws, player_state),
-                input_loop(ws, stdscr, player_state),
-                receive_loop(ws, player_state),
-                gravity_loop(player_state),
-                render_loop(stdscr, player_state),
-            )
-
-    try:
-        asyncio.run(ws_connect())
-    except ConnectionClosed as e:
-        return e.rcvd.reason if e.rcvd and e.rcvd.reason else "Disconnected"
-    except InvalidStatus:
-        return "Server rejected the connection"
-    except OSError:
-        return "Can't reach the server"
-    except KeyboardInterrupt:
-        pass
-    return None
 
 
 def main(stdscr):
@@ -71,21 +40,22 @@ def main(stdscr):
                 item.value += chr(key)
         else:
             if key == curses.KEY_UP:
-                menu_state.selected_index = (menu_state.selected_index - 1) % len(
-                    menu.buttons
-                )
+                move(menu_state, menu, -1)
             elif key == curses.KEY_DOWN:
-                menu_state.selected_index = (menu_state.selected_index + 1) % len(
-                    menu.buttons
-                )
+                move(menu_state, menu, 1)
             elif key in (curses.KEY_ENTER, 10, 13):
-                menu_state.selected_index = 0
-                menu_state.editing = False
-                menu_state.message = ""
                 if isinstance(item, TextField):
                     menu_state.editing = True
                 else:
-                    item.action(menu_state, menu)
+                    item.action(menu_state, menu, stdscr)
+
+
+def move(state, menu, step):
+    n = len(menu.buttons)
+    for _ in range(n):
+        state.selected_index = (state.selected_index + step) % n
+        if isinstance(menu.buttons[state.selected_index], (Button, TextField)):
+            return
 
 
 curses.wrapper(main)

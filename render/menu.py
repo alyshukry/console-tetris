@@ -1,6 +1,7 @@
 import curses
 
-from client.state.menu import MENUS, MenuState, TextField
+from client.state.menu import MENUS
+from client.state.types import MenuState, Separator, TextField
 from render.colors import ERROR_PAIR
 from render.logo import LOGO, LOGO_WIDTH, SUBTITLE
 
@@ -21,6 +22,7 @@ def draw_menu(stdscr, state: MenuState):
         button_count
         + (3 if menu.title else 0)
         + (5 if menu.show_logo else 0)
+        + (3 if state.message else 0)
         + (3 if menu.hint else 0)
     )
     y = (h - menu_height) // 2
@@ -45,7 +47,8 @@ def draw_menu(stdscr, state: MenuState):
 
     def field_text(item, selected):
         cursor = "_" if state.editing and selected else " "
-        value = f"{item.value}{cursor}".ljust(input_length)
+        displayed_value = "*" * len(item.value) if item.hide_chars else item.value
+        value = f"{displayed_value}{cursor}".ljust(input_length)
         return f"  {(item.label + ':').ljust(label_width - 3)} [{value}]  "
 
     if has_fields:

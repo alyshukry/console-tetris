@@ -1,47 +1,13 @@
-from dataclasses import dataclass
-from typing import Callable
+from client.state.types import Button, Menu, TextField
 
-from client.actions import go_to, quit_app, submit_login, submit_register
-
-
-@dataclass
-class Button:
-    label: str
-    action: Callable
-
-
-@dataclass
-class TextField:
-    label: str
-    value: str = ""
-    max_len: int = 20
-
-
-@dataclass
-class Menu:
-    buttons: list[Button | TextField]
-    title: str | None = None
-    hint: str = "↑/↓ move    Enter select"
-    show_logo: bool = False
-
-
-@dataclass
-class MenuState:
-    current_menu: str = "start"
-    selected_index: int = 0
-    editing: bool = False
-    message: str = ""
-    message_kind: str = "info"  # "info" | "error"
-    access_token: str | None = None
-    refresh_token: str | None = None
-    redraw: Callable | None = None
-
-
-def set_message(state: MenuState, msg: str, msg_kind: str = "info"):
-    state.message, state.message_kind = msg, msg_kind
-    if state.redraw:
-        state.redraw()
-
+from client.actions import (
+    create_room,
+    go_to,
+    load_rooms,
+    quit_app,
+    submit_login,
+    submit_register,
+)
 
 MENUS = {
     "start": Menu(
@@ -59,7 +25,7 @@ MENUS = {
         title="Login",
         buttons=[
             TextField("Username"),
-            TextField("Password"),
+            TextField("Password", hide_chars=True),
             Button("Sign In", submit_login),
             Button("Go Back", go_to("start")),
         ],
@@ -68,10 +34,39 @@ MENUS = {
         title="Register",
         buttons=[
             TextField("Username"),
-            TextField("Password"),
-            TextField("Confirm"),
+            TextField("Password", hide_chars=True),
+            TextField("Confirm", hide_chars=True),
             Button("Sign Up", submit_register),
             Button("Go Back", go_to("start")),
         ],
     ),
+    "main": Menu(
+        buttons=[
+            Button("Create Room", go_to("create_room")),
+            Button("Join Room", go_to("rooms")),
+            Button("Quit", quit_app),
+        ],
+        show_logo=True,
+    ),
+    "create_room": Menu(
+        title="Create Room",
+        buttons=[
+            TextField("Password (blank for none)"),
+            Button("Create Room", create_room),
+            Button("Go Back", go_to("main")),
+        ],
+    ),
+    "rooms": Menu(
+        title="Join Room",
+        buttons=[Button("Refresh", go_to("rooms")), Button("Go Back", go_to("main"))],
+        on_enter=load_rooms,
+    ),
+    "room_password": Menu(
+        title="Enter Room Password",
+        buttons=[TextField("Password"), Button("Go Back", go_to("rooms"))],
+    ),
+    "error": Menu(
+        buttons=[Button("OK", go_to("main"))],
+    ),
+    
 }
