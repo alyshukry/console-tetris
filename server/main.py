@@ -1,18 +1,19 @@
+import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import OperationalError
 
 from server.db.models import user as _user  # noqa: F401  (registers the table)
 from server.db.session import Base, engine
 from server.errors import AppError
 from server.routes import auth, health, rooms, ws
 from server.services.room_manager import RoomManager
-import time
-from sqlalchemy.exc import OperationalError
 
 MAX_RETRIES = 5
 RETRY_INTERVAL = 2
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
@@ -23,7 +24,9 @@ async def lifespan(_app: FastAPI):
             break
         except OperationalError as e:
             if attempt < MAX_RETRIES - 1:
-                print(f"Database not ready yet (attempt {attempt + 1}/{MAX_RETRIES}). Retrying in {RETRY_INTERVAL}s...")
+                print(
+                    f"Database not ready ({attempt + 1}/{MAX_RETRIES}). Retrying in a moment."
+                )
                 time.sleep(RETRY_INTERVAL)
             else:
                 print("Could not connect to the database. Exiting.")

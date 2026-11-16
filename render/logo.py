@@ -1,6 +1,5 @@
 from render.colors import PIECE_COLORS
 
-
 LOGO = [
     (PIECE_COLORS["Z"], "▀█▀", " █ "),
     (PIECE_COLORS["L"], "█▀▀", "██▄"),

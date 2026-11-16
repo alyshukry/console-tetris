@@ -1,12 +1,9 @@
 import time
 from dataclasses import dataclass, field
 
-
-from dataclasses import dataclass
-
+from game.constants import TICKS_PER_SECOND
 from game.piece import Piece
 from net.serialization import deserialize_piece
-from game.constants import TICKS_PER_SECOND
 from shared.room_state import RoomState
 
 

@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from server.config import settings
 from server.db.store import create_user, validate_user_login
 from server.dependencies import DatabaseDep
 from server.schemas.user import (
@@ -10,7 +11,6 @@ from server.schemas.user import (
     UserResponse,
 )
 from server.security import sign_token, verify_token
-from server.config import settings
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 

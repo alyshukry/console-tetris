@@ -1,17 +1,13 @@
 import asyncio
 
-import websockets
 import requests
-
-from client.state.types import Button, Separator, TextField, set_message
-
-from client.state.game import PlayerState
-
-from client.network import gravity_loop, ping_loop, receive_loop
-
-from client.input import input_loop
+import websockets
 from websockets import ConnectionClosed, InvalidStatus
 
+from client.input import input_loop
+from client.network import gravity_loop, ping_loop, receive_loop
+from client.state.game import PlayerState
+from client.state.types import Button, Separator, set_message
 from render.curses_render import render_loop
 
 
@@ -119,7 +115,7 @@ def connect_to_room(
 
     async def ws_connect():
         async with websockets.connect(
-            f"wss://console-tetris.onrender.com/ws?host={host}{"&password=" + password if password is not None else ""}",
+            f"wss://console-tetris.onrender.com/ws?host={host}{'&password=' + password if password is not None else ''}",
             additional_headers={"Authorization": f"Bearer {token}"},
         ) as ws:
             await asyncio.gather(
@@ -162,7 +158,7 @@ def load_rooms(state, menu, stdscr):
 
     room_items = [
         Button(
-            f"{r["host"]} - ({r["player_count"]} player{"s" if r["player_count"] != 1 else ""})",
+            f"{r['host']} - ({r['player_count']} player{'s' if r['player_count'] != 1 else ''})",
             select_room(r["host"], r["has_password"]),
         )
         for r in rooms
@@ -178,11 +174,15 @@ def select_room(host, has_password):
 
         if has_password:
             # rebuild the password menu so its Join button remembers this host
-            MENUS["room_password"].buttons[1] = Button("Join", submit_room_password(host))
+            MENUS["room_password"].buttons[1] = Button(
+                "Join", submit_room_password(host)
+            )
             go_to("room_password")(state, menu, stdscr)
         else:
             join_room(host)(state, menu, stdscr)
+
     return action
+
 
 def join_room(host):
     def action(state, menu, stdscr):
@@ -191,7 +191,9 @@ def join_room(host):
         go_to("error")(state, menu, stdscr)
         if error:
             set_message(state, error, "error")
+
     return action
+
 
 def submit_room_password(host):
     def action(state, menu, stdscr):
@@ -201,4 +203,5 @@ def submit_room_password(host):
         go_to("error")(state, menu, stdscr)
         if error:
             set_message(state, error, "error")
+
     return action

@@ -1,7 +1,7 @@
 import time
 
 from client.input import apply_local_move
-from client.state.game import PlayerState, BoardState
+from client.state.game import BoardState, PlayerState
 from game.collision import fits
 from net.serialization import deserialize_piece
 

@@ -6,13 +6,13 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 from starlette.requests import HTTPConnection
 
+from server.config import settings
 from server.db.models.user import User
 from server.db.session import SessionLocal
 from server.db.store import get_user
 from server.errors import InvalidToken, UserNotFound
 from server.security import verify_token
 from server.services.room_manager import RoomManager
-from server.config import settings
 
 
 class Bearer(HTTPBearer):

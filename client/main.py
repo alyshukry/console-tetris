@@ -1,16 +1,8 @@
-import asyncio
 import curses
-from typing import Callable
 
-import websockets
-from websockets.exceptions import ConnectionClosed, InvalidStatus
-
-from client.input import input_loop
-from client.network import gravity_loop, ping_loop, receive_loop
-from client.state.game import PlayerState
 from client.state.menu import MENUS
 from client.state.types import Button, MenuState, TextField
-from render.curses_render import render_loop, setup_curses
+from render.curses_render import setup_curses
 from render.menu import draw_menu
 
 
@@ -57,5 +49,5 @@ def move(state, menu, step):
         if isinstance(menu.buttons[state.selected_index], (Button, TextField)):
             return
 
-
-curses.wrapper(main)
+if __name__ == "__main__":
+    curses.wrapper(main)

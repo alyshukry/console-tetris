@@ -1,5 +1,3 @@
-from client.state.types import Button, Menu, TextField
-
 from client.actions import (
     create_room,
     go_to,
@@ -8,6 +6,7 @@ from client.actions import (
     submit_login,
     submit_register,
 )
+from client.state.types import Button, Menu, TextField
 
 MENUS = {
     "start": Menu(
@@ -68,5 +67,5 @@ MENUS = {
     "error": Menu(
         buttons=[Button("OK", go_to("main"))],
     ),
-    
+
 }

@@ -4,7 +4,6 @@ import jwt
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 
-from server.config import settings
 from server.errors import InvalidToken, TokenExpired
 
 ALGORITHM = "HS256"

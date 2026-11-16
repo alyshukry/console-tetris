@@ -1,7 +1,7 @@
 import curses
 
 from client.state.menu import MENUS
-from client.state.types import MenuState, Separator, TextField
+from client.state.types import MenuState, TextField
 from render.colors import ERROR_PAIR
 from render.logo import LOGO, LOGO_WIDTH, SUBTITLE
 
@@ -42,7 +42,9 @@ def draw_menu(stdscr, state: MenuState):
         y += 3
 
     has_fields = any(isinstance(i, TextField) for i in menu.buttons)
-    label_width = max(len(i.label) for i in menu.buttons) + 4 # + 4 to include the 2 spaces added before the label and the 2 spaces created by .ljust()
+    label_width = (
+        max(len(i.label) for i in menu.buttons) + 4
+    )  # + 4 to include the 2 spaces added before the label and the 2 spaces created by .ljust()
     input_length = TextField.max_len + 1
 
     def field_text(item, selected):
@@ -75,7 +77,12 @@ def draw_menu(stdscr, state: MenuState):
         y += 1
 
     if state.message:
-        center(stdscr, y + 2, f" {state.message} ", curses.color_pair(ERROR_PAIR if state.message_kind == "error" else 0))
+        center(
+            stdscr,
+            y + 2,
+            f" {state.message} ",
+            curses.color_pair(ERROR_PAIR if state.message_kind == "error" else 0),
+        )
         y += 2
 
     center(stdscr, y + 2, menu.hint, curses.A_DIM)

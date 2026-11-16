@@ -1,6 +1,7 @@
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
+
 
 @dataclass
 class Separator:
@@ -40,6 +41,7 @@ class MenuState:
     access_token: str | None = None
     refresh_token: str | None = None
     redraw: Callable | None = None
+    username: str | None = None
 
 
 def set_message(state: MenuState, msg: str, msg_kind: str = "info"):
