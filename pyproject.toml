@@ -5,14 +5,14 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "console-tetris"
 version = "0.1.0"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "websockets>=14",   # needed by both
 ]
 
 [project.optional-dependencies]
 client = [
-    "httpx",
+    "requests",
     "windows-curses; sys_platform == 'win32'",
 ]
 server = [
