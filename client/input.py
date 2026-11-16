@@ -3,7 +3,7 @@ import curses
 
 from websockets import ClientConnection
 
-from client.state.board import BoardState
+from client.state.game import BoardState
 from game.collision import fits
 from game.piece import Piece
 from net.protocol import encode

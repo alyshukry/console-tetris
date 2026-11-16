@@ -1,41 +1,39 @@
-import argparse
 import asyncio
 import curses
-from urllib.parse import urlencode
+from typing import Callable
 
 import websockets
 from websockets.exceptions import ConnectionClosed, InvalidStatus
 
-from client.api import Api, ApiError
-from client.endpoints import DEFAULT_SERVER, endpoints
 from client.input import input_loop
-from client.menu import Target, auth_menu, main_menu
 from client.network import gravity_loop, ping_loop, receive_loop
-from client.state.client import ClientState
+from client.state.game import PlayerState
+from client.state.menu import MENUS, MenuState, TextField
 from render.curses_render import render_loop, setup_curses
+from render.menu import draw_menu
 
 
-def play(stdscr, ws_base: str, token: str, target: Target) -> str | None:
-    setup_curses(stdscr)
-    state = ClientState()
-    params = {"host": target.host}
-    if target.password:
-        params["password"] = target.password
-    url = f"{ws_base}/ws?{urlencode(params)}"
-    headers = {"Authorization": f"Bearer {token}"}
+def connect_to_room(
+    stdscr, host: str, token: str, password: str | None = None
+) -> str | None:
 
-    async def run_player():
-        async with websockets.connect(url, additional_headers=headers) as ws:
+    player_state = PlayerState()
+
+    async def ws_connect():
+        async with websockets.connect(
+            f"wss://console-tetris.onrender.com/ws?host={host}{"?password=" + password if password is not None else ""}",
+            additional_headers={"Authorization": f"Bearer {token}"},
+        ) as ws:
             await asyncio.gather(
-                ping_loop(ws, state),
-                input_loop(ws, stdscr, state),
-                receive_loop(ws, state),
-                gravity_loop(state),
-                render_loop(stdscr, state),
+                ping_loop(ws, player_state),
+                input_loop(ws, stdscr, player_state),
+                receive_loop(ws, player_state),
+                gravity_loop(player_state),
+                render_loop(stdscr, player_state),
             )
 
     try:
-        asyncio.run(run_player())
+        asyncio.run(ws_connect())
     except ConnectionClosed as e:
         return e.rcvd.reason if e.rcvd and e.rcvd.reason else "Disconnected"
     except InvalidStatus:
@@ -47,37 +45,47 @@ def play(stdscr, ws_base: str, token: str, target: Target) -> str | None:
     return None
 
 
-def main(server: str):
-    http_base, ws_base = endpoints(server)
-    print(f"Connecting to {http_base} (may take a moment if the server is asleep)...")
-    api = Api(http_base)
+def main(stdscr):
+    setup_curses(stdscr)
+    menu_state = MenuState()
+    menu_state.redraw = lambda: draw_menu(stdscr, menu_state)
     while True:
-        if api.access_token is None and not auth_menu(api):
-            return
-        target = main_menu(api)
-        if target is None:
-            if api.access_token is None:
-                continue  # session expired -> back to login
-            return
-        try:
-            api.refresh()  # make sure the token is fresh at connect time
-        except ApiError as e:
-            print(e.detail)
-            continue
-        token = api.access_token
-        if token is None:
-            continue
-        error = curses.wrapper(play, ws_base, token, target)
-        if error:
-            print(error)
+        draw_menu(stdscr, menu_state)
+
+        menu = MENUS[menu_state.current_menu]
+        item = menu.buttons[menu_state.selected_index % len(menu.buttons)]
+        key = stdscr.getch()
+
+        if menu_state.editing:
+            assert isinstance(item, TextField)
+            if key in (curses.KEY_ENTER, 10, 13, 27):  # Enter or Esc
+                if key in (curses.KEY_ENTER, 10, 13):
+                    menu_state.selected_index = (menu_state.selected_index + 1) % len(
+                        menu.buttons
+                    )
+                next_item = menu.buttons[menu_state.selected_index]
+                menu_state.editing = isinstance(next_item, TextField)
+            elif key in (curses.KEY_BACKSPACE, 127, 8):
+                item.value = item.value[:-1]
+            elif 32 <= key <= 126 and len(item.value) < item.max_len:
+                item.value += chr(key)
+        else:
+            if key == curses.KEY_UP:
+                menu_state.selected_index = (menu_state.selected_index - 1) % len(
+                    menu.buttons
+                )
+            elif key == curses.KEY_DOWN:
+                menu_state.selected_index = (menu_state.selected_index + 1) % len(
+                    menu.buttons
+                )
+            elif key in (curses.KEY_ENTER, 10, 13):
+                menu_state.selected_index = 0
+                menu_state.editing = False
+                menu_state.message = ""
+                if isinstance(item, TextField):
+                    menu_state.editing = True
+                else:
+                    item.action(menu_state, menu)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "server",
-        nargs="?",
-        default=DEFAULT_SERVER,
-        help=f"Server address (default: {DEFAULT_SERVER}), e.g. localhost:8000",
-    )
-    main(parser.parse_args().server)
+curses.wrapper(main)

@@ -1,13 +1,38 @@
 import time
 from dataclasses import dataclass, field
 
-from client.state.board import BoardState
+
+from dataclasses import dataclass
+
+from game.piece import Piece
+from net.serialization import deserialize_piece
 from game.constants import TICKS_PER_SECOND
 from shared.room_state import RoomState
 
 
 @dataclass
-class ClientState:
+class BoardState:
+    cells: list
+    piece: Piece
+    next_piece: Piece
+    width: int = 10
+    height: int = 20
+    game_over: bool = False
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        return cls(
+            cells=data["cells"],
+            piece=deserialize_piece(data["piece"]),
+            next_piece=deserialize_piece(data["next_piece"]),
+            width=data["width"],
+            height=data["height"],
+            game_over=data["game_over"],
+        )
+
+
+@dataclass
+class PlayerState:
     boards: dict[int, BoardState] = field(default_factory=dict)
     my_id: int = -1
     room_state: RoomState = RoomState.LOBBY

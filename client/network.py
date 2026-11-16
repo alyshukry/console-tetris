@@ -15,7 +15,7 @@ from client.handlers.game import (
 from client.handlers.lobby import handle_countdown_tick, handle_lobby_update
 from client.handlers.room import handle_room_state
 from client.handlers.sync import handle_pong
-from client.state.client import ClientState
+from client.state.game import PlayerState
 from game.collision import fits
 from net.protocol import encode
 
@@ -33,7 +33,7 @@ HANDLERS = {
 }
 
 
-async def receive_loop(ws: ClientConnection, state: ClientState):
+async def receive_loop(ws: ClientConnection, state: PlayerState):
     async for msg in ws:
         try:
             data = json.loads(msg)
@@ -46,7 +46,7 @@ async def receive_loop(ws: ClientConnection, state: ClientState):
             handler(state, data)
 
 
-async def gravity_loop(state: ClientState):
+async def gravity_loop(state: PlayerState):
     while True:
         await asyncio.sleep(0.01)
         target_ticks = int(
@@ -67,7 +67,7 @@ async def gravity_loop(state: ClientState):
                         board.piece.row += 1
 
 
-async def ping_loop(ws: ClientConnection, state: ClientState):
+async def ping_loop(ws: ClientConnection, state: PlayerState):
     while True:
         await ws.send(
             encode("ping", {"player_tick": state.tick, "sent_at": time.monotonic()})

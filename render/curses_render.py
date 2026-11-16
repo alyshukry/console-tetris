@@ -2,7 +2,7 @@ import asyncio
 import curses
 from dataclasses import dataclass
 
-from client.state.board import BoardState
+from client.state.game import BoardState
 from game.collision import get_ghost_row
 from game.constants import SHAPES
 from render.colors import (

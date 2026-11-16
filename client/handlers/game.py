@@ -1,13 +1,12 @@
 import time
 
 from client.input import apply_local_move
-from client.state.board import BoardState
-from client.state.client import ClientState
+from client.state.game import PlayerState, BoardState
 from game.collision import fits
 from net.serialization import deserialize_piece
 
 
-def handle_welcome_info(state: ClientState, data):
+def handle_welcome_info(state: PlayerState, data):
     state.reset_room()
 
     state.my_id = data["your_id"]
@@ -19,9 +18,10 @@ def handle_welcome_info(state: ClientState, data):
     state.boards[state.my_id] = BoardState.from_dict(data["your_board"])
 
 
-def handle_all_boards(state: ClientState, data):
+def handle_all_boards(state: PlayerState, data):
     state.boards = {
-        int(player_id): BoardState.from_dict(board) for player_id, board in data["boards"].items()
+        int(player_id): BoardState.from_dict(board)
+        for player_id, board in data["boards"].items()
     }
 
 
@@ -52,7 +52,7 @@ def handle_piece_moved(state, data):
     replay_pending(state, board, data["tick"])
 
 
-def handle_piece_locked(state: ClientState, data):
+def handle_piece_locked(state: PlayerState, data):
     board_id = int(data["board_id"])
     board = state.boards[board_id]
 
@@ -66,7 +66,7 @@ def handle_lose(state, data):
     state.boards[board_id].game_over = True
 
 
-def replay_pending(state: ClientState, board: BoardState, server_tick: int):
+def replay_pending(state: PlayerState, board: BoardState, server_tick: int):
     pending = sorted(state.pending_inputs)
     i = 0
     for t in range(server_tick + 1, state.tick + 1):
