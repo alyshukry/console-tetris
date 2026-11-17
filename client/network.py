@@ -4,6 +4,7 @@ import time
 
 from websockets import ClientConnection
 
+from client.state.game import PlayerState
 from client.ws_handlers.connection import handle_player_left
 from client.ws_handlers.game import (
     handle_all_boards,
@@ -15,7 +16,6 @@ from client.ws_handlers.game import (
 from client.ws_handlers.lobby import handle_countdown_tick, handle_lobby_update
 from client.ws_handlers.room import handle_room_state
 from client.ws_handlers.sync import handle_pong
-from client.state.game import PlayerState
 from game.collision import fits
 from net.protocol import encode
 

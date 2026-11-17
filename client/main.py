@@ -1,55 +1,15 @@
 import curses
 
-from client.state.menu import MENUS
-from client.state.types import HINTS, Button, MenuState, TextField
-from render.curses_render import setup_curses
-from render.menu import draw_menu
+from client.menu.controller import run_menu
+from client.state.menu import create_menu_state
+from client.state.session import SessionState
+from client.ui.curses_render import setup_curses
 
 
 def main(stdscr):
     setup_curses(stdscr)
-    menu_state = MenuState()
-    menu_state.redraw = lambda: draw_menu(stdscr, menu_state)
-    while True:
-        draw_menu(stdscr, menu_state)
+    run_menu(stdscr, create_menu_state(stdscr), SessionState())
 
-        menu = MENUS[menu_state.current_menu]
-        item = menu.buttons[menu_state.selected_index % len(menu.buttons)]
-        key = stdscr.getch()
-
-        if menu_state.editing:
-            assert isinstance(item, TextField)
-            menu.hint = HINTS["editing"]
-            if key in (curses.KEY_ENTER, 10, 13, 27):  # Enter or Esc
-                if key in (curses.KEY_ENTER, 10, 13):
-                    menu_state.selected_index = (menu_state.selected_index + 1) % len(
-                        menu.buttons
-                    )
-                next_item = menu.buttons[menu_state.selected_index]
-                menu_state.editing = isinstance(next_item, TextField)
-            elif key in (curses.KEY_BACKSPACE, 127, 8):
-                item.value = item.value[:-1]
-            elif 32 <= key <= 126 and len(item.value) < item.max_len:
-                item.value += chr(key)
-        else:
-            menu.hint = HINTS["default"]
-            if key == curses.KEY_UP:
-                move(menu_state, menu, -1)
-            elif key == curses.KEY_DOWN:
-                move(menu_state, menu, 1)
-            elif key in (curses.KEY_ENTER, 10, 13):
-                if isinstance(item, TextField):
-                    menu_state.editing = True
-                else:
-                    item.action(menu_state, menu, stdscr)
-
-
-def move(state, menu, step):
-    n = len(menu.buttons)
-    for _ in range(n):
-        state.selected_index = (state.selected_index + step) % n
-        if isinstance(menu.buttons[state.selected_index], (Button, TextField)):
-            return
 
 if __name__ == "__main__":
     curses.wrapper(main)

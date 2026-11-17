@@ -1,9 +1,8 @@
 import curses
 
-from client.state.menu import MENUS
-from client.state.types import MenuState, TextField
-from render.colors import ERROR_PAIR
-from render.logo import LOGO, LOGO_WIDTH, SUBTITLE
+from client.menu.types import Menu, MenuState, TextField
+from client.ui.colors import ERROR_PAIR
+from client.ui.logo import LOGO, LOGO_WIDTH, SUBTITLE
 
 
 def center(stdscr, y: int, text: str, attr=0):
@@ -12,12 +11,11 @@ def center(stdscr, y: int, text: str, attr=0):
     stdscr.addstr(y, x, text, attr)
 
 
-def draw_menu(stdscr, state: MenuState):
+def draw_menu(stdscr, menu: Menu, state: MenuState):
     stdscr.clear()
     h, w = stdscr.getmaxyx()
 
-    menu = MENUS[state.current_menu]
-    button_count = len(MENUS[state.current_menu].buttons)
+    button_count = len(menu.buttons)
     menu_height = (
         button_count
         + (3 if menu.title else 0)

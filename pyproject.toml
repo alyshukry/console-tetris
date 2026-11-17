@@ -35,7 +35,6 @@ include = [
     "client*",
     "game*",
     "net*",
-    "render*",
     "server*",
     "shared*"
 ]
@@ -74,7 +73,6 @@ include = [
     "client",
     "game",
     "net",
-    "render",
     "server",
     "shared"
 ]

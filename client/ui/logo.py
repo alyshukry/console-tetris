@@ -1,4 +1,4 @@
-from render.colors import PIECE_COLORS
+from client.ui.colors import PIECE_COLORS
 
 LOGO = [
     (PIECE_COLORS["Z"], "▀█▀", " █ "),

@@ -3,9 +3,7 @@ import curses
 from dataclasses import dataclass
 
 from client.state.game import BoardState
-from game.collision import get_ghost_row
-from game.constants import SHAPES
-from render.colors import (
+from client.ui.colors import (
     BORDER_PAIR,
     EMPTY_PAIR,
     GAME_OVER_PAIR,
@@ -13,6 +11,8 @@ from render.colors import (
     PIECE_COLORS,
     setup_colors,
 )
+from game.collision import get_ghost_row
+from game.constants import SHAPES
 from shared.room_state import RoomState
 
 CELL_WIDTH = 2

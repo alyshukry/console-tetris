@@ -43,10 +43,7 @@ class MenuState:
     editing: bool = False
     message: str = ""
     message_kind: str = "info"  # "info" | "error"
-    access_token: str | None = None
-    refresh_token: str | None = None
     redraw: Callable | None = None
-    username: str | None = None
 
 
 def set_message(state: MenuState, msg: str, msg_kind: str = "info"):
