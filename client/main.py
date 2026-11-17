@@ -1,7 +1,7 @@
 import curses
 
 from client.state.menu import MENUS
-from client.state.types import Button, MenuState, TextField
+from client.state.types import HINTS, Button, MenuState, TextField
 from render.curses_render import setup_curses
 from render.menu import draw_menu
 
@@ -19,6 +19,7 @@ def main(stdscr):
 
         if menu_state.editing:
             assert isinstance(item, TextField)
+            menu.hint = HINTS["editing"]
             if key in (curses.KEY_ENTER, 10, 13, 27):  # Enter or Esc
                 if key in (curses.KEY_ENTER, 10, 13):
                     menu_state.selected_index = (menu_state.selected_index + 1) % len(
@@ -31,6 +32,7 @@ def main(stdscr):
             elif 32 <= key <= 126 and len(item.value) < item.max_len:
                 item.value += chr(key)
         else:
+            menu.hint = HINTS["default"]
             if key == curses.KEY_UP:
                 move(menu_state, menu, -1)
             elif key == curses.KEY_DOWN:
