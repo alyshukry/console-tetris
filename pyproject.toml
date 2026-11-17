@@ -14,6 +14,7 @@ dependencies = [
 client = [
     "requests",
     "windows-curses; sys_platform == 'win32'",
+    "python-dotenv",
 ]
 server = [
     "fastapi[standard]",
