@@ -4,7 +4,7 @@ import requests
 import websockets
 from websockets import ConnectionClosed, InvalidStatus
 
-from client.config import APP_ENV, SERVER_URL
+from client.config import HTTP_BASE, SERVER_URL, WS_BASE
 from client.input import input_loop
 from client.network import gravity_loop, ping_loop, receive_loop
 from client.state.game import PlayerState
@@ -31,7 +31,7 @@ def login(state, username, password) -> bool:
     set_message(state, "Contacting server... (may take a while if asleep)", "info")
     try:
         res = requests.post(
-            f"http{'s' if APP_ENV == 'production' else ''}://{SERVER_URL}/auth/login",
+            f"{HTTP_BASE}://{SERVER_URL}/auth/login",
             json={"username": username, "password": password},
             timeout=30,
         )
@@ -65,7 +65,7 @@ def submit_register(state, menu, stdscr):
     set_message(state, "Contacting server... (may take a while if asleep)", "info")
     try:
         res = requests.post(
-            f"http{'s' if APP_ENV == 'production' else ''}://{SERVER_URL}/auth/register",
+            f"{HTTP_BASE}://{SERVER_URL}/auth/register",
             json={"username": username, "password": password},
             timeout=30,
         )
@@ -89,7 +89,7 @@ def create_room(state, menu, stdscr):
     password = menu.buttons[0].value or None
     try:
         res = requests.post(
-            f"http{'s' if APP_ENV == 'production' else ''}://{SERVER_URL}/rooms",
+            f"{HTTP_BASE}://{SERVER_URL}/rooms",
             json={"password": password} if password else {},
             headers={"Authorization": f"Bearer {state.access_token}"},
             timeout=30,
@@ -117,7 +117,7 @@ def connect_to_room(
 
     async def ws_connect():
         async with websockets.connect(
-            f"ws{'s' if APP_ENV == 'production' else ''}://{SERVER_URL}/ws{params}",
+            f"{WS_BASE}://{SERVER_URL}/ws{params}",
             additional_headers={"Authorization": f"Bearer {token}"},
         ) as ws:
             await asyncio.gather(
@@ -146,7 +146,7 @@ def load_rooms(state, menu, stdscr):
     rooms = []
     try:
         res = requests.get(
-            f"http{'s' if APP_ENV == 'production' else ''}://{SERVER_URL}/rooms",
+            f"{HTTP_BASE}://{SERVER_URL}/rooms",
             headers={"Authorization": f"Bearer {state.access_token}"},
             timeout=30,
         )
