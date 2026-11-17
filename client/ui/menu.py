@@ -1,6 +1,7 @@
 import curses
 
-from client.menu.types import Menu, MenuState, TextField
+from client.menu.types import Menu, TextField
+from client.state.menu import MenuState
 from client.ui.colors import ERROR_PAIR
 from client.ui.logo import LOGO, LOGO_WIDTH, SUBTITLE
 

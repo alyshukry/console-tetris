@@ -1,8 +1,9 @@
 import requests
 
 from client.config import HTTP_BASE
-from client.menu.types import Button, Separator, set_message
+from client.menu.types import Button, Separator
 from client.session import connect_to_room
+from client.state.menu import set_message
 
 
 def go_to(menu_name: str):
