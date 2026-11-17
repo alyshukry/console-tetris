@@ -26,7 +26,7 @@ jobs:
       - name: Install client deps only
         shell: bash
         run: |
-          pip install websockets httpx pyinstaller
+          pip install websockets requests pyinstaller
           if [ "$RUNNER_OS" = "Windows" ]; then pip install windows-curses; fi
       - name: Build
         run: pyinstaller --onefile --name console-tetris --paths . client/main.py
