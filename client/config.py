@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-SERVER_URL = os.getenv("SERVER_URL", "console-tetris.onrender.ui.com")
+SERVER_URL = os.getenv("SERVER_URL", "console-tetris.onrender.com")
 SECURE = os.getenv("APP_ENV", "production") == "production"
 
 HTTP_BASE = f"{'https' if SECURE else 'http'}://{SERVER_URL}"
