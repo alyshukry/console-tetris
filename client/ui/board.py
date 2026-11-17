@@ -1,4 +1,3 @@
-import asyncio
 import curses
 from dataclasses import dataclass
 
@@ -9,11 +8,10 @@ from client.ui.colors import (
     GAME_OVER_PAIR,
     GARBAGE_PAIR,
     PIECE_COLORS,
-    setup_colors,
 )
+from client.ui.curses import addstr_safe
 from game.collision import get_ghost_row
 from game.constants import SHAPES
-from shared.room_state import RoomState
 
 CELL_WIDTH = 2
 CELL = "██"
@@ -34,84 +32,6 @@ class RenderBounds:
     @property
     def width(self) -> int:
         return self.max_col - self.min_col + 1
-
-
-def draw_boards(boards, stdscr, my_id):
-    screen_height, screen_width = stdscr.getmaxyx()
-
-    top = 2
-    left = 1
-
-    ordered_boards = []
-
-    if my_id in boards:
-        ordered_boards.append((my_id, boards[my_id]))
-
-    ordered_boards.extend(
-        (player_id, board) for player_id, board in boards.items() if player_id != my_id
-    )
-
-    for _, board in ordered_boards:
-        if left >= screen_width - 1:
-            break
-
-        bounds = draw_board(
-            board,
-            stdscr,
-            top,
-            left,
-            board is boards.get(my_id),
-            screen_height,
-            screen_width,
-        )
-
-        left = bounds.max_col + 2
-
-
-async def render_loop(stdscr, state):
-    while True:
-        stdscr.erase()
-
-        match state.room_state:
-            case RoomState.LOBBY:
-                ready_text = "Press K to get ready" if not state.ready else "You are ready"
-
-                addstr_safe(stdscr, 0, 0, ready_text)
-                addstr_safe(
-                    stdscr,
-                    1,
-                    0,
-                    f"{state.ready_count}/{state.player_count} players ready...",
-                )
-
-            case RoomState.COUNTDOWN:
-                dots = "." * (state.countdown % 3 + 1)
-                addstr_safe(
-                    stdscr,
-                    0,
-                    0,
-                    f"Starting in {state.countdown} seconds{dots}",
-                )
-
-            case RoomState.IN_GAME:
-                if state.my_id in state.boards:
-                    draw_boards(
-                        state.boards,
-                        stdscr,
-                        state.my_id,
-                    )
-                addstr_safe(stdscr, 0, 1, f"{state.latency:.0f}ms")
-
-            case RoomState.RESULTS:
-                suffix = "s" if len(state.winners) == 1 else ""
-                addstr_safe(
-                    stdscr,
-                    0,
-                    0,
-                    f"{state.winners} win{suffix} the game!",
-                )
-
-        await asyncio.sleep(0.02)
 
 
 def fill_rect(
@@ -389,40 +309,3 @@ def draw_border(
         " ▀" + "▀" * (board.width * CELL_WIDTH) + "▀ ",
         pair,
     )
-
-
-def setup_curses(stdscr):
-    curses.curs_set(0)
-    curses.start_color()
-
-    stdscr.keypad(True)
-    stdscr.nodelay(True)
-    stdscr.timeout(50)
-
-    setup_colors()
-
-
-def addstr_safe(stdscr, row, col, text, attributes=0):
-    screen_height, screen_width = stdscr.getmaxyx()
-
-    if row < 0 or row >= screen_height:
-        return
-
-    if col < 0:
-        text = text[-col:]
-        col = 0
-
-    if col >= screen_width or not text:
-        return
-
-    text = text[: screen_width - col]
-
-    try:
-        stdscr.addstr(
-            row,
-            col,
-            text,
-            attributes,
-        )
-    except curses.error:
-        pass

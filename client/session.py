@@ -7,7 +7,7 @@ from client.config import WS_BASE
 from client.input import input_loop
 from client.network import gravity_loop, ping_loop, receive_loop
 from client.state.game import PlayerState
-from client.ui.curses_render import render_loop
+from client.ui.game import render_loop
 
 
 def connect_to_room(
