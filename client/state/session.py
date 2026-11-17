@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class SessionState:
-    access_token: str | None = None
-    refresh_token: str | None = None
-    username: str | None = None
+class Session:
+    username: str
+    access_token: str
+    refresh_token: str

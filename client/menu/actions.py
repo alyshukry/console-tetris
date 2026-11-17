@@ -1,24 +1,27 @@
 import requests
 
 from client.config import HTTP_BASE
-from client.menu.types import Button, Separator
+from client.menu.types import Button, Context, Separator
 from client.session import connect_to_room
 from client.state.menu import set_message
+from client.state.session import Session
 
 
 def go_to(menu_name: str):
-    def action(menu_state, menus, stdscr, session_state):
+    def action(context: Context):
+        menu_state = context.menu_state
         menu_state.selected_index = 0
         menu_state.editing = False
         menu_state.message = ""
         menu_state.current_menu = menu_name
-        if menus[menu_name].on_enter:
-            menus[menu_name].on_enter(menu_state, menus, stdscr, session_state)
+        if context.menu.on_enter:
+            context.menu.on_enter(context)
 
     return action
 
 
-def login(menu_state, session_state, username, password) -> bool:
+def login(context: Context, username, password) -> bool:
+    menu_state = context.menu_state
     set_message(menu_state, "Contacting server... (may take a while if asleep)", "info")
     try:
         res = requests.post(
@@ -26,7 +29,6 @@ def login(menu_state, session_state, username, password) -> bool:
             json={"username": username, "password": password},
             timeout=30,
         )
-        session_state.username = username
     except requests.RequestException:
         set_message(menu_state, "Can't reach server", "error")
         return False
@@ -36,21 +38,25 @@ def login(menu_state, session_state, username, password) -> bool:
         return False
 
     data = res.json()
-    session_state.access_token = data["access_token"]
-    session_state.refresh_token = data["refresh_token"]
+    context.session = Session(
+        username=username,
+        access_token=data["access_token"],
+        refresh_token=data["refresh_token"],
+    )
     return True
 
 
-def submit_login(menu_state, menus, stdscr, session_state):
-    menu = menus[menu_state.current_menu]
-    username, password = (f.value for f in menu.buttons[:2])
-    if login(menu_state, session_state, username, password):
-        go_to("main")(menu_state, menus, stdscr, session_state)
+def submit_login(context: Context):
+    menu = context.menu
+    username, password = (getattr(field, "value") for field in menu.buttons[:2])
+    if login(context, username, password):
+        go_to("main")(context)
 
 
-def submit_register(menu_state, menus, stdscr, session_state):
-    menu = menus[menu_state.current_menu]
-    username, password, confirm = (f.value for f in menu.buttons[:3])
+def submit_register(context: Context):
+    menu_state = context.menu_state
+    menu = context.menu
+    username, password, confirm = (getattr(field, "value") for field in menu.buttons[:3])
     if password != confirm:
         set_message(menu_state, "Passwords don't match", "error")
         return
@@ -70,22 +76,24 @@ def submit_register(menu_state, menus, stdscr, session_state):
         set_message(menu_state, res.json().get("detail", "Registration failed"), "error")
         return
 
-    if login(menu_state, session_state, username, password):
-        go_to("main")(menu_state, menus, stdscr, session_state)
+    if login(context, username, password):
+        go_to("main")(context)
 
 
-def quit_app(menu_state, menus, stdscr, session_state):
+def quit_app(context: Context):
     raise SystemExit
 
 
-def create_room(menu_state, menus, stdscr, session_state):
-    menu = menus[menu_state.current_menu]
-    password = menu.buttons[0].value or None
+def create_room(context: Context):
+    menu_state = context.menu_state
+    session = context.require_session()
+    menu = context.menu
+    password = getattr(menu.buttons[0], "value", None) or None
     try:
         res = requests.post(
             f"{HTTP_BASE}/rooms",
             json={"password": password} if password else {},
-            headers={"Authorization": f"Bearer {session_state.access_token}"},
+            headers={"Authorization": f"Bearer {session.access_token}"},
             timeout=30,
         )
     except requests.RequestException:
@@ -96,22 +104,24 @@ def create_room(menu_state, menus, stdscr, session_state):
         return
 
     error = connect_to_room(
-        stdscr, session_state.username, session_state.access_token, password
+        context.stdscr, session.username, session.access_token, password
     )
 
-    go_to("main")(menu_state, menus, stdscr, session_state)
+    go_to("main")(context)
     if error:
         set_message(menu_state, error, "error")
 
 
-def load_rooms(menu_state, menus, stdscr, session_state):
-    menu = menus[menu_state.current_menu]
+def load_rooms(context: Context):
+    menu_state = context.menu_state
+    session = context.require_session()
+    menu = context.menu
     set_message(menu_state, "Loading rooms...")
     rooms = []
     try:
         res = requests.get(
             f"{HTTP_BASE}/rooms",
-            headers={"Authorization": f"Bearer {session_state.access_token}"},
+            headers={"Authorization": f"Bearer {session.access_token}"},
             timeout=30,
         )
         res.raise_for_status()
@@ -135,38 +145,44 @@ def load_rooms(menu_state, menus, stdscr, session_state):
 
 
 def select_room(host, has_password):
-    def action(menu_state, menus, stdscr, session_state):
+    def action(context: Context):
         if has_password:
             # rebuild the password menu so its Join button remembers this host
-            menus["room_password"].buttons[1] = Button(
+            context.menus["room_password"].buttons[1] = Button(
                 "Join", submit_room_password(host)
             )
-            go_to("room_password")(menu_state, menus, stdscr, session_state)
+            go_to("room_password")(context)
         else:
-            join_room(host)(menu_state, menus, stdscr, session_state)
+            join_room(host)(context)
 
     return action
 
 
 def join_room(host):
-    def action(menu_state, menus, stdscr, session_state):
-        error = connect_to_room(stdscr, host, session_state.access_token)
+    def action(context: Context):
+        session = context.require_session()
+        error = connect_to_room(
+            context.stdscr, host, session.access_token
+        )
 
-        go_to("error")(menu_state, menus, stdscr, session_state)
+        go_to("error")(context)
         if error:
-            set_message(menu_state, error, "error")
+            set_message(context.menu_state, error, "error")
 
     return action
 
 
 def submit_room_password(host):
-    def action(menu_state, menus, stdscr, session_state):
-        menu = menus[menu_state.current_menu]
-        password = menu.buttons[0].value
-        error = connect_to_room(stdscr, host, session_state.access_token, password)
+    def action(context: Context):
+        session = context.require_session()
+        menu = context.menu
+        password = getattr(menu.buttons[0], "value")
+        error = connect_to_room(
+            context.stdscr, host, session.access_token, password
+        )
 
-        go_to("error")(menu_state, menus, stdscr, session_state)
+        go_to("error")(context)
         if error:
-            set_message(menu_state, error, "error")
+            set_message(context.menu_state, error, "error")
 
     return action
