@@ -1,7 +1,9 @@
 import asyncio
+import logging
 
 from fastapi import APIRouter, WebSocket
 from pydantic import ValidationError
+from websockets import InvalidMessage
 
 from net.protocol import encode
 from server.dependencies import CurrentUserDep, RoomManagerDep
@@ -53,6 +55,7 @@ async def handle_message(room, ws, msg: ClientMessage):
             )
 
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -63,24 +66,34 @@ async def ws_endpoint(
     host: Username,
     password: str | None = None,
     room_manager: RoomManagerDep,
-    user: CurrentUserDep
+    user: CurrentUserDep,
 ):
     await ws.accept()
+    room = None
 
     try:
-        room = await asyncio.to_thread(room_manager.authorize_join, host, password, user.user_id)
+        room = await asyncio.to_thread(
+            room_manager.authorize_join, host, password, user.user_id
+        )
         room_manager.attach_player(room, ws, user.user_id)
-    except AppError as e:
-        await ws.close(code=1008, reason=e.detail)
-        return
-
-    try:
         async for raw in ws.iter_text():
             try:
                 msg = parse_client_message(raw)
             except ValidationError:
-                await ws.close(code=1003)
-                return
+                raise InvalidMessage() from None
             await handle_message(room, ws, msg)
+    except AppError as e:
+        await ws.close(code=e.ws_code, reason=e.detail)
+    except Exception:
+        logger.exception("Websocket error for user %s", user.user_id)
+        await close(ws, code=1011, reason="Internal server error")
     finally:
-        await handle_leave(room, ws, room_manager)
+        if room is not None:
+            await handle_leave(room, ws, room_manager)
+
+
+async def close(ws: WebSocket, code: int, reason: str):
+    try:
+        await ws.close(code=code, reason=reason[:120])
+    except Exception:
+        pass

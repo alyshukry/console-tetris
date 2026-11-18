@@ -2,6 +2,17 @@ class AppError(Exception):
     status_code = 400
     detail = "Bad request"
 
+    @property
+    def ws_code(self) -> int:
+        return 4000 + self.status_code
+    
+class InvalidMessage(AppError):
+    @property
+    def ws_code(self) -> int:
+        return 1003
+
+    detail = "Invalid message"
+
 
 class RoomNotFound(AppError):
     status_code = 404
