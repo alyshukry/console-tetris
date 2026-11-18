@@ -21,6 +21,8 @@ async def handle_leave(room, ws, room_manager):
     room.broadcast("player_left", {"player_id": leaver.player_id})
     room.broadcast_lobby()
 
+    room_manager.player_rooms.pop(leaver.player_id, None)
+
     if len(room.connections) < 1:
         await room_manager.delete_room(room.host)
     elif (
