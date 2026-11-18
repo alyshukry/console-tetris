@@ -22,13 +22,24 @@ def connect_to_room(
             f"{WS_BASE}/ws{params}",
             additional_headers={"Authorization": f"Bearer {token}"},
         ) as ws:
-            await asyncio.gather(
-                ping_loop(ws, player_state),
-                input_loop(ws, stdscr, player_state),
-                receive_loop(ws, player_state),
-                gravity_loop(player_state),
-                render_loop(stdscr, player_state),
-            )
+            tasks = [
+                asyncio.create_task(c)
+                for c in (
+                    ping_loop(ws, player_state),
+                    input_loop(ws, stdscr, player_state),
+                    receive_loop(ws, player_state),
+                    gravity_loop(player_state),
+                    render_loop(stdscr, player_state),
+                )
+            ]
+            try:
+                done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+                for t in done:
+                    t.result()
+            finally:
+                for t in tasks:
+                    t.cancel()
+                await asyncio.gather(*tasks, return_exceptions=True)
 
     try:
         asyncio.run(ws_connect())
