@@ -22,9 +22,9 @@ async def connect_to_room(
             f"{WS_BASE}/ws{params}",
             additional_headers={"Authorization": f"Bearer {token}"},
         ) as ws:
+            player_state = PlayerState(ws)
+            client_state.player_state = player_state
             client_state.screen = Screen.ROOM
-            player_state = client_state.require_player_state()
-            player_state.ws = ws
             tasks = [
                 asyncio.create_task(c)
                 for c in (
@@ -38,6 +38,8 @@ async def connect_to_room(
                 for t in done:
                     t.result()
             finally:
+                client_state.screen = Screen.MENU
+                client_state.player_state = None
                 for t in tasks:
                     t.cancel()
                 await asyncio.gather(*tasks, return_exceptions=True)

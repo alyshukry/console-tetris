@@ -18,7 +18,7 @@ def go_to(menu_name: str):
         menu_state.message = ""
         menu_state.current_menu = menu_name
         if menu_state.menu.on_enter:
-            menu_state.menu.on_enter(state)
+            await menu_state.menu.on_enter(state)
 
     return action
 
@@ -53,7 +53,7 @@ async def login(state: ClientState, username, password) -> bool:
 async def submit_login(state: ClientState):
     menu = state.menu_state.menu
     username, password = (getattr(field, "value") for field in menu.fixed_items[:2])
-    if login(state, username, password):
+    if await login(state, username, password):
         await go_to("main")(state)
 
 
@@ -83,11 +83,11 @@ async def submit_register(state: ClientState):
         )
         return
 
-    if login(state, username, password):
+    if await login(state, username, password):
         await go_to("main")(state)
 
 
-def quit_app(state: ClientState):
+async def quit_app(state: ClientState):
     raise SystemExit
 
 

@@ -10,13 +10,11 @@ from shared.room_state import RoomState
 
 async def render_loop(stdscr, state: ClientState):
     while True:
-        stdscr.erase()
+        stdscr.clear()
 
         match state.screen:
             case Screen.MENU:
-                stdscr.clear()
                 draw_menu(stdscr, state.menu_state)
-                stdscr.refresh()
             case Screen.ROOM:
                 player_state = state.require_player_state()
                 match player_state.room_state:
@@ -61,7 +59,7 @@ async def render_loop(stdscr, state: ClientState):
                         )
 
         
-
+        stdscr.refresh()
         await asyncio.sleep(0.02)
 
 
