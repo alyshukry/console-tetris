@@ -1,5 +1,6 @@
 import asyncio
 
+from client.menu.controller import set_menu
 import websockets
 from websockets import ConnectionClosed, InvalidStatus
 
@@ -25,6 +26,7 @@ async def connect_to_room(
             player_state = PlayerState(ws)
             client_state.player_state = player_state
             client_state.screen = Screen.ROOM
+            await set_menu(client_state, "lobby")
             tasks = [
                 asyncio.create_task(c)
                 for c in (

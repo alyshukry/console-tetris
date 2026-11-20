@@ -1,12 +1,13 @@
 import asyncio
 
+from client.menu.types import Separator
+
 from client.ui.menu import draw_menu
 
 from client.state.client import ClientState, Screen
 from client.ui.board import draw_board
 from client.ui.curses import addstr_safe
 from shared.room_state import RoomState
-
 
 async def render_loop(stdscr, state: ClientState):
     while True:
@@ -19,18 +20,11 @@ async def render_loop(stdscr, state: ClientState):
                 player_state = state.require_player_state()
                 match player_state.room_state:
                     case RoomState.LOBBY:
-                        ready_text = (
-                            "Press K to get ready" if not player_state.ready else "You are ready"
-                        )
-        
-                        addstr_safe(stdscr, 0, 0, ready_text)
-                        addstr_safe(
-                            stdscr,
-                            1,
-                            0,
-                            f"{player_state.ready_count}/{player_state.player_count} players ready...",
-                        )
-        
+                        state.menu_state.menu.dynamic_items = [
+                            Separator("Press K to get ready" if not player_state.ready else "You are ready"),
+                            Separator(f"{player_state.ready_count}/{player_state.player_count} players ready...")
+                        ]
+                        draw_menu(stdscr, state.menu_state)
                     case RoomState.COUNTDOWN:
                         dots = "." * (player_state.countdown % 3 + 1)
                         addstr_safe(

@@ -7,7 +7,7 @@ from client.menu.actions import (
     submit_register,
     submit_room_password,
 )
-from client.menu.types import Button, Menu, TextField
+from client.menu.types import Button, Menu, Separator, TextField
 
 MENUS = {
     "start": Menu(
@@ -71,5 +71,11 @@ MENUS = {
     ),
     "error": Menu(
         fixed_items=[Button("OK", go_to("main"))],
+    ),
+    "lobby": Menu(
+        title="Lobby",
+        fixed_items=[
+            Button("Go Back", go_to("rooms")),
+        ],
     ),
 }

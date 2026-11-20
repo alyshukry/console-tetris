@@ -4,21 +4,14 @@ from client.menu.types import Button, TextField
 from client.ui.menu import draw_menu
 
 
-# def run_menu(stdscr, menu_state):
-#     context = Context(menu_state, MENUS, stdscr)
-
-#     while True:
-#         stdscr.clear()
-#         draw_menu(stdscr, context.menu, context.menu_state)
-#         stdscr.refresh()
-
-#         key = stdscr.getch()
-
-#         if context.menu_state.editing:
-#             handle_text_input(context.menu_state, context.menu, key)
-#         else:
-#             handle_menu_input(context, key)
-
+async def set_menu(state, menu_name):
+    menu_state = state.menu_state
+    menu_state.selected_index = 0
+    menu_state.editing = False
+    menu_state.message = ""
+    menu_state.current_menu = menu_name
+    if menu_state.menu.on_enter:
+        await menu_state.menu.on_enter(state)
 
 def move(state, menu, step):
     n = len(menu.items)

@@ -30,3 +30,5 @@ class ClientState():
         if self.player_state is None:
             raise RuntimeError("Not in a game")
         return self.player_state
+    
+client_state = ClientState(MenuState())

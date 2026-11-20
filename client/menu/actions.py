@@ -1,5 +1,6 @@
 import asyncio
 
+from client.menu.controller import set_menu
 import requests
 
 from client.config import HTTP_BASE
@@ -12,13 +13,7 @@ from client.state.session import Session
 
 def go_to(menu_name: str):
     async def action(state: ClientState):
-        menu_state = state.menu_state
-        menu_state.selected_index = 0
-        menu_state.editing = False
-        menu_state.message = ""
-        menu_state.current_menu = menu_name
-        if menu_state.menu.on_enter:
-            await menu_state.menu.on_enter(state)
+        await set_menu(state, menu_name)
 
     return action
 
@@ -115,7 +110,7 @@ async def create_room(state: ClientState):
         )
         return
 
-    state.room_task = await asyncio.create_task(
+    state.room_task = asyncio.create_task(
         run_room(state, session.username, session.access_token, password)
     )
 
@@ -167,7 +162,7 @@ async def select_room(host, has_password):
 def join_room(host):
     async def action(state: ClientState):
         session = state.require_session()
-        state.room_task = await asyncio.create_task(
+        state.room_task = asyncio.create_task(
             run_room(state, host, session.access_token)
         )
 
@@ -182,7 +177,7 @@ async def submit_room_password(state: ClientState):
         return
     password = getattr(state.menu_state.menu.fixed_items[0], "value")
 
-    state.room_task = await asyncio.create_task(
+    state.room_task = asyncio.create_task(
         run_room(state, host, session.access_token, password)
     )
 
