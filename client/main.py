@@ -1,13 +1,32 @@
+import asyncio
 import curses
 
-from client.menu.controller import run_menu
-from client.state.menu import create_menu_state
+from client.input import input_loop
+from client.state.client import ClientState
+from client.state.menu import MenuState
 from client.ui.curses import setup_curses
+from client.ui.game import render_loop
+
+
+async def async_main(stdscr):
+    client_state = ClientState(MenuState())
+    tasks = [
+        asyncio.create_task(render_loop(stdscr, client_state)),
+        asyncio.create_task(input_loop(stdscr, client_state)),
+    ]
+    try:
+        done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+        for t in done:
+            t.result()  # surface any exception
+    finally:
+        for t in tasks:
+            t.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
 
 
 def main(stdscr):
     setup_curses(stdscr)
-    run_menu(stdscr, create_menu_state(stdscr))
+    asyncio.run(async_main(stdscr))
 
 
 if __name__ == "__main__":

@@ -33,7 +33,7 @@ HANDLERS = {
 }
 
 
-async def receive_loop(ws: ClientConnection, state: PlayerState):
+async def receive_loop(ws: ClientConnection, player_state: PlayerState):
     async for msg in ws:
         try:
             data = json.loads(msg)
@@ -43,19 +43,19 @@ async def receive_loop(ws: ClientConnection, state: PlayerState):
         message_type = data.get("type") if isinstance(data, dict) else None
         handler = HANDLERS.get(message_type) if isinstance(message_type, str) else None
         if handler:
-            handler(state, data)
+            handler(player_state, data)
 
 
-async def gravity_loop(state: PlayerState):
+async def gravity_loop(player_state: PlayerState):
     while True:
         await asyncio.sleep(0.01)
         target_ticks = int(
-            (time.monotonic() - state.start_time) * state.ticks_per_second
+            (time.monotonic() - player_state.start_time) * player_state.ticks_per_second
         )
-        while state.tick < target_ticks:
-            state.tick += 1
-            if state.tick % state.gravity_ticks == 0:
-                for board in state.boards.values():
+        while player_state.tick < target_ticks:
+            player_state.tick += 1
+            if player_state.tick % player_state.gravity_ticks == 0:
+                for board in player_state.boards.values():
                     if not board.game_over and fits(
                         board.cells,
                         board.piece,
@@ -67,9 +67,9 @@ async def gravity_loop(state: PlayerState):
                         board.piece.row += 1
 
 
-async def ping_loop(ws: ClientConnection, state: PlayerState):
+async def ping_loop(ws: ClientConnection, player_state: PlayerState):
     while True:
         await ws.send(
-            encode("ping", {"player_tick": state.tick, "sent_at": time.monotonic()})
+            encode("ping", {"player_tick": player_state.tick, "sent_at": time.monotonic()})
         )
         await asyncio.sleep(1)

@@ -3,6 +3,12 @@ import curses
 from client.ui.colors import setup_colors
 
 
+def center(stdscr, row: int, text: str, attr=0):
+    h, w = stdscr.getmaxyx()
+    col = (w - len(text)) // 2
+    addstr_safe(stdscr, row, col, text, attr)
+
+
 def addstr_safe(stdscr, row, col, text, attributes=0):
     screen_height, screen_width = stdscr.getmaxyx()
 

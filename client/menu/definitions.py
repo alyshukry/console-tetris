@@ -5,12 +5,13 @@ from client.menu.actions import (
     quit_app,
     submit_login,
     submit_register,
+    submit_room_password,
 )
 from client.menu.types import Button, Menu, TextField
 
 MENUS = {
     "start": Menu(
-        buttons=[
+        fixed_items=[
             Button("Login", go_to("login")),
             Button(
                 "Register",
@@ -22,7 +23,7 @@ MENUS = {
     ),
     "login": Menu(
         title="Login",
-        buttons=[
+        fixed_items=[
             TextField("Username"),
             TextField("Password", hide_chars=True),
             Button("Sign In", submit_login),
@@ -31,7 +32,7 @@ MENUS = {
     ),
     "register": Menu(
         title="Register",
-        buttons=[
+        fixed_items=[
             TextField("Username"),
             TextField("Password", hide_chars=True),
             TextField("Confirm", hide_chars=True),
@@ -40,7 +41,7 @@ MENUS = {
         ],
     ),
     "main": Menu(
-        buttons=[
+        fixed_items=[
             Button("Join Room", go_to("rooms")),
             Button("Create Room", go_to("create_room")),
             Button("Quit", quit_app),
@@ -49,7 +50,7 @@ MENUS = {
     ),
     "create_room": Menu(
         title="Create Room",
-        buttons=[
+        fixed_items=[
             TextField("Password (blank for none)", hide_chars=True),
             Button("Create Room", create_room),
             Button("Go Back", go_to("main")),
@@ -57,15 +58,18 @@ MENUS = {
     ),
     "rooms": Menu(
         title="Join Room",
-        buttons=[Button("Refresh", go_to("rooms")), Button("Go Back", go_to("main"))],
+        fixed_items=[Button("Refresh", go_to("rooms")), Button("Go Back", go_to("main"))],
         on_enter=load_rooms,
     ),
     "room_password": Menu(
         title="Enter Room Password",
-        buttons=[TextField("Password", hide_chars=True), Button("Go Back", go_to("rooms"))],
+        fixed_items=[
+            TextField("Password", hide_chars=True),
+            Button("Join", submit_room_password),
+            Button("Go Back", go_to("rooms")),
+        ],
     ),
     "error": Menu(
-        buttons=[Button("OK", go_to("main"))],
+        fixed_items=[Button("OK", go_to("main"))],
     ),
-
 }

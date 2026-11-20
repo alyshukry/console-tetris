@@ -1,6 +1,8 @@
 import time
 from dataclasses import dataclass, field
 
+from websockets import ClientConnection
+
 from game.constants import TICKS_PER_SECOND
 from game.piece import Piece
 from net.serialization import deserialize_piece
@@ -30,6 +32,7 @@ class BoardState:
 
 @dataclass
 class PlayerState:
+    ws: ClientConnection
     boards: dict[int, BoardState] = field(default_factory=dict)
     my_id: int = -1
     room_state: RoomState = RoomState.LOBBY

@@ -1,30 +1,34 @@
+import asyncio
+
 import requests
 
 from client.config import HTTP_BASE
-from client.menu.types import Button, Context, Separator
+from client.menu.types import Button, MenuItem, Separator
 from client.session import connect_to_room
+from client.state.client import ClientState
 from client.state.menu import set_message
 from client.state.session import Session
 
 
 def go_to(menu_name: str):
-    def action(context: Context):
-        menu_state = context.menu_state
+    async def action(state: ClientState):
+        menu_state = state.menu_state
         menu_state.selected_index = 0
         menu_state.editing = False
         menu_state.message = ""
         menu_state.current_menu = menu_name
-        if context.menu.on_enter:
-            context.menu.on_enter(context)
+        if menu_state.menu.on_enter:
+            menu_state.menu.on_enter(state)
 
     return action
 
 
-def login(context: Context, username, password) -> bool:
-    menu_state = context.menu_state
+async def login(state: ClientState, username, password) -> bool:
+    menu_state = state.menu_state
     set_message(menu_state, "Contacting server... (may take a while if asleep)", "info")
     try:
-        res = requests.post(
+        res = await asyncio.to_thread(
+            requests.post,
             f"{HTTP_BASE}/auth/login",
             json={"username": username, "password": password},
             timeout=30,
@@ -38,7 +42,7 @@ def login(context: Context, username, password) -> bool:
         return False
 
     data = res.json()
-    context.session = Session(
+    state.session = Session(
         username=username,
         access_token=data["access_token"],
         refresh_token=data["refresh_token"],
@@ -46,24 +50,25 @@ def login(context: Context, username, password) -> bool:
     return True
 
 
-def submit_login(context: Context):
-    menu = context.menu
-    username, password = (getattr(field, "value") for field in menu.buttons[:2])
-    if login(context, username, password):
-        go_to("main")(context)
+async def submit_login(state: ClientState):
+    menu = state.menu_state.menu
+    username, password = (getattr(field, "value") for field in menu.fixed_items[:2])
+    if login(state, username, password):
+        await go_to("main")(state)
 
 
-def submit_register(context: Context):
-    menu_state = context.menu_state
-    menu = context.menu
-    username, password, confirm = (getattr(field, "value") for field in menu.buttons[:3])
+async def submit_register(state: ClientState):
+    menu_state = state.menu_state
+    menu = state.menu_state.menu
+    username, password, confirm = (getattr(field, "value") for field in menu.fixed_items[:3])
     if password != confirm:
         set_message(menu_state, "Passwords don't match", "error")
         return
 
     set_message(menu_state, "Contacting server... (may take a while if asleep)", "info")
     try:
-        res = requests.post(
+        res = await asyncio.to_thread(
+            requests.post,
             f"{HTTP_BASE}/auth/register",
             json={"username": username, "password": password},
             timeout=30,
@@ -73,24 +78,27 @@ def submit_register(context: Context):
         return
 
     if not res.ok:
-        set_message(menu_state, res.json().get("detail", "Registration failed"), "error")
+        set_message(
+            menu_state, res.json().get("detail", "Registration failed"), "error"
+        )
         return
 
-    if login(context, username, password):
-        go_to("main")(context)
+    if login(state, username, password):
+        await go_to("main")(state)
 
 
-def quit_app(context: Context):
+def quit_app(state: ClientState):
     raise SystemExit
 
 
-def create_room(context: Context):
-    menu_state = context.menu_state
-    session = context.require_session()
-    menu = context.menu
-    password = getattr(menu.buttons[0], "value", None) or None
+async def create_room(state: ClientState):
+    menu_state = state.menu_state
+    session = state.require_session()
+    menu = state.menu_state.menu
+    password = getattr(menu.fixed_items[0], "value", None) or None
     try:
-        res = requests.post(
+        res = await asyncio.to_thread(
+            requests.post,
             f"{HTTP_BASE}/rooms",
             json={"password": password} if password else {},
             headers={"Authorization": f"Bearer {session.access_token}"},
@@ -100,26 +108,26 @@ def create_room(context: Context):
         set_message(menu_state, "Can't reach server", "error")
         return
     if not res.ok:
-        set_message(menu_state, res.json().get("detail", "Room creation failed"), "error")
+        set_message(
+            menu_state, res.json().get("detail", "Room creation failed"), "error"
+        )
         return
 
-    error = connect_to_room(
-        context.stdscr, session.username, session.access_token, password
+    error = await connect_to_room(
+        state, session.username, session.access_token, password
     )
-
-    go_to("main")(context)
+    await go_to("main")(state)
     if error:
         set_message(menu_state, error, "error")
 
 
-def load_rooms(context: Context):
-    menu_state = context.menu_state
-    session = context.require_session()
-    menu = context.menu
-    set_message(menu_state, "Loading rooms...")
+async def load_rooms(state: ClientState):
+    session = state.require_session()
+    set_message(state.menu_state, "Loading rooms...")
     rooms = []
     try:
-        res = requests.get(
+        res = await asyncio.to_thread(
+            requests.get,
             f"{HTTP_BASE}/rooms",
             headers={"Authorization": f"Bearer {session.access_token}"},
             timeout=30,
@@ -127,62 +135,57 @@ def load_rooms(context: Context):
         res.raise_for_status()
         rooms = res.json()
     except (requests.RequestException, ValueError):
-        set_message(menu_state, "Couldn't load rooms", "error")
+        set_message(state.menu_state, "Couldn't load rooms", "error")
         rooms = []
     else:
-        menu_state.message = ""
+        state.menu_state.message = ""
 
-    room_items = [
-        Button(
-            f"{r['host']} - ({r['player_count']} player{'s' if r['player_count'] != 1 else ''})",
-            select_room(r["host"], r["has_password"]),
-        )
-        for r in rooms
-    ] or [Separator("No Rooms Found")]
-
-    menu.buttons = menu.buttons[-2:]
-    menu.buttons = [*room_items, Separator(), *menu.buttons]
-
-
-def select_room(host, has_password):
-    def action(context: Context):
-        if has_password:
-            # rebuild the password menu so its Join button remembers this host
-            context.menus["room_password"].buttons[1] = Button(
-                "Join", submit_room_password(host)
+    room_items: list[MenuItem] = []
+    for r in rooms:
+        room_items.append(
+            Button(
+                f"{r['host']} - ({r['player_count']} player{'s' if r['player_count'] != 1 else ''})",
+                await select_room(r["host"], r["has_password"]),
             )
-            go_to("room_password")(context)
+        )
+
+    state.menu_state.menu.dynamic_items = room_items
+    if not room_items:
+        set_message(state.menu_state, "No rooms found", "info")
+
+
+async def select_room(host, has_password):
+    async def action(state: ClientState):
+        if has_password:
+            state.menu_state.target_host = host
+            await go_to("room_password")(state)
         else:
-            join_room(host)(context)
+            await join_room(host)(state)
 
     return action
 
 
 def join_room(host):
-    def action(context: Context):
-        session = context.require_session()
-        error = connect_to_room(
-            context.stdscr, host, session.access_token
-        )
+    async def action(state: ClientState):
+        session = state.require_session()
 
-        go_to("error")(context)
+        error = await connect_to_room(state, host, session.access_token)
+        await go_to("error")(state)
         if error:
-            set_message(context.menu_state, error, "error")
+            set_message(state.menu_state, error, "error")
 
     return action
 
 
-def submit_room_password(host):
-    def action(context: Context):
-        session = context.require_session()
-        menu = context.menu
-        password = getattr(menu.buttons[0], "value")
-        error = connect_to_room(
-            context.stdscr, host, session.access_token, password
-        )
+async def submit_room_password(state: ClientState):
+    session = state.require_session()
+    host = state.menu_state.target_host
+    if host is None:
+        set_message(state.menu_state, "No room selected", "error")
+        return
+    password = getattr(state.menu_state.menu.fixed_items[0], "value")
 
-        go_to("error")(context)
-        if error:
-            set_message(context.menu_state, error, "error")
-
-    return action
+    error = await connect_to_room(state, host, session.access_token, password)
+    await go_to("error")(state)
+    if error:
+        set_message(state.menu_state, error, "error")
