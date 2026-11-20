@@ -36,6 +36,5 @@ def setup_curses(stdscr):
 
     stdscr.keypad(True)
     stdscr.nodelay(True)
-    stdscr.timeout(50)
 
     setup_colors()

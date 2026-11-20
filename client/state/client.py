@@ -1,3 +1,4 @@
+import asyncio
 from dataclasses import dataclass
 from enum import Enum
 
@@ -18,6 +19,7 @@ class ClientState():
     player_state: PlayerState | None = None
     screen: Screen = Screen.MENU
     session: Session | None = None
+    room_task: asyncio.Task | None = None
 
     def require_session(self) -> Session:
         if self.session is None:

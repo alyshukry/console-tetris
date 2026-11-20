@@ -60,7 +60,9 @@ async def submit_login(state: ClientState):
 async def submit_register(state: ClientState):
     menu_state = state.menu_state
     menu = state.menu_state.menu
-    username, password, confirm = (getattr(field, "value") for field in menu.fixed_items[:3])
+    username, password, confirm = (
+        getattr(field, "value") for field in menu.fixed_items[:3]
+    )
     if password != confirm:
         set_message(menu_state, "Passwords don't match", "error")
         return
@@ -113,12 +115,9 @@ async def create_room(state: ClientState):
         )
         return
 
-    error = await connect_to_room(
-        state, session.username, session.access_token, password
+    state.room_task = await asyncio.create_task(
+        run_room(state, session.username, session.access_token, password)
     )
-    await go_to("main")(state)
-    if error:
-        set_message(menu_state, error, "error")
 
 
 async def load_rooms(state: ClientState):
@@ -168,11 +167,9 @@ async def select_room(host, has_password):
 def join_room(host):
     async def action(state: ClientState):
         session = state.require_session()
-
-        error = await connect_to_room(state, host, session.access_token)
-        await go_to("error")(state)
-        if error:
-            set_message(state.menu_state, error, "error")
+        state.room_task = await asyncio.create_task(
+            run_room(state, host, session.access_token)
+        )
 
     return action
 
@@ -185,7 +182,15 @@ async def submit_room_password(state: ClientState):
         return
     password = getattr(state.menu_state.menu.fixed_items[0], "value")
 
-    error = await connect_to_room(state, host, session.access_token, password)
-    await go_to("error")(state)
+    state.room_task = await asyncio.create_task(
+        run_room(state, host, session.access_token, password)
+    )
+
+
+async def run_room(
+    client_state: ClientState, host: str, token: str, password: str | None = None
+):
+    error = await connect_to_room(client_state, host, token, password)
+    await go_to("main")(client_state)
     if error:
-        set_message(state.menu_state, error, "error")
+        set_message(client_state.menu_state, error, "error")
