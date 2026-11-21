@@ -3,13 +3,12 @@ import logging
 
 from fastapi import APIRouter, WebSocket
 from pydantic import ValidationError
-from websockets import InvalidMessage
 
 from net.protocol import encode
 from server.dependencies import CurrentUserDep, RoomManagerDep
 from server.engine.lifecycle import cancel_countdown, start_countdown
 from server.engine.lobby import check_ready, handle_leave
-from server.errors import AppError
+from server.errors import AppError, InvalidMessage
 from server.schemas.common import Username
 from server.schemas.messages import (
     ClientMessage,
