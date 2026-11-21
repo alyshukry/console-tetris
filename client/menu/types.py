@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING, TypeAlias
 if TYPE_CHECKING:
     from client.state.client import ClientState
 
-Action: TypeAlias = Callable[[ClientState], Awaitable[None]]
-Label: TypeAlias = str | Callable[[ClientState], str]
+Action: TypeAlias = Callable[["ClientState"], Awaitable[None]]
+Label: TypeAlias = str | Callable[["ClientState"], str]
 
 
 @dataclass
