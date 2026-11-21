@@ -25,13 +25,12 @@ async def connect_to_room(
         ) as ws:
             player_state = PlayerState(ws)
             client_state.player_state = player_state
-            client_state.screen = Screen.ROOM
-            await set_menu(client_state, "lobby")
+            await set_menu(client_state, "LOBBY")
             tasks = [
                 asyncio.create_task(c)
                 for c in (
                     ping_loop(ws, player_state),
-                    receive_loop(ws, player_state),
+                    receive_loop(ws, client_state),
                     gravity_loop(player_state),
                 )
             ]

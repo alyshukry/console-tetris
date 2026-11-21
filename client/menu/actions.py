@@ -10,6 +10,8 @@ from client.state.client import ClientState
 from client.state.menu import set_message
 from client.state.session import Session
 
+from net.protocol import encode
+
 
 def go_to(menu_name: str):
     async def action(state: ClientState):
@@ -49,7 +51,7 @@ async def submit_login(state: ClientState):
     menu = state.menu_state.menu
     username, password = (getattr(field, "value") for field in menu.fixed_items[:2])
     if await login(state, username, password):
-        await go_to("main")(state)
+        await set_menu(state, "main")
 
 
 async def submit_register(state: ClientState):
@@ -81,7 +83,7 @@ async def submit_register(state: ClientState):
         return
 
     if await login(state, username, password):
-        await go_to("main")(state)
+        await set_menu(state, "main")
 
 
 async def quit_app(state: ClientState):
@@ -152,7 +154,7 @@ async def select_room(host, has_password):
     async def action(state: ClientState):
         if has_password:
             state.menu_state.target_host = host
-            await go_to("room_password")(state)
+            await set_menu(state, "room_password")
         else:
             await join_room(host)(state)
 
@@ -186,6 +188,19 @@ async def run_room(
     client_state: ClientState, host: str, token: str, password: str | None = None
 ):
     error = await connect_to_room(client_state, host, token, password)
-    await go_to("main")(client_state)
+    await set_menu(client_state, "main")
     if error:
         set_message(client_state.menu_state, error, "error")
+
+
+async def leave_room(state: ClientState):
+    player_state = state.require_player_state()
+    await player_state.ws.close()
+    player_state = None
+    set_message(state.menu_state, "Disconnected from room")
+    await set_menu(state, "main")
+
+
+async def toggle_ready(state: ClientState):
+    player_state = state.require_player_state()
+    await player_state.ws.send(encode("unready" if player_state.ready else "ready"))

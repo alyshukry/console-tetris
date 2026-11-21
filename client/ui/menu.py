@@ -1,83 +1,99 @@
 import curses
 
-from client.ui.curses import center
+from client.ui.curses import addstr_safe, center
 
-from client.menu.types import Menu, TextField
+from client.menu.types import Label, Menu, MenuItem, TextField
 from client.state.menu import MenuState
 from client.ui.colors import ERROR_PAIR
 from client.ui.logo import LOGO, LOGO_WIDTH, SUBTITLE
 
+from client.state.client import ClientState
 
-def draw_menu(stdscr, menu_state: MenuState):
+
+def resolve_label(value: Label, state: ClientState) -> str:
+    return value if isinstance(value, str) else value(state)
+
+
+def draw_logo(stdscr, row: int, w: int) -> int:
+    center(stdscr, row, SUBTITLE)
+    row += 1
+    col = max((w - LOGO_WIDTH) // 2, 0)
+    for pair, upper, lower in LOGO:
+        addstr_safe(stdscr, row, col, upper, curses.color_pair(pair))
+        addstr_safe(stdscr, row + 1, col, lower, curses.color_pair(pair))
+        col += len(upper) + 1
+    return row + 4
+
+
+def draw_items(stdscr, row: int, w: int, menu_state: MenuState, items, labels) -> int:
+    fields = [i for i in items if isinstance(i, TextField)]
+    # +4 = 2 leading spaces + 2 from ljust padding
+    label_width = max(map(len, labels)) + 4
+    input_length = max((f.max_len for f in fields), default=0) + 1
+
+    def field_text(item: TextField, label: str, selected: bool) -> str:
+        cursor = "_" if menu_state.editing and selected else " "
+        shown = "*" * len(item.value) if item.hide_chars else item.value
+        value = f"{shown}{cursor}".ljust(input_length)
+        return f"  {(label + ':').ljust(label_width - 3)} [{value}]  "
+
+    if fields:
+        block_width = max(
+            len(field_text(i, l, False))
+            for i, l in zip(items, labels)
+            if isinstance(i, TextField)
+        )
+    else:
+        block_width = label_width
+    block_col = (w - block_width) // 2
+
+    for idx, (item, label) in enumerate(zip(items, labels)):
+        selected = idx == menu_state.selected_index
+        if isinstance(item, TextField):
+            text = field_text(item, label, selected)
+        elif fields:
+            text = label.center(block_width)
+        else:
+            text = f"  {label}"
+        addstr_safe(
+            stdscr,
+            row,
+            block_col,
+            text.ljust(block_width),
+            curses.A_REVERSE if selected else 0,
+        )
+        row += 1
+    return row
+
+
+def draw_menu(stdscr, state: ClientState):
     h, w = stdscr.getmaxyx()
-    menu = menu_state.menu
+    menu_state: MenuState = state.menu_state
+    menu: Menu = menu_state.menu
+    items = menu.items
+    labels = [resolve_label(i.label, state) for i in items]
 
-    item_count = len(menu.items)
-    menu_height = (
-        item_count
+    height = (
+        len(items)
         + (3 if menu.title else 0)
         + (5 if menu.show_logo else 0)
         + (3 if menu_state.message else 0)
         + (3 if menu.hint else 0)
     )
-    row = (h - menu_height) // 2
+    row = (h - height) // 2
 
     if menu.show_logo:
-        center(stdscr, row, SUBTITLE)
-        row += 1
-        col = max((w - LOGO_WIDTH) // 2, 0)
-        for pair, upper, lower in LOGO:
-            stdscr.addstr(row, col, upper, curses.color_pair(pair))
-            stdscr.addstr(row + 1, col, lower, curses.color_pair(pair))
-            col += len(upper) + 1
-        row += 4
-
+        row = draw_logo(stdscr, row, w)
     if menu.title:
         center(stdscr, row, menu.title)
         row += 3
 
-    has_fields = any(isinstance(i, TextField) for i in menu.items)
-    label_width = (
-        max(len(i.label) for i in menu.items) + 4
-    )  # + 4 to include the 2 spaces added before the label and the 2 spaces created by .ljust()
-    input_length = TextField.max_len + 1
-
-    def field_text(item, selected):
-        cursor = "_" if menu_state.editing and selected else " "
-        displayed_value = "*" * len(item.value) if item.hide_chars else item.value
-        value = f"{displayed_value}{cursor}".ljust(input_length)
-        return f"  {(item.label + ':').ljust(label_width - 3)} [{value}]  "
-
-    if has_fields:
-        block_width = max(
-            len(field_text(i, False)) for i in menu.items if isinstance(i, TextField)
-        )
-    else:
-        block_width = label_width
-
-    block_col = (w - block_width) // 2
-
-    for idx, item in enumerate(menu.items):
-        selected = idx == menu_state.selected_index
-        attr = curses.A_REVERSE if selected else 0
-
-        if isinstance(item, TextField):
-            text = field_text(item, selected)
-        elif has_fields:
-            text = item.label.center(block_width)
-        else:
-            text = f"  {item.label}".ljust(block_width)
-
-        stdscr.addstr(row, block_col, text.ljust(block_width), attr)
-        row += 1
+    row = draw_items(stdscr, row, w, menu_state, items, labels)
 
     if menu_state.message:
-        center(
-            stdscr,
-            row + 2,
-            f" {menu_state.message} ",
-            curses.color_pair(ERROR_PAIR if menu_state.message_kind == "error" else 0),
+        attr = curses.color_pair(
+            ERROR_PAIR if menu_state.message_kind == "error" else 0
         )
+        center(stdscr, row + 2, f" {menu_state.message} ", attr)
         row += 2
-
-    center(stdscr, row + 2, menu.hint, curses.A_DIM)
+    center(stdscr, row + 2, resolve_label(menu.hint, state), curses.A_DIM)

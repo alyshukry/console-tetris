@@ -9,50 +9,22 @@ from client.ui.board import draw_board
 from client.ui.curses import addstr_safe
 from shared.room_state import RoomState
 
+
 async def render_loop(stdscr, state: ClientState):
     while True:
         stdscr.clear()
+        player_state = state.player_state
+        if player_state is not None and player_state.room_state == RoomState.IN_GAME:
+            if player_state.my_id in player_state.boards:
+                draw_boards(
+                    player_state.boards,
+                    stdscr,
+                    player_state.my_id,
+                )
+            addstr_safe(stdscr, 0, 1, f"{player_state.latency:.0f}ms")
+        else:
+            draw_menu(stdscr, state)
 
-        match state.screen:
-            case Screen.MENU:
-                draw_menu(stdscr, state.menu_state)
-            case Screen.ROOM:
-                player_state = state.require_player_state()
-                match player_state.room_state:
-                    case RoomState.LOBBY:
-                        state.menu_state.menu.dynamic_items = [
-                            Separator("Press K to get ready" if not player_state.ready else "You are ready"),
-                            Separator(f"{player_state.ready_count}/{player_state.player_count} players ready...")
-                        ]
-                        draw_menu(stdscr, state.menu_state)
-                    case RoomState.COUNTDOWN:
-                        dots = "." * (player_state.countdown % 3 + 1)
-                        addstr_safe(
-                            stdscr,
-                            0,
-                            0,
-                            f"Starting in {player_state.countdown} seconds{dots}",
-                        )
-        
-                    case RoomState.IN_GAME:
-                        if player_state.my_id in player_state.boards:
-                            draw_boards(
-                                player_state.boards,
-                                stdscr,
-                                player_state.my_id,
-                            )
-                        addstr_safe(stdscr, 0, 1, f"{player_state.latency:.0f}ms")
-        
-                    case RoomState.RESULTS:
-                        suffix = "s" if len(player_state.winners) == 1 else ""
-                        addstr_safe(
-                            stdscr,
-                            0,
-                            0,
-                            f"{player_state.winners} win{suffix} the game!",
-                        )
-
-        
         stdscr.refresh()
         await asyncio.sleep(0.02)
 

@@ -10,16 +10,17 @@ if TYPE_CHECKING:
     from client.state.client import ClientState
 
 type Action = Callable[[ClientState], Awaitable[None]]
+type Label = str | Callable[[ClientState], str]
 
 
 @dataclass
 class Separator:
-    label: str = ""
+    label: Label = ""
 
 
 @dataclass
 class Button:
-    label: str
+    label: Label
     action: Action
 
 
@@ -39,7 +40,11 @@ class Menu:
     fixed_items: list[MenuItem]
     dynamic_items: list[MenuItem] = field(default_factory=list)
     title: str | None = None
-    hint: str = "↑/↓ move    Enter select"
+    hint: Label = lambda s: (
+        "type    Enter finish    Esc cancel"
+        if s.menu_state.editing
+        else "↑/↓ move    Enter select"
+    )
     show_logo: bool = False
     on_enter: Action | None = None
 

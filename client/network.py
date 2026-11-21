@@ -16,6 +16,7 @@ from client.ws_handlers.game import (
 from client.ws_handlers.lobby import handle_countdown_tick, handle_lobby_update
 from client.ws_handlers.room import handle_room_state
 from client.ws_handlers.sync import handle_pong
+from client.state.client import ClientState
 from game.collision import fits
 from net.protocol import encode
 
@@ -33,7 +34,7 @@ HANDLERS = {
 }
 
 
-async def receive_loop(ws: ClientConnection, player_state: PlayerState):
+async def receive_loop(ws: ClientConnection, state: ClientState):
     async for msg in ws:
         try:
             data = json.loads(msg)
@@ -43,7 +44,7 @@ async def receive_loop(ws: ClientConnection, player_state: PlayerState):
         message_type = data.get("type") if isinstance(data, dict) else None
         handler = HANDLERS.get(message_type) if isinstance(message_type, str) else None
         if handler:
-            handler(player_state, data)
+            await handler(state, data)
 
 
 async def gravity_loop(player_state: PlayerState):

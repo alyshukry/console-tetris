@@ -1,8 +1,10 @@
 from client.menu.actions import (
     create_room,
     go_to,
+    leave_room,
     load_rooms,
     quit_app,
+    toggle_ready,
     submit_login,
     submit_register,
     submit_room_password,
@@ -58,7 +60,10 @@ MENUS = {
     ),
     "rooms": Menu(
         title="Join Room",
-        fixed_items=[Button("Refresh", go_to("rooms")), Button("Go Back", go_to("main"))],
+        fixed_items=[
+            Button("Refresh", go_to("rooms")),
+            Button("Go Back", go_to("main")),
+        ],
         on_enter=load_rooms,
     ),
     "room_password": Menu(
@@ -72,10 +77,41 @@ MENUS = {
     "error": Menu(
         fixed_items=[Button("OK", go_to("main"))],
     ),
-    "lobby": Menu(
+    "LOBBY": Menu(
         title="Lobby",
         fixed_items=[
-            Button("Go Back", go_to("rooms")),
+            Separator(
+                lambda state: (
+                    f"{getattr(state.player_state, 'ready_count', 0)}/"
+                    f"{getattr(state.player_state, 'player_count', 0)} players ready"
+                )
+            ),
+            Separator(),
+            Button(
+                lambda state: (
+                    "Unready"
+                    if getattr(state.player_state, "ready", False)
+                    else "Ready"
+                ),
+                toggle_ready,
+            ),
+            Button("Leave Room", leave_room),
         ],
+    ),
+    "COUNTDOWN": Menu(
+        fixed_items=[
+            Separator(
+                lambda state: f"Starting in {getattr(state.player_state, "countdown", "N/A")} seconds{"." * (getattr(state.player_state, "countdown", 5) % 3 + 1)}"
+            )
+        ],
+        hint="",
+    ),
+    "RESULTS": Menu(
+        fixed_items=[
+            Separator(
+                lambda state: f"{getattr(state.player_state, "winners", [])} win{"s" if len(getattr(state.player_state, "winners", [])) == 1 else ""} the game!"
+            )
+        ],
+        hint="",
     ),
 }

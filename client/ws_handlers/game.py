@@ -1,35 +1,39 @@
 import time
 
 from client.input import apply_local_move
+from client.state.client import ClientState
 from client.state.game import BoardState, PlayerState
 from game.collision import fits
 from net.serialization import deserialize_piece
 
 
-def handle_welcome_info(state: PlayerState, data):
-    state.reset_room()
+async def handle_welcome_info(state: ClientState, data):
+    player_state = state.require_player_state()
+    player_state.reset_room()
 
-    state.my_id = data["your_id"]
-    state.ticks_per_second = data["ticks_per_second"]
-    state.gravity_ticks = data["gravity_ticks"]
-    state.tick = data["tick"]
-    state.start_time = time.monotonic()
+    player_state.my_id = data["your_id"]
+    player_state.ticks_per_second = data["ticks_per_second"]
+    player_state.gravity_ticks = data["gravity_ticks"]
+    player_state.tick = data["tick"]
+    player_state.start_time = time.monotonic()
 
-    state.boards[state.my_id] = BoardState.from_dict(data["your_board"])
+    player_state.boards[player_state.my_id] = BoardState.from_dict(data["your_board"])
 
 
-def handle_all_boards(state: PlayerState, data):
-    state.boards = {
+async def handle_all_boards(state: ClientState, data):
+    player_state = state.require_player_state()
+    player_state.boards = {
         int(player_id): BoardState.from_dict(board)
         for player_id, board in data["boards"].items()
     }
 
 
-def handle_piece_moved(state, data):
+async def handle_piece_moved(state: ClientState, data):
+    player_state = state.require_player_state()
     board_id = int(data["board_id"])
-    board = state.boards[board_id]
+    board = player_state.boards[board_id]
 
-    if board_id != state.my_id:
+    if board_id != player_state.my_id:
         board.piece.col = data["col"]
         board.piece.row = data["row"]
         board.piece.rot = data["rot"]
@@ -43,27 +47,29 @@ def handle_piece_moved(state, data):
     board.piece.rot = data["rot"]
 
     if ack_input_tick is not None and ack_input_seq is not None:
-        state.pending_inputs = [
+        player_state.pending_inputs = [
             item
-            for item in state.pending_inputs
+            for item in player_state.pending_inputs
             if (item[0], item[1]) > (ack_input_tick, ack_input_seq)
         ]
 
-    replay_pending(state, board, data["tick"])
+    replay_pending(player_state, board, data["tick"])
 
 
-def handle_piece_locked(state: PlayerState, data):
+async def handle_piece_locked(state: ClientState, data):
+    player_state = state.require_player_state()
     board_id = int(data["board_id"])
-    board = state.boards[board_id]
+    board = player_state.boards[board_id]
 
     board.piece = deserialize_piece(data["new_piece"])
     board.next_piece = deserialize_piece(data["next_piece"])
     board.cells = data["cells"]
 
 
-def handle_lose(state, data):
+async def handle_lose(state: ClientState, data):
+    player_state = state.require_player_state()
     board_id = int(data["board_id"])
-    state.boards[board_id].game_over = True
+    player_state.boards[board_id].game_over = True
 
 
 def replay_pending(state: PlayerState, board: BoardState, server_tick: int):
