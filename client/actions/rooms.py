@@ -11,7 +11,6 @@ from net.protocol import encode
 
 
 async def create_room(state: ClientState):
-    menu_state = state.menu_state
     session = state.require_session()
     menu = state.menu_state.menu
     password = getattr(menu.fixed_items[0], "value", None) or None
@@ -24,12 +23,6 @@ async def create_room(state: ClientState):
         json={"password": password} if password else {},
     )
     if res is None:
-        return
-
-    if not res.ok:
-        set_message(
-            menu_state, res.json().get("detail", "Room creation failed"), "error"
-        )
         return
 
     state.room_task = asyncio.create_task(

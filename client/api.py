@@ -3,10 +3,19 @@ import asyncio
 import requests
 
 from client.config import HTTP_BASE
+from client.state.client import ClientState
 from client.state.menu import set_message
 
 
-async def api(state, method, path, *, auth=False, error="Request failed", **kw):
+async def api(
+    state: ClientState,
+    method: str,
+    path: str,
+    *,
+    auth=False,
+    error="Request failed",
+    **kw,
+) -> requests.Response | None:
     headers = (
         {"Authorization": f"Bearer {state.require_session().access_token}"}
         if auth

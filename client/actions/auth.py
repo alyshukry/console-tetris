@@ -18,10 +18,6 @@ async def login(state: ClientState, username, password) -> bool:
     if res is None:
         return False
 
-    if not res.ok:
-        set_message(menu_state, res.json().get("detail", "Login failed"), "error")
-        return False
-
     data = res.json()
     state.session = Session(
         username=username,
@@ -57,12 +53,6 @@ async def submit_register(state: ClientState):
         json={"username": username, "password": password},
     )
     if res is None:
-        return
-
-    if not res.ok:
-        set_message(
-            menu_state, res.json().get("detail", "Registration failed"), "error"
-        )
         return
 
     if await login(state, username, password):

@@ -17,6 +17,7 @@ class MenuName(StrEnum):
     CREATE_ROOM = auto()
     ROOMS = auto()
     ROOM_PASSWORD = auto()
+    # RoomState menus
     LOBBY = "LOBBY"
     COUNTDOWN = "COUNTDOWN"
     RESULTS = "RESULTS"
