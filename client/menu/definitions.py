@@ -1,83 +1,89 @@
-from client.menu.actions import (
-    create_room,
-    go_to,
-    leave_room,
-    load_rooms,
-    quit_app,
+from client.actions.auth import (
     submit_login,
     submit_register,
+)
+from client.actions.navigation import (
+    go_to,
+    quit_app,
+)
+from client.actions.rooms import (
+    create_room,
+    leave_room,
+    load_rooms,
     submit_room_password,
     toggle_ready,
 )
-from client.menu.types import Button, Menu, Separator, TextField
+from client.menu.types import Button, Menu, MenuName, Separator, TextField
 
-MENUS = {
-    "start": Menu(
+
+def back_to(menu: MenuName) -> Button:
+    return Button("Go Back", go_to(menu))
+
+
+MENUS: dict[MenuName, Menu] = {
+    MenuName.START: Menu(
         fixed_items=[
-            Button("Login", go_to("login")),
+            Button("Login", go_to(MenuName.LOGIN)),
             Button(
                 "Register",
-                go_to("register"),
+                go_to(MenuName.REGISTER),
             ),
             Button("Quit", quit_app),
         ],
         show_logo=True,
     ),
-    "login": Menu(
+    MenuName.LOGIN: Menu(
         title="Login",
         fixed_items=[
             TextField("Username"),
             TextField("Password", hide_chars=True),
             Button("Sign In", submit_login),
-            Button("Go Back", go_to("start")),
+            back_to(MenuName.START),
         ],
     ),
-    "register": Menu(
+    MenuName.REGISTER: Menu(
         title="Register",
         fixed_items=[
             TextField("Username"),
             TextField("Password", hide_chars=True),
             TextField("Confirm", hide_chars=True),
             Button("Sign Up", submit_register),
-            Button("Go Back", go_to("start")),
+            back_to(MenuName.START),
         ],
     ),
-    "main": Menu(
+    MenuName.MAIN: Menu(
         fixed_items=[
-            Button("Join Room", go_to("rooms")),
-            Button("Create Room", go_to("create_room")),
+            Button("Join Room", go_to(MenuName.ROOMS)),
+            Button("Create Room", go_to(MenuName.CREATE_ROOM)),
             Button("Quit", quit_app),
         ],
         show_logo=True,
     ),
-    "create_room": Menu(
+    MenuName.CREATE_ROOM: Menu(
         title="Create Room",
         fixed_items=[
             TextField("Password (blank for none)", hide_chars=True),
             Button("Create Room", create_room),
-            Button("Go Back", go_to("main")),
+            back_to(MenuName.MAIN),
         ],
     ),
-    "rooms": Menu(
+    MenuName.ROOMS: Menu(
         title="Join Room",
         fixed_items=[
-            Button("Refresh", go_to("rooms")),
-            Button("Go Back", go_to("main")),
+            Button("Refresh", go_to(MenuName.ROOMS)),
+            back_to(MenuName.MAIN),
         ],
         on_enter=load_rooms,
     ),
-    "room_password": Menu(
+    MenuName.ROOM_PASSWORD: Menu(
         title="Enter Room Password",
         fixed_items=[
             TextField("Password", hide_chars=True),
             Button("Join", submit_room_password),
-            Button("Go Back", go_to("rooms")),
+            back_to(MenuName.ROOMS),
         ],
     ),
-    "error": Menu(
-        fixed_items=[Button("OK", go_to("main"))],
-    ),
-    "LOBBY": Menu(
+    MenuName.LOBBY: Menu(
         title="Lobby",
         fixed_items=[
             Separator(
@@ -98,7 +104,7 @@ MENUS = {
             Button("Leave Room", leave_room),
         ],
     ),
-    "COUNTDOWN": Menu(
+    MenuName.COUNTDOWN: Menu(
         fixed_items=[
             Separator(
                 lambda s: (
@@ -109,7 +115,7 @@ MENUS = {
         ],
         hint="",
     ),
-    "RESULTS": Menu(
+    MenuName.RESULTS: Menu(
         fixed_items=[
             Separator(
                 lambda s: (

@@ -3,7 +3,6 @@ import asyncio
 import requests
 
 from client.config import HTTP_BASE
-
 from client.state.menu import set_message
 
 

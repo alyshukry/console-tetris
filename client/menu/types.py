@@ -1,11 +1,26 @@
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass, field
+from enum import StrEnum, auto
 from typing import TYPE_CHECKING, TypeAlias
 
 if TYPE_CHECKING:
     from client.state.client import ClientState
+
+
+class MenuName(StrEnum):
+    START = auto()
+    LOGIN = auto()
+    REGISTER = auto()
+    MAIN = auto()
+    CREATE_ROOM = auto()
+    ROOMS = auto()
+    ROOM_PASSWORD = auto()
+    LOBBY = "LOBBY"
+    COUNTDOWN = "COUNTDOWN"
+    RESULTS = "RESULTS"
+
 
 Action: TypeAlias = Callable[["ClientState"], Awaitable[None]]
 Label: TypeAlias = str | Callable[["ClientState"], str]
@@ -35,7 +50,7 @@ MenuItem: TypeAlias = Button | Separator | TextField
 
 @dataclass
 class Menu:
-    fixed_items: list[MenuItem]
+    fixed_items: Sequence[MenuItem]
     dynamic_items: list[MenuItem] = field(default_factory=list)
     title: str | None = None
     hint: Label = lambda s: (

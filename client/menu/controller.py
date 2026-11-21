@@ -1,9 +1,9 @@
 import curses
 
-from client.menu.types import Button, Separator, TextField
+from client.menu.types import Button, MenuName, Separator, TextField
 
 
-async def set_menu(state, menu_name):
+async def set_menu(state, menu_name: MenuName):
     menu_state = state.menu_state
     menu_state.editing = False
     menu_state.message = ""

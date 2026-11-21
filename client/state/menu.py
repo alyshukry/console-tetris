@@ -1,20 +1,19 @@
 from dataclasses import dataclass
 
-from client.menu.types import Menu
+from client.menu.types import Menu, MenuName
 
 
 @dataclass
 class MenuState:
-    current_menu: str = "start"
+    current_menu: MenuName = MenuName.START
     selected_index: int | None = 0
     editing: bool = False
     message: str = ""
     message_kind: str = "info"  # "info" | "error"
     target_host: str | None = None
-    # redraw: Callable | None = None
 
     @property
-    def menu(self) -> Menu:  # the current menu, replaces the repeated lookup
+    def menu(self) -> Menu:
         from client.menu.definitions import MENUS
         return MENUS[self.current_menu]
 

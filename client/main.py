@@ -1,11 +1,11 @@
 import asyncio
 import curses
 
-from client.input import input_loop
+from client.loops.input import input_loop
+from client.loops.render import render_loop
 from client.state.client import ClientState
 from client.state.menu import MenuState
 from client.ui.curses import setup_curses
-from client.ui.game import render_loop
 
 
 async def async_main(stdscr):

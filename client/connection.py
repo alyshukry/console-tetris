@@ -4,11 +4,13 @@ import websockets
 from websockets import ConnectionClosed, InvalidStatus
 
 from client.config import WS_BASE
+from client.loops.gravity import gravity_loop
+from client.loops.ping import ping_loop
+from client.loops.receive import receive_loop
 from client.menu.controller import set_menu
-from client.network import gravity_loop, ping_loop, receive_loop
+from client.menu.types import MenuName
 from client.state.client import ClientState
 from client.state.game import PlayerState
-
 from client.state.menu import set_message
 
 
@@ -25,7 +27,7 @@ async def connect_to_room(
         ) as ws:
             player_state = PlayerState(ws)
             client_state.player_state = player_state
-            await set_menu(client_state, "LOBBY")
+            await set_menu(client_state, MenuName.LOBBY)
             tasks = [
                 asyncio.create_task(c)
                 for c in (
@@ -58,6 +60,6 @@ async def run_room(
     client_state: ClientState, host: str, token: str, password: str | None = None
 ):
     error = await connect_to_room(client_state, host, token, password)
-    await set_menu(client_state, "main")
+    await set_menu(client_state, MenuName.MAIN)
     if error:
         set_message(client_state.menu_state, error, "error")

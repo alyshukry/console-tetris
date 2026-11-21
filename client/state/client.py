@@ -1,11 +1,9 @@
 import asyncio
 from dataclasses import dataclass
-from enum import Enum
 
 from client.state.game import PlayerState
 from client.state.menu import MenuState
 from client.state.session import Session
-
 
 
 @dataclass

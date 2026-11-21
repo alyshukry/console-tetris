@@ -1,28 +1,10 @@
-import asyncio
 import curses
 
-from client.menu.controller import handle_menu_input
-from client.state.client import ClientState
 from client.state.game import BoardState
 from game.collision import fits
 from game.piece import Piece
 from net.protocol import encode
 from shared.action import Action
-from shared.room_state import RoomState
-
-
-async def input_loop(stdscr, state: ClientState):
-    while True:
-        key = stdscr.getch()
-        if key != -1:
-            if (
-                state.player_state is not None
-                and state.player_state.room_state == RoomState.IN_GAME
-            ):
-                await handle_game_input(state.player_state, key)
-            else:
-                await handle_menu_input(state.menu_state, state, key)
-        await asyncio.sleep(0.025)
 
 
 def key_to_action(key) -> Action | None:

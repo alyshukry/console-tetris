@@ -1,6 +1,6 @@
 import time
 
-from client.input import apply_local_move
+from client.game_input import apply_local_move
 from client.state.client import ClientState
 from client.state.game import BoardState, PlayerState
 from game.collision import fits
