@@ -26,7 +26,7 @@ def move(state, menu, step):
             return
 
 
-async def handle_menu_input(menu_state, client_state, key):
+async def handle_menu_input(menu_state, state, key):
     menu = menu_state.menu
     idx = menu_state.selected_index
     if idx is None:
@@ -43,7 +43,7 @@ async def handle_menu_input(menu_state, client_state, key):
             if isinstance(item, TextField):
                 menu_state.editing = True
             else:
-                await item.action(client_state)
+                await item.action(state)
     else:
         if key in (curses.KEY_ENTER, 10, 13, 27):  # Enter or Esc
             if key in (curses.KEY_ENTER, 10, 13):

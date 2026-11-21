@@ -9,10 +9,10 @@ from client.ui.curses import setup_curses
 
 
 async def async_main(stdscr):
-    client_state = ClientState(MenuState())
+    state = ClientState(MenuState())
     tasks = [
-        asyncio.create_task(render_loop(stdscr, client_state)),
-        asyncio.create_task(input_loop(stdscr, client_state)),
+        asyncio.create_task(render_loop(stdscr, state)),
+        asyncio.create_task(input_loop(stdscr, state)),
     ]
     try:
         done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)

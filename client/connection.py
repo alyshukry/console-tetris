@@ -15,7 +15,7 @@ from client.state.menu import set_message
 
 
 async def connect_to_room(
-    client_state: ClientState, host: str, token: str, password: str | None = None
+    state: ClientState, host: str, token: str, password: str | None = None
 ) -> str | None:
 
     params = f"?host={host}{'&password=' + password if password is not None else ''}"
@@ -26,13 +26,13 @@ async def connect_to_room(
             additional_headers={"Authorization": f"Bearer {token}"},
         ) as ws:
             player_state = PlayerState(ws)
-            client_state.player_state = player_state
-            await set_menu(client_state, MenuName.LOBBY)
+            state.player_state = player_state
+            await set_menu(state, MenuName.LOBBY)
             tasks = [
                 asyncio.create_task(c)
                 for c in (
                     ping_loop(ws, player_state),
-                    receive_loop(ws, client_state),
+                    receive_loop(ws, state),
                     gravity_loop(player_state),
                 )
             ]
@@ -41,7 +41,7 @@ async def connect_to_room(
                 for t in done:
                     t.result()
             finally:
-                client_state.player_state = None
+                state.player_state = None
                 for t in tasks:
                     t.cancel()
                 await asyncio.gather(*tasks, return_exceptions=True)
@@ -57,9 +57,9 @@ async def connect_to_room(
 
 
 async def run_room(
-    client_state: ClientState, host: str, token: str, password: str | None = None
+    state: ClientState, host: str, token: str, password: str | None = None
 ):
-    error = await connect_to_room(client_state, host, token, password)
-    await set_menu(client_state, MenuName.MAIN)
+    error = await connect_to_room(state, host, token, password)
+    await set_menu(state, MenuName.MAIN)
     if error:
-        set_message(client_state.menu_state, error, "error")
+        set_message(state.menu_state, error, "error")
