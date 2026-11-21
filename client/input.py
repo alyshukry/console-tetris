@@ -1,12 +1,8 @@
 import asyncio
 import curses
 
-from client.menu.types import TextField
-
 from client.menu.controller import handle_menu_input
-from websockets import ClientConnection
-
-from client.state.client import ClientState, Screen
+from client.state.client import ClientState
 from client.state.game import BoardState
 from game.collision import fits
 from game.piece import Piece

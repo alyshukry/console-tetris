@@ -1,15 +1,13 @@
 import asyncio
 
-from client.menu.controller import set_menu
 import websockets
 from websockets import ConnectionClosed, InvalidStatus
 
 from client.config import WS_BASE
-from client.input import input_loop
+from client.menu.controller import set_menu
 from client.network import gravity_loop, ping_loop, receive_loop
 from client.state.client import ClientState, Screen
 from client.state.game import PlayerState
-from client.ui.game import render_loop
 
 
 async def connect_to_room(

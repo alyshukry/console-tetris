@@ -1,6 +1,6 @@
+from client.menu.controller import set_menu
 from client.state.client import ClientState
 from shared.room_state import RoomState
-from client.menu.controller import set_menu
 
 
 async def handle_room_state(state: ClientState, data):

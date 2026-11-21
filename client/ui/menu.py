@@ -1,13 +1,11 @@
 import curses
 
-from client.ui.curses import addstr_safe, center
-
-from client.menu.types import Label, Menu, MenuItem, TextField
+from client.menu.types import Label, Menu, TextField
+from client.state.client import ClientState
 from client.state.menu import MenuState
 from client.ui.colors import ERROR_PAIR
+from client.ui.curses import addstr_safe, center
 from client.ui.logo import LOGO, LOGO_WIDTH, SUBTITLE
-
-from client.state.client import ClientState
 
 
 def resolve_label(value: Label, state: ClientState) -> str:
@@ -39,15 +37,15 @@ def draw_items(stdscr, row: int, w: int, menu_state: MenuState, items, labels) -
 
     if fields:
         block_width = max(
-            len(field_text(i, l, False))
-            for i, l in zip(items, labels)
+            len(field_text(i, label, False))
+            for i, label in zip(items, labels, strict=True)
             if isinstance(i, TextField)
         )
     else:
         block_width = label_width
     block_col = (w - block_width) // 2
 
-    for idx, (item, label) in enumerate(zip(items, labels)):
+    for idx, (item, label) in enumerate(zip(items, labels, strict=True)):
         selected = idx == menu_state.selected_index
         if isinstance(item, TextField):
             text = field_text(item, label, selected)

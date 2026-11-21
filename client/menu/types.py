@@ -1,16 +1,14 @@
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Awaitable
-
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeAlias
 
 if TYPE_CHECKING:
     from client.state.client import ClientState
 
-type Action = Callable[[ClientState], Awaitable[None]]
-type Label = str | Callable[[ClientState], str]
+Action: TypeAlias = Callable[[ClientState], Awaitable[None]]
+Label: TypeAlias = str | Callable[[ClientState], str]
 
 
 @dataclass
@@ -32,7 +30,7 @@ class TextField:
     hide_chars: bool = False
 
 
-type MenuItem = Button | Separator | TextField
+MenuItem: TypeAlias = Button | Separator | TextField
 
 
 @dataclass

@@ -1,15 +1,14 @@
 import asyncio
 
-from client.menu.controller import set_menu
 import requests
 
 from client.config import HTTP_BASE
-from client.menu.types import Button, MenuItem, Separator
+from client.menu.controller import set_menu
+from client.menu.types import Button, MenuItem
 from client.session import connect_to_room
 from client.state.client import ClientState
 from client.state.menu import set_message
 from client.state.session import Session
-
 from net.protocol import encode
 
 
@@ -49,7 +48,7 @@ async def login(state: ClientState, username, password) -> bool:
 
 async def submit_login(state: ClientState):
     menu = state.menu_state.menu
-    username, password = (getattr(field, "value") for field in menu.fixed_items[:2])
+    username, password = (field.value for field in menu.fixed_items[:2])
     if await login(state, username, password):
         await set_menu(state, "main")
 
@@ -58,7 +57,7 @@ async def submit_register(state: ClientState):
     menu_state = state.menu_state
     menu = state.menu_state.menu
     username, password, confirm = (
-        getattr(field, "value") for field in menu.fixed_items[:3]
+        field.value for field in menu.fixed_items[:3]
     )
     if password != confirm:
         set_message(menu_state, "Passwords don't match", "error")
@@ -140,7 +139,7 @@ async def load_rooms(state: ClientState):
     for r in rooms:
         room_items.append(
             Button(
-                f"{r['host']} - ({r['player_count']} player{'s' if r['player_count'] != 1 else ''})",
+                f"{r['host']} - ({r['player_count']} {r['player_count']} inside)",
                 await select_room(r["host"], r["has_password"]),
             )
         )
@@ -177,7 +176,7 @@ async def submit_room_password(state: ClientState):
     if host is None:
         set_message(state.menu_state, "No room selected", "error")
         return
-    password = getattr(state.menu_state.menu.fixed_items[0], "value")
+    password = state.menu_state.menu.fixed_items[0].value
 
     state.room_task = asyncio.create_task(
         run_room(state, host, session.access_token, password)

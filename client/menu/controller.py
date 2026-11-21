@@ -1,7 +1,6 @@
 import curses
 
 from client.menu.types import Button, Separator, TextField
-from client.ui.menu import draw_menu
 
 
 async def set_menu(state, menu_name):

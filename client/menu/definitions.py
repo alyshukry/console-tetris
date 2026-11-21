@@ -4,10 +4,10 @@ from client.menu.actions import (
     leave_room,
     load_rooms,
     quit_app,
-    toggle_ready,
     submit_login,
     submit_register,
     submit_room_password,
+    toggle_ready,
 )
 from client.menu.types import Button, Menu, Separator, TextField
 
@@ -101,16 +101,22 @@ MENUS = {
     "COUNTDOWN": Menu(
         fixed_items=[
             Separator(
-                lambda state: f"Starting in {getattr(state.player_state, "countdown", "N/A")} seconds{"." * (getattr(state.player_state, "countdown", 5) % 3 + 1)}"
-            )
+                lambda s: (
+                    f"Starting in {(c := getattr(s.player_state, 'countdown', 0))} seconds"
+                    f"{'.' * (c % 3 + 1)}"
+                )
+            ),
         ],
         hint="",
     ),
     "RESULTS": Menu(
         fixed_items=[
             Separator(
-                lambda state: f"{getattr(state.player_state, "winners", [])} win{"s" if len(getattr(state.player_state, "winners", [])) == 1 else ""} the game!"
-            )
+                lambda s: (
+                    f"{(w := getattr(s.player_state, 'winners', []))} "
+                    f"win{'s' if len(w) == 1 else ''} the game!"
+                )
+            ),
         ],
         hint="",
     ),

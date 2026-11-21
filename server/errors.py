@@ -5,7 +5,7 @@ class AppError(Exception):
     @property
     def ws_code(self) -> int:
         return 4000 + self.status_code
-    
+
 class InvalidMessage(AppError):
     @property
     def ws_code(self) -> int:

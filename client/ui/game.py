@@ -1,12 +1,9 @@
 import asyncio
 
-from client.menu.types import Separator
-
-from client.ui.menu import draw_menu
-
-from client.state.client import ClientState, Screen
+from client.state.client import ClientState
 from client.ui.board import draw_board
 from client.ui.curses import addstr_safe
+from client.ui.menu import draw_menu
 from shared.room_state import RoomState
 
 
