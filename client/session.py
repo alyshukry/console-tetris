@@ -6,8 +6,10 @@ from websockets import ConnectionClosed, InvalidStatus
 from client.config import WS_BASE
 from client.menu.controller import set_menu
 from client.network import gravity_loop, ping_loop, receive_loop
-from client.state.client import ClientState, Screen
+from client.state.client import ClientState
 from client.state.game import PlayerState
+
+from client.state.menu import set_message
 
 
 async def connect_to_room(
@@ -37,7 +39,6 @@ async def connect_to_room(
                 for t in done:
                     t.result()
             finally:
-                client_state.screen = Screen.MENU
                 client_state.player_state = None
                 for t in tasks:
                     t.cancel()
@@ -51,3 +52,12 @@ async def connect_to_room(
     except KeyboardInterrupt:
         pass
     return None
+
+
+async def run_room(
+    client_state: ClientState, host: str, token: str, password: str | None = None
+):
+    error = await connect_to_room(client_state, host, token, password)
+    await set_menu(client_state, "main")
+    if error:
+        set_message(client_state.menu_state, error, "error")

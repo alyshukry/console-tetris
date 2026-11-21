@@ -1,14 +1,14 @@
 import asyncio
-
-import requests
+from typing import cast
 
 from client.config import HTTP_BASE
 from client.menu.controller import set_menu
 from client.menu.types import Button, MenuItem, TextField
-from client.session import connect_to_room
+from client.session import connect_to_room, run_room
 from client.state.client import ClientState
 from client.state.menu import set_message
 from client.state.session import Session
+from client.api import api
 from net.protocol import encode
 
 
@@ -22,15 +22,11 @@ def go_to(menu_name: str):
 async def login(state: ClientState, username, password) -> bool:
     menu_state = state.menu_state
     set_message(menu_state, "Contacting server... (may take a while if asleep)", "info")
-    try:
-        res = await asyncio.to_thread(
-            requests.post,
-            f"{HTTP_BASE}/auth/login",
-            json={"username": username, "password": password},
-            timeout=30,
-        )
-    except requests.RequestException:
-        set_message(menu_state, "Can't reach server", "error")
+
+    res = await api(
+        state, "POST", "/auth/login", json={"username": username, "password": password}
+    )
+    if res is None:
         return False
 
     if not res.ok:
@@ -48,7 +44,7 @@ async def login(state: ClientState, username, password) -> bool:
 
 async def submit_login(state: ClientState):
     menu = state.menu_state.menu
-    fields: list[TextField] = menu.fixed_items[:2]
+    fields = cast(list[TextField], menu.fixed_items[:2])
     username, password = (field.value for field in fields)
     if await login(state, username, password):
         await set_menu(state, "main")
@@ -57,23 +53,22 @@ async def submit_login(state: ClientState):
 async def submit_register(state: ClientState):
     menu_state = state.menu_state
     menu = state.menu_state.menu
-    fields: list[TextField] = menu.fixed_items[:3]
+    fields = cast(list[TextField], menu.fixed_items[:3])
     username, password, confirm = (field.value for field in fields)
     if password != confirm:
         set_message(menu_state, "Passwords don't match", "error")
         return
 
     set_message(menu_state, "Contacting server... (may take a while if asleep)", "info")
-    try:
-        res = await asyncio.to_thread(
-            requests.post,
-            f"{HTTP_BASE}/auth/register",
-            json={"username": username, "password": password},
-            timeout=30,
-        )
-    except requests.RequestException:
-        set_message(menu_state, "Can't reach server", "error")
-        return
+
+    res = await api(
+        state,
+        "POST",
+        "/auth/register",
+        json={"username": username, "password": password},
+    )
+    if res is None:
+        return False
 
     if not res.ok:
         set_message(
@@ -94,17 +89,17 @@ async def create_room(state: ClientState):
     session = state.require_session()
     menu = state.menu_state.menu
     password = getattr(menu.fixed_items[0], "value", None) or None
-    try:
-        res = await asyncio.to_thread(
-            requests.post,
-            f"{HTTP_BASE}/rooms",
-            json={"password": password} if password else {},
-            headers={"Authorization": f"Bearer {session.access_token}"},
-            timeout=30,
-        )
-    except requests.RequestException:
-        set_message(menu_state, "Can't reach server", "error")
-        return
+
+    res = await api(
+        state,
+        "POST",
+        "/rooms",
+        auth=True,
+        json={"password": password} if password else {},
+    )
+    if res is None:
+        return False
+
     if not res.ok:
         set_message(
             menu_state, res.json().get("detail", "Room creation failed"), "error"
@@ -117,23 +112,15 @@ async def create_room(state: ClientState):
 
 
 async def load_rooms(state: ClientState):
-    session = state.require_session()
     set_message(state.menu_state, "Loading rooms...")
     rooms = []
-    try:
-        res = await asyncio.to_thread(
-            requests.get,
-            f"{HTTP_BASE}/rooms",
-            headers={"Authorization": f"Bearer {session.access_token}"},
-            timeout=30,
-        )
-        res.raise_for_status()
-        rooms = res.json()
-    except (requests.RequestException, ValueError):
-        set_message(state.menu_state, "Couldn't load rooms", "error")
-        rooms = []
-    else:
-        state.menu_state.message = ""
+
+    res = await api(state, "GET", "/rooms", auth=True)
+    if res is None:
+        return
+    
+    set_message(state.menu_state, "")
+    rooms = res.json()
 
     room_items: list[MenuItem] = []
     for r in rooms:
@@ -176,7 +163,7 @@ async def submit_room_password(state: ClientState):
     if host is None:
         set_message(state.menu_state, "No room selected", "error")
         return
-    password_field: TextField = state.menu_state.menu.fixed_items[0]
+    password_field = cast(TextField, state.menu_state.menu.fixed_items[0])
     password = password_field.value
 
     state.room_task = asyncio.create_task(
@@ -184,21 +171,9 @@ async def submit_room_password(state: ClientState):
     )
 
 
-async def run_room(
-    client_state: ClientState, host: str, token: str, password: str | None = None
-):
-    error = await connect_to_room(client_state, host, token, password)
-    await set_menu(client_state, "main")
-    if error:
-        set_message(client_state.menu_state, error, "error")
-
-
 async def leave_room(state: ClientState):
-    player_state = state.require_player_state()
-    await player_state.ws.close()
-    player_state = None
-    set_message(state.menu_state, "Disconnected from room")
-    await set_menu(state, "main")
+    await state.require_player_state().ws.close()
+    state.player_state = None
 
 
 async def toggle_ready(state: ClientState):

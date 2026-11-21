@@ -7,16 +7,11 @@ from client.state.menu import MenuState
 from client.state.session import Session
 
 
-class Screen(Enum):
-    MENU = "menu"
-    ROOM = "room"
-
 
 @dataclass
 class ClientState:
     menu_state: MenuState
     player_state: PlayerState | None = None
-    screen: Screen = Screen.MENU
     session: Session | None = None
     room_task: asyncio.Task | None = None
 
@@ -29,5 +24,3 @@ class ClientState:
         if self.player_state is None:
             raise RuntimeError("Not in a game")
         return self.player_state
-
-client_state = ClientState(MenuState())

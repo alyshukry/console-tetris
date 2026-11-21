@@ -16,7 +16,6 @@ async def set_menu(state, menu_name):
         (i for i, item in enumerate(menu.items) if not isinstance(item, Separator)),
         None,
     )
-    menu_state.editing = False
 
 
 def move(state, menu, step):
