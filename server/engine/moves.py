@@ -52,7 +52,7 @@ def resolve_move(room, player: Player, result):
 
 
 def board_update_event(p: Player):
-    d = serialize_board(p.board)
+    d = serialize_board(p.board, p.username)
     return "piece_locked", {
         "board_id": p.player_id,
         "cells": d.get("cells"),
