@@ -119,8 +119,8 @@ MENUS: dict[MenuName, Menu] = {
         fixed_items=[
             Separator(
                 lambda s: (
-                    f"{(w := getattr(s.player_state, 'winners', []))} "
-                    f"win{'s' if len(w) == 1 else ''} the game!"
+                    f"{', '.join(getattr(s.player_state, 'winners', []))} "
+                    f"win{'s' if len(getattr(s.player_state, 'winners', [])) == 1 else ''} the game!"
                 )
             ),
         ],
