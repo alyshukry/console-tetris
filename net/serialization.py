@@ -2,7 +2,6 @@ from dataclasses import asdict
 
 from game.board import Board
 from game.piece import Piece
-from server.schemas.common import Username
 
 
 def serialize_piece(piece: Piece) -> dict:
