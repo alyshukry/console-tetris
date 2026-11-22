@@ -120,7 +120,8 @@ MENUS: dict[MenuName, Menu] = {
             Separator(
                 lambda s: (
                     f"{', '.join(getattr(s.player_state, 'winners', []))} "
-                    f"win{'s' if len(getattr(s.player_state, 'winners', [])) == 1 else ''} the game!"
+                    f"win{'s' if len(getattr(s.player_state, 'winners', [])) == 1 else ''}"
+                    " the game!"
                 )
             ),
         ],

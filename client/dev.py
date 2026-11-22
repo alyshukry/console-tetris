@@ -1,8 +1,8 @@
 import argparse
 import asyncio
 
-from client.actions.rooms import toggle_ready
 from client.actions.auth import login
+from client.actions.rooms import toggle_ready
 from client.api import api
 from client.connection import run_room
 from client.menu.controller import set_menu

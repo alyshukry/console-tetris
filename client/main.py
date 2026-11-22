@@ -17,7 +17,7 @@ async def async_main(stdscr, args):
     ]
     if args.dev:
         # deliberately not in `tasks`: it finishes on its own, which would end the app
-        dev_task = asyncio.create_task(
+        asyncio.create_task(
             dev_autostart(state, args.dev, args.create, args.join, args.ready)
         )
     try:

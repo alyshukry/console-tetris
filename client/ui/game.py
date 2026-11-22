@@ -11,25 +11,17 @@ CELL_WIDTH = 2
 CELL = "██"
 GHOST_CELL = "░░"
 BOARD_GAP = 2
-BOARD_TOP = 0  # row 0 is the latency, row 1 the "NEXT" label
+ROW_GAP = 0
 NEXT_ROWS = 2  # tallest piece at rotation 0 is 2 cells high
 NEXT_WIDTH = 4 * CELL_WIDTH  # the I piece is 4 cells wide, in characters
 
 
-# ---------- sizes ----------
-
-
 def board_size(board: BoardState) -> tuple[int, int]:
-    """(height, width) in terminal characters, border included."""
     return board.height + 2, board.width * CELL_WIDTH + 2
 
 
 def mini_size(board: BoardState) -> tuple[int, int]:
-    """Same, for the small version (2 cells stacked per character)."""
     return (board.height + 1) // 2 + 2, board.width + 2
-
-
-# ---------- shared helpers ----------
 
 
 def cell_pair(board: BoardState, cell) -> int:
@@ -47,11 +39,7 @@ def draw_frame(stdscr, row: int, col: int, height: int, width: int):
     addstr_safe(stdscr, row + height - 1, col, "▀" * width, pair)
 
 
-# ---------- full-size board (mine) ----------
-
-
 def draw_cell(stdscr, top, left, r, c, glyph, pair):
-    """Draw one cell at board coords (r, c). top/left = board interior origin."""
     if r < 0:  # above the visible board
         return
     addstr_safe(stdscr, top + r, left + c * CELL_WIDTH, glyph, curses.color_pair(pair))
@@ -66,7 +54,6 @@ def draw_board(stdscr, board: BoardState, row: int, col: int):
     draw_frame(stdscr, row, col, *board_size(board))
     top, left = row + 1, col + 1  # interior origin
 
-    # settled cells
     for r, line in enumerate(board.cells):
         for c, cell in enumerate(line):
             if cell in (0, None):
@@ -93,7 +80,6 @@ def draw_next(stdscr, board: BoardState, row: int, col: int):
     pair = curses.color_pair(GAME_OVER_PAIR if board.game_over else PIECE_COLORS[shape])
     cells = SHAPES[shape][0]
 
-    # bounding box of the shape, so we can center it
     min_r = min(dr for dr, _ in cells)
     min_c = min(dc for _, dc in cells)
     height = max(dr for dr, _ in cells) - min_r + 1
@@ -111,11 +97,7 @@ def draw_next(stdscr, board: BoardState, row: int, col: int):
         )
 
 
-# ---------- mini board (other players) ----------
-
-
 def pair_grid(board: BoardState) -> list[list[int | None]]:
-    """Color pair per cell (None = empty): settled cells plus the active piece."""
     grid = [
         [None if cell in (0, None) else cell_pair(board, cell) for cell in line]
         for line in board.cells
@@ -156,25 +138,40 @@ def draw_mini_board(stdscr, board: BoardState, row: int, col: int):
                 glyph,
                 curses.color_pair(pair if pair is not None else 0),
             )
-    addstr_safe(stdscr, mini_size(board)[0], col, board.username[:12])
+    addstr_safe(stdscr, row + mini_size(board)[0], col, board.username[:12])
 
 
-# ---------- layout ----------
+def draw_game(stdscr, boards: dict[int, BoardState], my_id: int):
+    screen_h, screen_w = stdscr.getmaxyx()
+    mine = boards[my_id]
+    minis = [b for pid, b in boards.items() if pid != my_id]
 
+    main_h, board_w = board_size(mine)
+    main_w = NEXT_WIDTH + BOARD_GAP + board_w
 
-def draw_boards(stdscr, boards: dict[int, BoardState], my_id: int):
-    _, screen_width = stdscr.getmaxyx()
-    ordered = sorted(boards.items(), key=lambda item: item[0] != my_id)
+    # minis: as many columns as fit beside the main board, the rest wrap into new rows
+    cols = rows = grid_w = grid_h = 0
+    if minis:
+        mini_h, mini_w = mini_size(minis[0])
+        slot_w = mini_w + BOARD_GAP
+        slot_h = mini_h + 1 + ROW_GAP  # +1 for the username label
+        free_w = screen_w - main_w - BOARD_GAP
+        cols = max(1, min(len(minis), (free_w + BOARD_GAP) // slot_w))
+        rows = -(-len(minis) // cols)
+        grid_w = cols * slot_w - BOARD_GAP
+        grid_h = rows * slot_h - ROW_GAP
 
-    col = 1
-    for player_id, board in ordered:
-        if col >= screen_width:
-            break
-        if player_id == my_id:
-            draw_next(stdscr, board, BOARD_TOP + 1, col)
-            col += NEXT_WIDTH + BOARD_GAP
-            draw_board(stdscr, board, BOARD_TOP, col)
-            col += board_size(board)[1] + BOARD_GAP
-        else:
-            draw_mini_board(stdscr, board, BOARD_TOP, col)
-            col += mini_size(board)[1] + BOARD_GAP
+    total_w = main_w + (BOARD_GAP + grid_w if minis else 0)
+    total_h = max(main_h, grid_h)
+    left = max((screen_w - total_w) // 2, 0)
+    top = max((screen_h - total_h) // 2, 0)
+
+    main_top = top + (total_h - main_h) // 2
+    draw_next(stdscr, mine, main_top + 1, left)
+    draw_board(stdscr, mine, main_top, left + NEXT_WIDTH + BOARD_GAP)
+
+    grid_left = left + main_w + BOARD_GAP
+    grid_top = top + (total_h - grid_h) // 2
+    for i, board in enumerate(minis):
+        r, c = divmod(i, cols)
+        draw_mini_board(stdscr, board, grid_top + r * slot_h, grid_left + c * slot_w)
