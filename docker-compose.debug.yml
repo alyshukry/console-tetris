@@ -16,8 +16,15 @@ services:
       retries: 10
 
   api:
+    command: fastapi dev server/main.py --host 0.0.0.0 --port 8000
+    restart: "no"
     environment:
       - DATABASE_URL=postgresql+psycopg://tetris:tetris@db:5432/tetris
+    volumes:
+      - ./server:/app/server
+      - ./game:/app/game
+      - ./net:/app/net
+      - ./shared:/app/shared
     depends_on:
       db:
         condition: service_healthy
