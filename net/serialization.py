@@ -9,7 +9,7 @@ def serialize_piece(piece: Piece) -> dict:
     return asdict(piece)
 
 
-def serialize_board(board: Board, username: Username) -> dict:
+def serialize_board(board: Board, username: str) -> dict:
     return {
         "username": username,
         "cells": board.cells,
