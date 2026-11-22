@@ -40,7 +40,7 @@ class PlayerState:
     player_count: int = 1
     ready_count: int = 0
     countdown: int = 5
-    winners: list[int] = field(default_factory=list)
+    winners: list[str] = field(default_factory=list)
     tick: int = 0
     ticks_per_second: float = TICKS_PER_SECOND
     gravity_ticks: int = 10

@@ -1,12 +1,14 @@
 from dataclasses import dataclass, field
 
 from game.board import Board
+from server.schemas.common import Username
 from shared.action import Action
 
 
 @dataclass
 class Player:
     board: Board
+    username: Username
     player_id: int
     ready: bool = False
     outbox: list[tuple[str, dict]] = field(default_factory=list)

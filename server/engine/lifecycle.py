@@ -75,7 +75,7 @@ async def start_game(room):
 
 async def end_game(room, winners: list[Player]):
     await set_room_state(
-        room, RoomState.RESULTS, {"winners": [p.player_id for p in winners]}
+        room, RoomState.RESULTS, {"winners": [p.username for p in winners]}
     )
     await asyncio.sleep(5)
     await reset_to_lobby(room)

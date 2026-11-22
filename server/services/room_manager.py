@@ -15,6 +15,7 @@ from server.errors import (
 )
 from server.models.player import Player
 from server.models.room import Room
+from server.schemas.common import Username
 from server.security import hash_password, verify_password
 from shared.room_state import RoomState
 
@@ -42,10 +43,10 @@ class RoomManager:
         self._check_joinable(room)
         return room
 
-    def attach_player(self, room: Room, ws: WebSocket, user_id: int) -> Player:
+    def attach_player(self, room: Room, ws: WebSocket, user_id: int, username: Username) -> Player:
         self._check_joinable(room)
         self.player_rooms[user_id] = room.host
-        player = Player(Board(room.shared_bag), user_id)
+        player = Player(Board(room.shared_bag), username, user_id)
         room.connections[ws] = player
         player.outbox.append(("room_state", {"state": room.state.value}))
         room.broadcast_lobby()

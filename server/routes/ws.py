@@ -74,7 +74,7 @@ async def ws_endpoint(
         room = await asyncio.to_thread(
             room_manager.authorize_join, host, password, user.user_id
         )
-        room_manager.attach_player(room, ws, user.user_id)
+        room_manager.attach_player(room, ws, user.user_id, user.username)
         async for raw in ws.iter_text():
             try:
                 msg = parse_client_message(raw)
