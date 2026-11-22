@@ -11,6 +11,7 @@ from shared.room_state import RoomState
 
 @dataclass
 class BoardState:
+    username: str
     cells: list
     piece: Piece
     next_piece: Piece
@@ -21,6 +22,7 @@ class BoardState:
     @classmethod
     def from_dict(cls, data: dict):
         return cls(
+            username=data["username"],
             cells=data["cells"],
             piece=deserialize_piece(data["piece"]),
             next_piece=deserialize_piece(data["next_piece"]),

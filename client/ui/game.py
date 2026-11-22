@@ -1,343 +1,180 @@
 import curses
-from dataclasses import dataclass
 
 from client.state.game import BoardState
-from client.ui.colors import (
-    BORDER_PAIR,
-    EMPTY_PAIR,
-    GAME_OVER_PAIR,
-    GARBAGE_PAIR,
-    PIECE_COLORS,
-)
+from client.ui.colors import BORDER_PAIR, GAME_OVER_PAIR, GARBAGE_PAIR, PIECE_COLORS
 from client.ui.curses import addstr_safe
 from game.collision import get_ghost_row
 from game.constants import SHAPES
+from game.piece import Piece
 
 CELL_WIDTH = 2
 CELL = "██"
 GHOST_CELL = "░░"
+BOARD_GAP = 2
+BOARD_TOP = 0  # row 0 is the latency, row 1 the "NEXT" label
+NEXT_ROWS = 2  # tallest piece at rotation 0 is 2 cells high
+NEXT_WIDTH = 4 * CELL_WIDTH  # the I piece is 4 cells wide, in characters
 
 
-@dataclass(frozen=True)
-class RenderBounds:
-    min_row: int
-    min_col: int
-    max_row: int
-    max_col: int
-
-    @property
-    def height(self) -> int:
-        return self.max_row - self.min_row + 1
-
-    @property
-    def width(self) -> int:
-        return self.max_col - self.min_col + 1
+# ---------- sizes ----------
 
 
-def fill_rect(
-    stdscr,
-    top,
-    left,
-    bottom,
-    right,
-    color_pair,
-    cell=CELL,
-):
-    screen_height, screen_width = stdscr.getmaxyx()
+def board_size(board: BoardState) -> tuple[int, int]:
+    """(height, width) in terminal characters, border included."""
+    return board.height + 2, board.width * CELL_WIDTH + 2
 
-    top = max(top, 0)
-    bottom = min(bottom, screen_height - 1)
 
-    left_char = max(left * CELL_WIDTH, 0)
-    right_char = min(
-        (right + 1) * CELL_WIDTH,
-        screen_width,
-    )
+def mini_size(board: BoardState) -> tuple[int, int]:
+    """Same, for the small version (2 cells stacked per character)."""
+    return (board.height + 1) // 2 + 2, board.width + 2
 
-    if top > bottom or left_char >= right_char:
+
+# ---------- shared helpers ----------
+
+
+def cell_pair(board: BoardState, cell) -> int:
+    if board.game_over:
+        return GAME_OVER_PAIR
+    return GARBAGE_PAIR if cell == "X" else PIECE_COLORS[cell]
+
+
+def draw_frame(stdscr, row: int, col: int, height: int, width: int):
+    pair = curses.color_pair(BORDER_PAIR)
+    addstr_safe(stdscr, row, col, "▄" * width, pair)
+    for r in range(1, height - 1):
+        addstr_safe(stdscr, row + r, col, "█", pair)
+        addstr_safe(stdscr, row + r, col + width - 1, "█", pair)
+    addstr_safe(stdscr, row + height - 1, col, "▀" * width, pair)
+
+
+# ---------- full-size board (mine) ----------
+
+
+def draw_cell(stdscr, top, left, r, c, glyph, pair):
+    """Draw one cell at board coords (r, c). top/left = board interior origin."""
+    if r < 0:  # above the visible board
         return
-
-    text = cell * ((right_char - left_char) // CELL_WIDTH)
-
-    for row in range(top, bottom + 1):
-        try:
-            addstr_safe(
-                stdscr,
-                row,
-                left_char,
-                text,
-                curses.color_pair(color_pair),
-            )
-        except curses.error:
-            pass
+    addstr_safe(stdscr, top + r, left + c * CELL_WIDTH, glyph, curses.color_pair(pair))
 
 
-def draw_board(
-    board: BoardState,
-    stdscr,
-    top: int,
-    left: int,
-    show_next: bool,
-    screen_height: int,
-    screen_width: int,
-) -> RenderBounds:
-    board_bottom = top + board.height - 1
-    board_right = left + board.width - 1
+def draw_piece(stdscr, top, left, piece: Piece, row: int, glyph: str, pair: int):
+    for dr, dc in SHAPES[piece.shape][piece.rot]:
+        draw_cell(stdscr, top, left, row + dr, piece.col + dc, glyph, pair)
 
-    min_row = top - 1
-    max_row = board_bottom + 1
-    min_col = left - 1
-    max_col = board_right + 1
 
-    if min_row >= screen_height or min_col >= screen_width:
-        return RenderBounds(
-            min_row,
-            min_col,
-            max_row,
-            max_col,
-        )
+def draw_board(stdscr, board: BoardState, row: int, col: int):
+    draw_frame(stdscr, row, col, *board_size(board))
+    top, left = row + 1, col + 1  # interior origin
 
-    fill_rect(
-        stdscr,
-        top,
-        left,
-        board_bottom,
-        board_right,
-        EMPTY_PAIR,
-    )
-
-    draw_border(
-        board,
-        stdscr,
-        top,
-        left,
-    )
-
-    if show_next:
-        preview_top = top + 2
-        preview_left = board_right + 3
-        preview_bottom = top + 6
-        preview_right = preview_left + 5
-
-        fill_rect(
-            stdscr,
-            preview_top,
-            preview_left,
-            preview_bottom,
-            preview_right,
-            EMPTY_PAIR,
-        )
-
-        draw_piece(
-            board,
-            stdscr,
-            top,
-            left,
-            board.next_piece.shape,
-            4,
-            board.width + 4,
-            0,
-        )
-
-        addstr_safe(
-            stdscr,
-            top + 1,
-            preview_left * CELL_WIDTH,
-            "NEXT PIECE:",
-        )
-
-        max_col = max(
-            max_col,
-            preview_right,
-        )
-        max_row = max(
-            max_row,
-            preview_bottom,
-        )
-
-    if not board.game_over:
-        draw_ghost(
-            board,
-            stdscr,
-            top,
-            left,
-        )
-
-    piece = board.piece
-
-    draw_piece(
-        board,
-        stdscr,
-        top,
-        left,
-        piece.shape,
-        piece.row,
-        piece.col,
-        piece.rot,
-    )
-
-    game_over_pair = GAME_OVER_PAIR if board.game_over else None
-
-    for row in range(board.height):
-        for col in range(board.width):
-            cell = board.cells[row][col]
-
+    # settled cells
+    for r, line in enumerate(board.cells):
+        for c, cell in enumerate(line):
             if cell in (0, None):
                 continue
+            draw_cell(stdscr, top, left, r, c, CELL, cell_pair(board, cell))
 
-            if game_over_pair:
-                pair = game_over_pair
-            elif cell == "X":
-                pair = GARBAGE_PAIR
+    # ghost, then the active piece on top
+    piece = board.piece
+    if board.game_over:
+        pair = GAME_OVER_PAIR
+    else:
+        pair = PIECE_COLORS[piece.shape]
+        ghost_row = piece.row + get_ghost_row(
+            board.cells, piece, board.width, board.height
+        )
+        draw_piece(stdscr, top, left, piece, ghost_row, GHOST_CELL, pair)
+    draw_piece(stdscr, top, left, piece, piece.row, CELL, pair)
+
+
+def draw_next(stdscr, board: BoardState, row: int, col: int):
+    addstr_safe(stdscr, row, col + 1, "NEXT")
+
+    shape = board.next_piece.shape
+    pair = curses.color_pair(GAME_OVER_PAIR if board.game_over else PIECE_COLORS[shape])
+    cells = SHAPES[shape][0]
+
+    # bounding box of the shape, so we can center it
+    min_r = min(dr for dr, _ in cells)
+    min_c = min(dc for _, dc in cells)
+    height = max(dr for dr, _ in cells) - min_r + 1
+    width = (max(dc for _, dc in cells) - min_c + 1) * CELL_WIDTH  # in characters
+
+    top = row + 2 + (NEXT_ROWS - height) // 2
+    left = col + (NEXT_WIDTH - width) // 2
+    for dr, dc in cells:
+        addstr_safe(
+            stdscr,
+            top + dr - min_r,
+            left + (dc - min_c) * CELL_WIDTH,
+            CELL,
+            pair,
+        )
+
+
+# ---------- mini board (other players) ----------
+
+
+def pair_grid(board: BoardState) -> list[list[int | None]]:
+    """Color pair per cell (None = empty): settled cells plus the active piece."""
+    grid = [
+        [None if cell in (0, None) else cell_pair(board, cell) for cell in line]
+        for line in board.cells
+    ]
+    piece = board.piece
+    pair = GAME_OVER_PAIR if board.game_over else PIECE_COLORS[piece.shape]
+    for dr, dc in SHAPES[piece.shape][piece.rot]:
+        r, c = piece.row + dr, piece.col + dc
+        if 0 <= r < board.height and 0 <= c < board.width:
+            grid[r][c] = pair
+    return grid
+
+
+def draw_mini_board(stdscr, board: BoardState, row: int, col: int):
+    draw_frame(stdscr, row, col, *mini_size(board))
+    grid = pair_grid(board)
+    empty = [None] * board.width
+
+    # each terminal row shows two board rows: upper half ▀, lower half ▄
+    for i in range(0, board.height, 2):
+        upper = grid[i]
+        lower = grid[i + 1] if i + 1 < board.height else empty
+        for c in range(board.width):
+            top, bottom = upper[c], lower[c]
+            if top is None and bottom is None:
+                continue
+            if top is not None and bottom is not None:
+                glyph = "█"
+            elif top is not None:
+                glyph = "▀"
             else:
-                pair = PIECE_COLORS[cell]
-
+                glyph = "▄"
+            pair = top if top is not None else bottom
             addstr_safe(
                 stdscr,
-                top + row,
-                (left + col) * CELL_WIDTH,
-                CELL,
-                curses.color_pair(pair),
+                row + 1 + i // 2,
+                col + 1 + c,
+                glyph,
+                curses.color_pair(pair if pair is not None else 0),
             )
-
-    return RenderBounds(
-        min_row,
-        min_col,
-        max_row,
-        max_col,
-    )
+    addstr_safe(stdscr, mini_size(board)[0], col, board.username[:12])
 
 
-def draw_piece(
-    board,
-    stdscr,
-    top,
-    left,
-    shape,
-    row,
-    col,
-    rot,
-):
-    pair = GAME_OVER_PAIR if board.game_over else PIECE_COLORS[shape]
-
-    for dr, dc in SHAPES[shape][rot]:
-        screen_row = top + row + dr
-        screen_col = left + col + dc
-
-        if screen_row <= top - 1:
-            continue
-
-        addstr_safe(
-            stdscr,
-            screen_row,
-            screen_col * CELL_WIDTH,
-            CELL,
-            curses.color_pair(pair),
-        )
+# ---------- layout ----------
 
 
-def draw_ghost(
-    board,
-    stdscr,
-    top,
-    left,
-):
-    ghost_row = get_ghost_row(
-        board.cells,
-        board.piece,
-        board.width,
-        board.height,
-    )
+def draw_boards(stdscr, boards: dict[int, BoardState], my_id: int):
+    _, screen_width = stdscr.getmaxyx()
+    ordered = sorted(boards.items(), key=lambda item: item[0] != my_id)
 
-    piece = board.piece
-    pair = PIECE_COLORS[piece.shape]
-
-    for dr, dc in SHAPES[piece.shape][piece.rot]:
-        addstr_safe(
-            stdscr,
-            top + piece.row + ghost_row + dr,
-            (left + piece.col + dc) * CELL_WIDTH,
-            GHOST_CELL,
-            curses.color_pair(pair),
-        )
-
-
-def draw_border(
-    board,
-    stdscr,
-    top,
-    left,
-):
-    border_top = top - 1
-    border_left = (left - 1) * CELL_WIDTH
-    border_bottom = top + board.height
-    border_right = (left + board.width) * CELL_WIDTH
-
-    pair = curses.color_pair(BORDER_PAIR)
-
-    addstr_safe(
-        stdscr,
-        border_top,
-        border_left,
-        " ▄" + "▄" * (board.width * CELL_WIDTH) + "▄ ",
-        pair,
-    )
-
-    for row in range(board.height):
-        screen_row = top + row
-
-        addstr_safe(
-            stdscr,
-            screen_row,
-            border_left,
-            " █",
-            pair,
-        )
-
-        addstr_safe(
-            stdscr,
-            screen_row,
-            border_right,
-            "█ ",
-            pair,
-        )
-
-    addstr_safe(
-        stdscr,
-        border_bottom,
-        border_left,
-        " ▀" + "▀" * (board.width * CELL_WIDTH) + "▀ ",
-        pair,
-    )
-
-
-def draw_boards(boards, stdscr, my_id):
-    screen_height, screen_width = stdscr.getmaxyx()
-
-    top = 2
-    left = 1
-
-    ordered_boards = []
-
-    if my_id in boards:
-        ordered_boards.append((my_id, boards[my_id]))
-
-    ordered_boards.extend(
-        (player_id, board) for player_id, board in boards.items() if player_id != my_id
-    )
-
-    for _, board in ordered_boards:
-        if left >= screen_width - 1:
+    col = 1
+    for player_id, board in ordered:
+        if col >= screen_width:
             break
-
-        bounds = draw_board(
-            board,
-            stdscr,
-            top,
-            left,
-            board is boards.get(my_id),
-            screen_height,
-            screen_width,
-        )
-
-        left = bounds.max_col + 2
+        if player_id == my_id:
+            draw_next(stdscr, board, BOARD_TOP + 1, col)
+            col += NEXT_WIDTH + BOARD_GAP
+            draw_board(stdscr, board, BOARD_TOP, col)
+            col += board_size(board)[1] + BOARD_GAP
+        else:
+            draw_mini_board(stdscr, board, BOARD_TOP, col)
+            col += mini_size(board)[1] + BOARD_GAP

@@ -2,14 +2,16 @@ from dataclasses import asdict
 
 from game.board import Board
 from game.piece import Piece
+from server.schemas.common import Username
 
 
 def serialize_piece(piece: Piece) -> dict:
     return asdict(piece)
 
 
-def serialize_board(board: Board) -> dict:
+def serialize_board(board: Board, username: Username) -> dict:
     return {
+        "username": username,
         "cells": board.cells,
         "width": board.width,
         "height": board.height,

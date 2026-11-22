@@ -59,7 +59,7 @@ async def start_game(room):
                 (
                     "welcome_info",
                     {
-                        "your_board": serialize_board(player.board),
+                        "your_board": serialize_board(player.board, player.username),
                         "your_id": player.player_id,
                         "ticks_per_second": TICKS_PER_SECOND,
                         "gravity_ticks": room.gravity_ticks,
@@ -83,6 +83,6 @@ async def end_game(room, winners: list[Player]):
 def all_boards_payload(room):
     return {
         "boards": {
-            p.player_id: serialize_board(p.board) for p in room.connections.values()
+            p.player_id: serialize_board(p.board, p.username) for p in room.connections.values()
         }
     }

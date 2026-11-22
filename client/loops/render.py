@@ -14,11 +14,11 @@ async def render_loop(stdscr, state: ClientState):
         if player_state is not None and player_state.room_state == RoomState.IN_GAME:
             if player_state.my_id in player_state.boards:
                 draw_boards(
-                    player_state.boards,
                     stdscr,
+                    player_state.boards,
                     player_state.my_id,
                 )
-            addstr_safe(stdscr, 0, 1, f"{player_state.latency:.0f}ms")
+            # addstr_safe(stdscr, 0, 1, f"{player_state.latency:.0f}ms")
         else:
             draw_menu(stdscr, state)
 
