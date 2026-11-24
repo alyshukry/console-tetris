@@ -15,10 +15,10 @@ A real-time multiplayer Tetris battle played entirely in a terminal UI. Clear li
 3. Create a room on one of the devices (or accounts).
 4. Join the room from the other device.
 ## Demos
-![login menu](.github/assets/login menu.png)
-![joining room](.github/assets/part 1.gif)
-![playing game](.github/assets/part 2.gif)
-![winning game](.github/assets/part 3.gif)
+![login menu](.github/assets/login_menu.png)
+![joining room](.github/assets/part1.gif)
+![playing game](.github/assets/part2.gif)
+![winning game](.github/assets/part3.gif)
 ## Architecture
 ```
   ┌────────────┐   HTTP (auth, room list)  ┌────────────────────────────┐   ┌────────────┐
