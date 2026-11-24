@@ -2,9 +2,9 @@
 <p align="center"> <picture> <img alt="console tetris battle banner" src=".github/assets/banner.png" width="500px"> </picture> </p> <h3 align="center" style="font-family: monospace;"> Multiplayer battle-royale Tetris in your terminal! </h3> <br>
 
 ## Navigation
-1.  [Try it out](https://github.com/alyshukry/console-tetris#run-it)
-2.  [Demos](https://github.com/alyshukry/console-tetris#demos)
-3.  [Features](https://github.com/alyshukry/console-tetris#features)
+1.  [Features](https://github.com/alyshukry/console-tetris#features)
+2.  [Try it out](https://github.com/alyshukry/console-tetris#run-it)
+3.  [Demos](https://github.com/alyshukry/console-tetris#demos)
 4.  [Architecture](https://github.com/alyshukry/console-tetris#architecture)
 ## Features
 A real-time multiplayer Tetris battle played entirely in a terminal UI. Clear lines to send garbage to your opponents and be the last one standing. Built with Python, FastAPI, and WebSockets, with a server-authoritative game engine, client-side prediction with reconciliation, JWT auth, and PostgreSQL. Containerized with Docker and deployed on Render.
