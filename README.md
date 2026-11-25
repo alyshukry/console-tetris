@@ -8,7 +8,7 @@
 4.  [Architecture](https://github.com/alyshukry/console-tetris#architecture)
 ## Features
 A real-time multiplayer Tetris battle played entirely in a terminal UI. Clear lines to send garbage to your opponents and be the last one standing. Built with Python, FastAPI, and WebSockets, with a server-authoritative game engine, client-side prediction with reconciliation, JWT auth, and PostgreSQL. Containerized with Docker and deployed on Render.
-> The console-only UI is a delibirate choice. The point of this project is the backend: concurrency, real-time sync, auth, and deployment, rather than frontend polish.
+> The console-only UI is a deliberate choice. The point of this project is the backend: concurrency, real-time sync, auth, and deployment, rather than frontend polish.
 ## Try it out
 1. Download the executable for your OS from the [releases page](https://github.com/alyshukry/console-tetris/releases) and run it on two devices (or twice with different accounts).
 2. Register a new account.
