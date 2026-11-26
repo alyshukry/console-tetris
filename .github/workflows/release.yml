@@ -11,6 +11,10 @@ jobs:
     strategy:
       matrix:
         include:
+          - os: macos-15
+            name: console-tetris-macos-arm64
+          - os: macos-15-intel
+            name: console-tetris-macos-intel
           - os: ubuntu-latest
             name: console-tetris-linux
           - os: macos-latest
